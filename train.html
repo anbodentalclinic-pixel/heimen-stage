@@ -189,6 +189,42 @@ details.hint{ margin:6px 0; } details.hint summary{ cursor:pointer; font-weight:
 var QS=new URLSearchParams(location.search), EMB=QS.get("embed"), EMB_TITLE=QS.get("title")||"";
 var KEY= EMB ? "heimen-zukei-embed" : "heimen-zukei-v1";
 if(EMB) document.documentElement.classList.add("embed");
+/* ===== 記録をGoogleスプレッドシートへ送る（おうちの人が送り先を設定したときだけ） ===== */
+var ML={cfg:"math-log-cfg",q:"math-log-queue",snap:"math-log-snap",weak:"math-log-weak"};
+function mlCfg(){ try{ return JSON.parse(localStorage.getItem(ML.cfg))||{}; }catch(e){ return {}; } }
+function mlSetCfg(c){ try{ localStorage.setItem(ML.cfg,JSON.stringify(c)); }catch(e){} }
+function mlQ(){ try{ return JSON.parse(localStorage.getItem(ML.q))||[]; }catch(e){ return []; } }
+function mlStrip(h){ return String(h==null?"":h).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim(); }
+function mlLog(row){ row.t=new Date().toISOString(); row.app=row.app||"平面図形 ステージ攻略"; var q=mlQ(); q.push(row); if(q.length>800) q=q.slice(-800); try{ localStorage.setItem(ML.q,JSON.stringify(q)); }catch(e){} mlFlush(); }
+var mlBusy=false;
+function mlPost(c,body,cors){ return fetch(c.url,{method:"POST",mode:cors?"cors":"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}); }
+function mlFlush(){ var c=mlCfg(); if(!c.url||!c.key||mlBusy) return; var q=mlQ(); if(!q.length) return; var batch=q.slice(0,40); mlBusy=true;
+  mlPost(c,{key:c.key,rows:batch}).then(function(){ var q2=mlQ(); q2.splice(0,batch.length); try{ localStorage.setItem(ML.q,JSON.stringify(q2)); }catch(e){} mlBusy=false; c=mlCfg(); c.sent=(c.sent||0)+batch.length; c.last=new Date().toISOString(); mlSetCfg(c); if(q2.length) mlFlush(); }).catch(function(){ mlBusy=false; }); }
+function mlSnapshot(force){ var c=mlCfg(); if(!c.url||!c.key) return Promise.resolve(-1); if(!force && localStorage.getItem(ML.snap)) return Promise.resolve(0);
+  if(!c.dev){ c.dev=(/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)?"スマホ":"パソコン")+"-"+Math.random().toString(36).slice(2,6); mlSetCfg(c); }
+  var skip=/^(math-log-|heimen-zukei-embed)/, items=[];
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(!k||skip.test(k)) continue; var v=localStorage.getItem(k)||""; var n=Math.max(1,Math.ceil(v.length/40000)); for(var p=0;p<n;p++) items.push({dev:c.dev,origin:location.origin,k:k,part:p+1,total:n,data:v.slice(p*40000,(p+1)*40000)}); }
+  var chain=Promise.resolve();
+  for(var j=0;j<items.length;j+=3){ (function(g){ chain=chain.then(function(){ return mlPost(c,{key:c.key,snapshot:g}); }); })(items.slice(j,j+3)); }
+  return chain.then(function(){ try{ localStorage.setItem(ML.snap,new Date().toISOString()); }catch(e){} return items.length; });
+}
+function mlWeakCache(){ try{ return JSON.parse(localStorage.getItem(ML.weak))||null; }catch(e){ return null; } }
+function mlWeakFetch(){ var c=mlCfg(); if(!c.url||!c.key) return Promise.resolve(null);
+  return mlPost(c,{key:c.key,want:"weak"},true).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok&&d.weak){ try{ localStorage.setItem(ML.weak,JSON.stringify({at:Date.now(),weak:d.weak})); }catch(e){} return d.weak; } return null; }).catch(function(){ return null; }); }
+
+function mlPat(it){ var t=it.type,u=it.u;
+  if(["cdraw","construct","order"].indexOf(t)>=0) return "作図の手順";
+  if(t==="move"||t==="gdraw"||u==="u2") return "図形の移動";
+  if(t==="sym"||u==="u1") return "言葉・記号の意味";
+  if(u==="u3") return "作図の意味（等しい距離）";
+  if(u==="u4") return "作図の手順";
+  if(u==="u5") return "作図の文章題の読み取り";
+  if(u==="u6") return t==="num"?"計算（π・おうぎ形）":"おうぎ形の考え方";
+  if(u==="u7") return "ワークの直し";
+  if(u==="u8") return "寄り道（活用）";
+  return "その他"; }
+function mlAns(it){ if(it.opts&&it.c!=null) return Array.isArray(it.c)?it.c.map(function(i){return mlStrip(it.opts[i]);}).join(" / "):mlStrip(it.opts[it.c]); if(it.ans!=null) return String(it.ans)+(it.unit?" "+it.unit:""); return ""; }
+function mlGot(it,c){ try{ if(it.opts){ if(c.pick!=null&&it.opts[c.pick]!=null) return mlStrip(it.opts[c.pick]); if(c.sel&&c.sel.length) return c.sel.map(function(i){return mlStrip(it.opts[i]);}).join(" / "); } if(c.vals&&c.vals.length) return c.vals.join(" "); }catch(e){} return ""; }
 /* ---------- 小道具 ---------- */
 function shuffle(n){ var a=[]; for(var i=0;i<n;i++) a.push(i); for(i=n-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
 function m(n){ return n<0 ? "−"+Math.abs(n) : String(n); }
@@ -813,6 +849,9 @@ var S; try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(e){ S=null; }
 if(!S||!S.units){ S={unit:"u1",units:freshUnits(),mute:false}; }
 if(EMB){ var mute0=S.mute; S={unit:"emb",units:freshUnits(),mute:!!mute0}; S.units.emb={q:EMB.split(",").filter(function(id){return ITEMS[id];}).map(function(id){return {id:id};}),pos:0,cur:null,done:false,again:[],first:{}}; }
 (function(){ var f=freshUnits(); UNITS.forEach(function(u){ var cur=S.units[u.key]; var want=f[u.key].q.map(function(e){return e.id;}).join(","); var have=cur?cur.q.filter(function(e){return !e.again;}).map(function(e){return e.id;}).join(","):""; if(want!==have) S.units[u.key]=f[u.key]; }); })();
+(function(){ if(EMB) return; var wc=mlWeakCache(); var ids=wc&&wc.weak?wc.weak.map(function(o){return o.id;}).filter(function(id){return ITEMS[id]&&ITEMS[id].type!=="card";}):[];
+  if(ids.length){ UNITS.push({key:"u9",label:"苦手（記録から）"}); var cur=S.units.u9, have=cur?cur.q.filter(function(e){return !e.again;}).map(function(e){return e.id;}).join(","):""; if(have!==ids.join(",")) S.units.u9={q:ids.map(function(id){return {id:id};}),pos:0,cur:null,done:false,again:[]}; }
+  mlFlush(); mlWeakFetch(); })();
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 var app=document.getElementById("app"), nav=document.getElementById("nav");
 
@@ -1308,6 +1347,7 @@ function bindLive(){
 /* ---------- 操作 ---------- */
 function next(D,c,it,e){
   if(D.first && !e.again) D.first[e.id]=!!c.res;
+  if(it.type!=="card" && c.res!==null && c.res!==undefined){ var ul=(UNITS.filter(function(u){return u.key===it.u;})[0]||{}).label||""; mlLog({unit:"平面図形："+ul,pat:mlPat(it),id:e.id,q:mlStrip(it.q||it.ctx||"").slice(0,200),res:c.res?"○":"×",ans:mlAns(it),got:c.res?"":mlGot(it,c),ref:it.ref||"",memo:(EMB?"ステージ "+EMB_TITLE:"トレーニング")+(e.again?"（もう一度）":"")}); }
   if(!c.res && D.again.indexOf(D.pos)<0 && ["card","draw","locus","construct","sector","circlearea","roll","conceptanim"].indexOf(it.type)<0){ D.again.push(D.q.length); D.q.push({id:e.id,again:true}); }
   D.pos++; D.cur=null; if(D.pos>=D.q.length){ D.done=true; sfx("done"); }
 }

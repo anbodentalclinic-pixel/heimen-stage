@@ -737,12 +737,36 @@ window.addEventListener("message",function(ev){
   ov.hidden=true; panel.innerHTML=""; current=null; G.mode="play"; keys={}; try{ window.focus(); }catch(e){}
 });
 
+/* ===== 記録をGoogleスプレッドシートへ送る（おうちの人が送り先を設定したときだけ） ===== */
+var ML={cfg:"math-log-cfg",q:"math-log-queue",snap:"math-log-snap",weak:"math-log-weak"};
+function mlCfg(){ try{ return JSON.parse(localStorage.getItem(ML.cfg))||{}; }catch(e){ return {}; } }
+function mlSetCfg(c){ try{ localStorage.setItem(ML.cfg,JSON.stringify(c)); }catch(e){} }
+function mlQ(){ try{ return JSON.parse(localStorage.getItem(ML.q))||[]; }catch(e){ return []; } }
+function mlStrip(h){ return String(h==null?"":h).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim(); }
+function mlLog(row){ row.t=new Date().toISOString(); row.app=row.app||"平面図形 ステージ攻略"; var q=mlQ(); q.push(row); if(q.length>800) q=q.slice(-800); try{ localStorage.setItem(ML.q,JSON.stringify(q)); }catch(e){} mlFlush(); }
+var mlBusy=false;
+function mlPost(c,body,cors){ return fetch(c.url,{method:"POST",mode:cors?"cors":"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}); }
+function mlFlush(){ var c=mlCfg(); if(!c.url||!c.key||mlBusy) return; var q=mlQ(); if(!q.length) return; var batch=q.slice(0,40); mlBusy=true;
+  mlPost(c,{key:c.key,rows:batch}).then(function(){ var q2=mlQ(); q2.splice(0,batch.length); try{ localStorage.setItem(ML.q,JSON.stringify(q2)); }catch(e){} mlBusy=false; c=mlCfg(); c.sent=(c.sent||0)+batch.length; c.last=new Date().toISOString(); mlSetCfg(c); if(q2.length) mlFlush(); }).catch(function(){ mlBusy=false; }); }
+function mlSnapshot(force){ var c=mlCfg(); if(!c.url||!c.key) return Promise.resolve(-1); if(!force && localStorage.getItem(ML.snap)) return Promise.resolve(0);
+  if(!c.dev){ c.dev=(/Mobi|Android|iPhone|iPad/.test(navigator.userAgent)?"スマホ":"パソコン")+"-"+Math.random().toString(36).slice(2,6); mlSetCfg(c); }
+  var skip=/^(math-log-|heimen-zukei-embed)/, items=[];
+  for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(!k||skip.test(k)) continue; var v=localStorage.getItem(k)||""; var n=Math.max(1,Math.ceil(v.length/40000)); for(var p=0;p<n;p++) items.push({dev:c.dev,origin:location.origin,k:k,part:p+1,total:n,data:v.slice(p*40000,(p+1)*40000)}); }
+  var chain=Promise.resolve();
+  for(var j=0;j<items.length;j+=3){ (function(g){ chain=chain.then(function(){ return mlPost(c,{key:c.key,snapshot:g}); }); })(items.slice(j,j+3)); }
+  return chain.then(function(){ try{ localStorage.setItem(ML.snap,new Date().toISOString()); }catch(e){} return items.length; });
+}
+function mlWeakCache(){ try{ return JSON.parse(localStorage.getItem(ML.weak))||null; }catch(e){ return null; } }
+function mlWeakFetch(){ var c=mlCfg(); if(!c.url||!c.key) return Promise.resolve(null);
+  return mlPost(c,{key:c.key,want:"weak"},true).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok&&d.weak){ try{ localStorage.setItem(ML.weak,JSON.stringify({at:Date.now(),weak:d.weak})); }catch(e){} return d.weak; } return null; }).catch(function(){ return null; }); }
+
 /* ================= 問ブロック ================= */
 function hitBlock(b){ if(b.used||G.mode!=="play") return; sfx("bump"); var pool=QUIZ[b.world]; var q=pool[Math.floor(Math.random()*pool.length)]; current={block:b,q:q,g:{type:"quiz"}};
   var h='<span class="tag">問ブロック</span><h2>問題</h2><p style="font-size:19px">'+q.q+'</p>'+choiceBtns(q.o,"quiz")+'<div id="fb"></div><p class="small">正解するとコイン3まい。まちがえてもハートはへらない。</p>';
   openPanel(h); }
 function quizAnswer(b){ var q=current.q, ok=+b.dataset.i===q.c, fb=document.getElementById("fb"); b.classList.add(ok?"right":"wrong"); panel.querySelectorAll('button[data-act="quiz"]').forEach(function(x){ x.disabled=true; if(+x.dataset.i===q.c) x.classList.add("right"); });
   current.block.used=true; SAVE.qhit=(SAVE.qhit||0)+1; save();
+  var qi=QUIZ[current.block.world].indexOf(q); mlLog({unit:"平面図形：問ブロック（用語）",pat:"言葉・記号の意味",id:"quiz-"+current.block.world+"-"+qi,q:q.q,res:ok?"○":"×",ans:q.o[q.c],got:ok?"":q.o[+b.dataset.i],memo:"ステージ "+G.id+" の問ブロック"});
   if(ok){ sfx("coin"); G.coin+=3; addPts(3); say(fb,"ok","<b>正解！</b> "+q.ex); } else { sfx("ng"); logMiss("問ブロック："+q.q.slice(0,24)); say(fb,"ng","<b>ざんねん。</b> 答えは「"+q.o[q.c]+"」。"+q.ex); }
   fb.innerHTML+='<button class="btn main" data-act="go">ステージにもどる</button>'; }
 
@@ -775,13 +799,22 @@ function showTitle(){
   h+='<div class="startbox">'+(nx?'<button class="btn main big" data-stage="'+nx.id+'">▶ ステージ '+nx.id+'「'+nx.name+'」から始める</button>':'<p><b>全ステージクリア！</b> ★が3つでないステージに、もう一度ちょうせんしよう。</p>')+'<p class="small" style="margin:6px 0 0">機×'+SAVE.lives+'　★'+SAVE.pts+' ポイント（50ポイントごとに機が1つ増える）</p></div>';
   h+='<p><span class="keys">←</span> <span class="keys">→</span> 移動　<span class="keys">スペース</span> または <span class="keys">↑</span> ジャンプ　<span class="keys">↓</span> 土管に入る　<span class="keys">Esc</span> メニュー</p><p class="small">ゲートの前まで進むと問題が出る。まちがえるとハートが1つへる（5つなくなると機が1つへる）。「問」ブロックは下からジャンプでたたくと問題が出る。</p>';
   h+='<div class="stagegrid">'+WORLDS.map(function(w,wi){ if(w.soon) return '<div class="world"><h3>'+w.name+'</h3><p class="small">準備中</p></div>'; return '<div class="world"><h3>'+w.name+'</h3>'+w.stages.map(function(s,si){ var open = (wi===0&&si===0) || SAVE.clear[prevId(wi,si)] || SAVE.clear[s.id]; var star=SAVE.stars[s.id]||0; return '<button class="btn sbtn" data-stage="'+s.id+'"'+(open?'':' disabled')+'><span>'+s.id+' '+s.name+'<br><span class="small">'+(s.ref||'')+'</span></span><span>'+(SAVE.clear[s.id]?'★'.repeat(star)+'☆'.repeat(3-star):'')+'</span></button>'; }).join('')+'</div>'; }).join('')+'</div>';
-  h+='<div class="trainbox"><b>おさらい用：トレーニング</b>　<span class="small">ステージを進めたあと、まちがえた問題をまとめて練習したいときに使う。</span> <a class="btn" href="train.html" style="text-decoration:none;display:inline-block;font-size:14px;min-height:32px;padding:4px 10px">トレーニングを開く</a></div>';
+  var wc=mlWeakCache(), wl=wc&&wc.weak?wc.weak:[], wh=wl.filter(function(o){return /^平面図形/.test(o.unit||"");}).length;
+  h+='<div class="trainbox"><b>おさらい用：トレーニング</b>　<span class="small">ステージを進めたあと、まちがえた問題をまとめて練習したいときに使う。</span> <a class="btn" href="train.html" style="text-decoration:none;display:inline-block;font-size:14px;min-height:32px;padding:4px 10px">トレーニングを開く</a>'+(wh?'<p class="small" style="margin:6px 0 0">テスト対策：記録から、まだ直っていない平面図形の問題が <b>'+wh+' 問</b>。トレーニングの「苦手（記録から）」でまとめて練習できる。</p>':'')+'</div>';
+  var mc=mlCfg(), mq=mlQ().length;
+  h+='<details style="margin-top:12px"><summary>記録の送り先（おうちの人用）'+(mc.url?'　<span class="small">設定ずみ</span>':'')+'</summary><p class="small">問題の結果（○・×）を、Google スプレッドシート「拓真 数学まちがい記録」に送る。名前は送らない。設定はこの端末だけに保存される。</p>'+
+    '<p><label class="small">ウェブアプリのURL<br><input id="mlurl" style="width:100%;font-size:14px" value="'+(mc.url||'').replace(/"/g,'')+'" placeholder="https://script.google.com/macros/s/……/exec"></label></p>'+
+    '<p><label class="small">合言葉<br><input id="mlkey" style="width:14em;font-size:14px" value="'+(mc.key||'').replace(/"/g,'')+'"></label> <button class="btn" id="mlsave" style="font-size:14px;min-height:32px;padding:4px 10px">保存して送る</button></p>'+
+    '<p class="small" id="mlstat">まだ送っていない記録：'+mq+' 件'+(mc.last?'　最後に送った日時：'+new Date(mc.last).toLocaleString('ja-JP'):'')+'<br>ほかのアプリの記録（この端末に残っている分）：'+(localStorage.getItem(ML.snap)?'送信ずみ（'+new Date(localStorage.getItem(ML.snap)).toLocaleDateString('ja-JP')+'）':'まだ')+'</p>'+
+    '<button class="btn" id="mlsnap" style="font-size:13px;min-height:30px;padding:2px 8px">ほかのアプリの記録をもう一度送る</button></details>';
   var wn=WORK&&WORK.items?Object.keys(WORK.items).length:0;
   h+='<details style="margin-top:12px"><summary>ワーク版ファイル（おうちの人用）</summary><p class="small">ワークの問題そのものは、公開しないファイルに入っている。このパソコンで1回読みこむと、ステージとトレーニングにワークの問題が出るようになる。</p><p>'+(wn?'<b>読みこみ済み：'+wn+' 問</b>　<button class="btn" id="wkoff">外す</button>':'まだ読みこんでいない')+'</p><input type="file" id="wkfile" accept=".json,application/json"></details>';
   if(SAVE.miss.length) h+='<details style="margin-top:12px"><summary>まちがえた問題の記録（'+SAVE.miss.length+'）</summary><ul class="small">'+SAVE.miss.slice(-15).reverse().map(function(m){return '<li>'+m.at+'　'+m.stage+'　'+m.what+'</li>';}).join('')+'</ul></details>';
   panel.innerHTML=h; ov.hidden=false;
   panel.querySelectorAll("[data-stage]").forEach(function(b){ b.onclick=function(){ ac(); startStage(b.dataset.stage); }; });
   var wf=document.getElementById("wkfile"); if(wf) wf.onchange=function(){ var f=wf.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ try{ var o=JSON.parse(r.result); if(!o.items) throw 0; localStorage.setItem("heimen-work-v1",r.result); WORK=o; showTitle(); }catch(e){ alert("ワーク版ファイルではないようです"); } }; r.readAsText(f); };
+  var ms=document.getElementById("mlsave"); if(ms) ms.onclick=function(){ var u=document.getElementById("mlurl").value.trim(), k=document.getElementById("mlkey").value.trim(); if(u && !/^https:\/\/script\.google\.com\/macros\/s\/[^\/]+\/exec$/.test(u)){ alert("URL は https://script.google.com/macros/s/……/exec の形で入れてください"); return; } var c=mlCfg(); c.url=u; c.key=k; mlSetCfg(c); mlFlush(); document.getElementById("mlstat").textContent="送っています…"; mlSnapshot(false).then(function(n){ return mlWeakFetch().then(function(w){ document.getElementById("mlstat").textContent="保存しました。"+(n>0?"ほかのアプリの記録 "+n+" 件を送りました。":"")+(w?"スプレッドシートとつながりました（苦手 "+w.length+" 問）。":"スプレッドシートの返事が読めませんでした。URL と合言葉を確かめてください。"); }); }); };
+  var mn=document.getElementById("mlsnap"); if(mn) mn.onclick=function(){ document.getElementById("mlstat").textContent="送っています…"; mlSnapshot(true).then(function(n){ document.getElementById("mlstat").textContent=n<0?"先に URL と合言葉を保存してください。":"ほかのアプリの記録 "+n+" 件を送りました。"; }); };
   var wo=document.getElementById("wkoff"); if(wo) wo.onclick=function(){ localStorage.removeItem("heimen-work-v1"); WORK=null; showTitle(); };
 }
 function prevId(wi,si){ if(si>0) return WORLDS[wi].stages[si-1].id; if(wi>0){ var pw=WORLDS[wi-1]; return pw.stages[pw.stages.length-1].id; } return null; }
@@ -811,7 +844,7 @@ function hud(){ var L=document.getElementById("hudL"), C=document.getElementById
 var last=0, acc=0;
 function loop(ts){ requestAnimationFrame(loop); musicUpdate(); if(!G||!G.info){ hud(); drawMenuBg(); return; } var d=Math.min(50,ts-last); last=ts; acc+=d; while(acc>=16.67){ if(G.mode==="play"||G.mode==="panel") { G.t++; } if(G.mode==="play") step(); acc-=16.67; } draw(); hud(); }
 function drawMenuBg(){ var gr=ctx.createLinearGradient(0,0,0,H); gr.addColorStop(0,"#7EC8F2"); gr.addColorStop(1,"#CDEBFA"); ctx.fillStyle=gr; ctx.fillRect(0,0,W,H); for(var i=0;i<W;i+=TILE){ tile(i,GY,TILE,90,"ground"); } drawHero(120,GY-36,1,1); }
-showTitle(); requestAnimationFrame(loop);
+mlFlush(); mlSnapshot(false); mlWeakFetch().then(function(w){ if(w && G && G.mode==="menu" && !document.activeElement.matches("input")) showTitle(); }); showTitle(); requestAnimationFrame(loop);
 window.__game={get MUS(){return MUS;},get G(){return G;}, openGate:function(i){ openGate(G.gates[i]); }, start:startStage};
 })();
 </script>
