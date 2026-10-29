@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>平面図形 ステージ攻略</title>
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{ --ink:#1D2B3A; --sub:#4E6274; --paper:#EAF1F6; --card:#FFFFFF; --gold:#F2B705; --gold2:#FFE07A; --good:#2F7D5B; --goodbg:#DDF1E7; --rasp:#B84A62; --hint:#FFF4CF; --comp:#2E6FB7; --red:#C8323C; --grid:#CFDDE8; color-scheme:light; }
+*{ box-sizing:border-box; }
+html,body{ margin:0; height:100%; background:#10202E; color:var(--ink); font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif; }
+#wrap{ position:relative; width:min(100vw, calc(100vh * 16 / 9)); aspect-ratio:16/9; margin:0 auto; top:50%; transform:translateY(-50%); }
+canvas{ position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; display:block; }
+.pix{ font-family:"DotGothic16",monospace; }
+#hud{ position:absolute; left:0; right:0; top:0; display:flex; justify-content:space-between; align-items:center; padding:1.2% 2%; pointer-events:none; color:#fff; font-family:"DotGothic16",monospace; font-size:clamp(14px,2.2vw,26px); text-shadow:2px 2px 0 #1D2B3A; }
+#hud .r{ display:flex; gap:18px; align-items:center; }
+.overlay{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(16,32,46,.55); }
+.overlay[hidden]{ display:none; }
+.panel{ width:min(94%,880px); max-height:92%; overflow:auto; background:var(--card); border:4px solid var(--ink); border-radius:10px; box-shadow:0 8px 0 var(--ink); padding:18px 22px; font-size:17px; line-height:1.6; }
+.panel h2{ font-family:"DotGothic16",monospace; font-weight:400; font-size:26px; margin:0 0 6px; }
+.panel .tag{ display:inline-block; background:var(--gold); border:2px solid var(--ink); border-radius:6px; padding:0 8px; font-size:14px; font-weight:700; }
+.cols{ display:grid; grid-template-columns:1.1fr 1fr; gap:16px; align-items:start; }
+@media (max-width:760px){ .cols{ grid-template-columns:1fr; } }
+.fig{ border:2px solid var(--ink); border-radius:6px; background:#F6FAFD; }
+.fig svg{ display:block; width:100%; height:auto; }
+.btn{ font:inherit; font-weight:700; font-size:16px; padding:8px 14px; min-height:42px; border:2px solid var(--ink); border-bottom-width:5px; border-radius:6px; background:#fff; color:var(--ink); cursor:pointer; margin:4px 6px 4px 0; }
+.btn:active{ transform:translateY(2px); border-bottom-width:3px; }
+.btn.main{ background:#4F9A3E; color:#fff; } .btn.gold{ background:var(--gold); }
+.btn:disabled{ opacity:.45; cursor:default; }
+.btn.right{ background:var(--goodbg); border-color:var(--good); opacity:1; } .btn.wrong{ background:var(--hint); border-color:var(--rasp); opacity:1; }
+.btn:focus-visible, input:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+input.num{ font:inherit; font-size:22px; width:5em; padding:4px 8px; border:2px solid var(--ink); border-radius:6px; }
+.msg{ border:2px solid var(--ink); border-radius:6px; padding:8px 12px; margin:10px 0; }
+.msg.ok{ background:var(--goodbg); } .msg.ng{ background:var(--hint); }
+.row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.hearts{ color:#ff5a6e; }
+.startbox{ border:4px solid var(--ink); border-radius:10px; background:#FFF6D6; padding:12px 14px; margin:10px 0 12px; text-align:center; }
+.btn.big{ font-size:22px; padding:12px 22px; min-height:56px; animation:pulse 1.6s ease-in-out infinite; }
+@keyframes pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.04); } }
+@media (prefers-reduced-motion:reduce){ .btn.big{ animation:none; } }
+.trainbox{ margin-top:16px; padding:10px 12px; border:2px dashed #9AA6B2; border-radius:8px; color:#3B4A58; }
+.stagegrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:10px; }
+.world{ border:3px solid var(--ink); border-radius:8px; padding:10px; background:#F6FAFD; }
+.world h3{ margin:0 0 6px; font-size:18px; }
+.sbtn{ display:flex; justify-content:space-between; width:100%; text-align:left; }
+.keys{ display:inline-block; border:2px solid var(--ink); border-bottom-width:4px; border-radius:5px; padding:0 7px; font-family:"DotGothic16",monospace; background:#fff; }
+.panel.zpanel{ width:96%; height:94%; max-height:94%; display:flex; flex-direction:column; padding:10px 12px; overflow:hidden; }
+.zhead{ flex:0 0 auto; padding:0 4px 6px; }
+#zf{ flex:1; width:100%; border:2px solid var(--ink); border-radius:6px; background:#fff; }
+code{ font-family:"DotGothic16",monospace; background:var(--paper); padding:1px 6px; border-radius:4px; }
+.small{ font-size:14px; color:var(--sub); }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="960" height="540" aria-label="横スクロールのステージ"></canvas>
+  <div id="hud"><div id="hudL"></div><div class="r"><span id="hudCoin"></span><span id="hudHeart" class="hearts"></span><button id="bgm" class="btn" style="pointer-events:auto;font-size:13px;min-height:30px;padding:2px 8px;margin:0">BGM あり</button><button id="snd" class="btn" style="pointer-events:auto;font-size:13px;min-height:30px;padding:2px 8px;margin:0">音あり</button></div></div>
+  <div id="ov" class="overlay" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+</div>
+<script>
+(function(){
+"use strict";
+/* ================= 基本 ================= */
+var KEY="heimen-stage-v1";
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d"), W=960, H=540, TILE=30, GY=450;
+var ov=document.getElementById("ov"), panel=document.getElementById("panel");
+var SAVE; try{ SAVE=JSON.parse(localStorage.getItem(KEY)); }catch(e){ SAVE=null; }
+if(!SAVE) SAVE={clear:{},stars:{},miss:[],mute:false};
+if(SAVE.lives==null){ SAVE.lives=3; SAVE.pts=0; SAVE.nextUp=50; }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(SAVE)); }catch(e){} }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function num(s){ s=String(s||"").trim().replace(/[−ー―－]/g,"-").replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/π/g,"").replace(/\s/g,""); if(!s) return null; if(s.indexOf("/")>=0){ var p=s.split("/"); var a=+p[0], b=+p[1]; return (isNaN(a)||isNaN(b)||!b)?null:a/b; } var v=Number(s); return isNaN(v)?null:v; }
+function fmt(v){ if(Math.abs(v-Math.round(v))<1e-9) return String(Math.round(v)).replace("-","−"); return (Math.round(v*10)/10).toString(); }
+
+/* ================= 効果音 ================= */
+var AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==="suspended") AC.resume(); return AC; }
+function tone(f,t0,d,type,v){ var c=ac(); if(!c) return; var o=c.createOscillator(),g=c.createGain(),t=c.currentTime+t0; o.type=type||"square"; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v||0.08,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+d+0.02); }
+function sfx(n){ if(SAVE.mute) return;
+  if(n==="jump") { var c=ac(); if(!c) return; var o=c.createOscillator(),g=c.createGain(),t=c.currentTime; o.type="square"; o.frequency.setValueAtTime(300,t); o.frequency.exponentialRampToValueAtTime(700,t+0.12); g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.15); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+0.16); }
+  if(n==="coin"){ tone(988,0,0.07); tone(1319,0.07,0.18); }
+  if(n==="ok"){ tone(659,0,0.12,"triangle",0.15); tone(880,0.1,0.2,"triangle",0.15); tone(1175,0.22,0.25,"triangle",0.13); }
+  if(n==="ng"){ tone(220,0,0.25,"sawtooth",0.06); }
+  if(n==="bump"){ tone(160,0,0.08,"square",0.08); }
+  if(n==="move"){ for(var i=0;i<4;i++) tone(392+i*98,i*0.08,0.09,"square",0.05); }
+  if(n==="clear"){ [523,659,784,1047,784,1047].forEach(function(f,i){ tone(f,i*0.13,0.22,"square",0.07); }); }
+  if(n==="hurt"){ tone(330,0,0.1,"square",0.08); tone(220,0.1,0.2,"square",0.08); }
+}
+/* ================= BGM（8トラック：メロディ・ハモり・和音・ベース・アルペジオ・キック・スネア・ハイハット） ================= */
+var NOTE={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
+function nm(s){ var m=/^([A-G][#b]?)(\d)$/.exec(s); return m?12*(+m[2]+1)+NOTE[m[1]]:null; }
+function chordTones(c){ var m=/^([A-G][#b]?)(m?)(maj7|7)?$/.exec(c), r=NOTE[m[1]]+48, t=[r, r+(m[2]?3:4), r+7]; if(m[3]==="7") t.push(r+(m[2]?10:10)); if(m[3]==="maj7") t.push(r+11); return t; }
+function hz(n){ return 440*Math.pow(2,(n-69)/12); }
+var SONGS={
+ title:{bpm:118,beats:4,chords:"C G Am F C G F G",lead:"square",
+  mel:"E5 - G5 - C6 - B5 A5 | G5 - D5 - G5 - - . | A5 - C6 - E6 - D6 C6 | A5 - F5 - A5 - - . | G5 E5 G5 C6 - B5 C6 D6 | B5 - G5 - D5 - G5 . | A5 G5 F5 A5 C6 - A5 . | B5 - D6 - G5 - - .",
+  bass:"R . R 5 R . 5 .",arp:1,k:"x.......x.......",s:"....x.......x...",h:"..x...x...x...x."},
+ w1:{bpm:132,beats:4,chords:"F C Dm Bb F C Bb C",lead:"square",
+  mel:"A5 . C6 . A5 F5 G5 . | E5 . G5 . C6 - - . | F5 . A5 . D6 C6 A5 . | Bb5 - A5 - G5 - F5 . | A5 C6 F6 . E6 . C6 . | G5 . C6 . E6 - D6 . | D6 C6 Bb5 A5 G5 . Bb5 . | C6 - G5 - C6 - - .",
+  bass:"R . 5 . 8 . 5 .",arp:4,k:"x...x...x...x...",s:"....x.......x...",h:"x.x.x.x.x.x.x.x."},
+ w2:{bpm:108,beats:4,chords:"Em C G D Em C D D",lead:"triangle",
+  mel:"B4 - E5 - G5 - F#5 E5 | E5 - - - G5 - - . | D5 - G5 - B5 - A5 G5 | F#5 - - - A5 - - . | B4 - E5 - G5 - B5 - | C6 - B5 A5 G5 - E5 . | F#5 - A5 - D6 - C6 A5 | F#5 - - - D5 - - .",
+  bass:"R R . R 5 . R .",arp:2,k:"x.....x.x.......",s:"....x.......x..x",h:"x.xxx.xxx.xxx.xx"},
+ w3:{bpm:150,beats:3,chords:"D Bm G A D Bm Em A",lead:"triangle",
+  mel:"F#5 - A5 - D6 - | B5 - - - A5 . | G5 - B5 - D6 - | C#6 - - - A5 . | F#5 - A5 - F#6 - | D6 - B5 - F#5 - | G5 - E5 - G5 - | A5 - - - - .",
+  bass:"R . 5 . 5 .",arp:3,k:"x...........",s:"....x...x...",h:"x.x.x.x.x.x."},
+ under:{bpm:96,beats:4,chords:"Am Am F E Am Am Dm E",lead:"sine",bell:1,
+  mel:"A5 . . C6 . . E6 . | D6 . C6 . B5 . . . | A5 . . C6 . . F6 . | E6 - - - G#5 . . . | A5 . . E5 . . A5 . | C6 . B5 . A5 . . . | D6 . F6 . E6 . D6 . | B5 - - - E5 . . .",
+  bass:"R . . R . . 5 .",arp:4,k:"x.......x.......",s:"........x.......",h:"....x.......x..."},
+ boss:{bpm:164,beats:4,chords:"Dm Bb C A Dm Bb Gm A",lead:"sawtooth",
+  mel:"D5 D5 F5 D5 A5 - G5 F5 | F5 - D5 - Bb4 - - . | E5 E5 G5 E5 C6 - Bb5 A5 | A5 - C#5 - E5 - A5 . | D6 - C6 - A5 - F5 - | D5 F5 Bb5 - A5 - F5 . | G5 - Bb5 - D6 - C6 Bb5 | A5 - E5 - C#5 - A4 .",
+  bass:"R R 8 R R 8 R 8",arp:1,k:"x...x...x...x...",s:"....x.......x.xx",h:"xxxxxxxxxxxxxxxx"},
+ think:{bpm:80,beats:4,chords:"Cmaj7 Am7 Fmaj7 G7",lead:"sine",soft:1,
+  mel:". . E5 - - - D5 - | C5 - - - . . . . | . . A4 - C5 - E5 - | D5 - - - . . . .",
+  bass:"R - - - 5 - - -",arp:4,k:"",s:"",h:"........x......."}
+};
+SONGS.w1.parsed=null;
+function parseSong(sg){ if(sg.p) return sg.p; var spb=sg.beats*4, ch=sg.chords.split(" ").map(chordTones), bars=sg.mel.split("|").map(function(b){ return b.trim().split(/\s+/); });
+  var ev=[], mel=[];
+  bars.forEach(function(tk,bi){ var cur=null; tk.forEach(function(t,i){ var st=bi*spb+i*2; if(t==="-"){ if(cur) cur.len+=2; return; } if(t==="."){ cur=null; return; } cur={st:st,n:nm(t),len:2,bar:bi}; mel.push(cur); }); });
+  mel.forEach(function(m){ ev.push({tr:"lead",st:m.st,n:m.n,len:m.len}); if(m.st%4===0||m.len>=4){ var tones=ch[m.bar].map(function(x){return x+12;}).concat(ch[m.bar].map(function(x){return x+24;})), h=null; tones.forEach(function(x){ if(x<=m.n-3&&(!h||x>h)) h=x; }); if(h) ev.push({tr:"harm",st:m.st,n:h,len:m.len}); } });
+  ch.forEach(function(c,bi){ var b0=bi*spb; ev.push({tr:"pad",st:b0,n:c,len:spb});
+    sg.bass.split(" ").forEach(function(t,i){ if(t==="."||t==="-") return; var r=c[0]-12, n=t==="R"?r:t==="5"?r+7:t==="8"?r+12:r+4, len=2; var rest=sg.bass.split(" ").slice(i+1); for(var j=0;j<rest.length&&rest[j]==="-";j++) len+=2; ev.push({tr:"bass",st:b0+i*2,n:n,len:len}); });
+    if(sg.arp){ var tones=c.concat([c[0]+12]), seq=sg.arp===2?[0,1,2,3,2,1]:sg.arp===3?[0,2,3,2,1,2]:sg.arp===4?[0,2,1,3]:[0,1,2,3]; for(var s2=0;s2<spb;s2++){ if(sg.arp===4&&s2%2) continue; ev.push({tr:"arp",st:b0+s2,n:tones[seq[s2%seq.length]%tones.length]+12,len:1}); } }
+    ["k","s","h"].forEach(function(d){ var pt=sg[d]; if(!pt) return; for(var s3=0;s3<spb;s3++) if(pt[s3%pt.length]==="x") ev.push({tr:d,st:b0+s3}); });
+  });
+  sg.p={ev:ev,len:ch.length*spb}; return sg.p; }
+var MUS={cur:null,gain:null,next:0,step:0,timer:null,duck:1};
+function musicBus(){ var c=ac(); if(!c) return null; if(!MUS.gain){ MUS.gain=c.createGain(); MUS.gain.gain.value=0.9; var comp=c.createDynamicsCompressor(); MUS.gain.connect(comp); comp.connect(c.destination); var len=c.sampleRate*0.5, b=c.createBuffer(1,len,c.sampleRate), d=b.getChannelData(0); for(var i=0;i<len;i++) d[i]=Math.random()*2-1; MUS.noise=b; } return c; }
+function voice(c,ev,t,sg,spd){ var o,g=c.createGain(),dur=(ev.len||1)*spd, out=MUS.gain, v;
+  if(ev.tr==="k"){ o=c.createOscillator(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(40,t+0.12); g.gain.setValueAtTime(0.32,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.16); o.connect(g); g.connect(out); o.start(t); o.stop(t+0.18); return; }
+  if(ev.tr==="s"||ev.tr==="h"){ var n=c.createBufferSource(); n.buffer=MUS.noise; var f=c.createBiquadFilter(); f.type=ev.tr==="s"?"bandpass":"highpass"; f.frequency.value=ev.tr==="s"?1800:7000; v=ev.tr==="s"?0.16:0.05; g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(0.001,t+(ev.tr==="s"?0.12:0.04)); n.connect(f); f.connect(g); g.connect(out); n.start(t); n.stop(t+0.15); return; }
+  if(ev.tr==="pad"){ ev.n.forEach(function(nn){ var oo=c.createOscillator(), gg=c.createGain(), lp=c.createBiquadFilter(); oo.type="sawtooth"; oo.frequency.value=hz(nn); lp.type="lowpass"; lp.frequency.value=900; gg.gain.setValueAtTime(0,t); gg.gain.linearRampToValueAtTime(sg.soft?0.03:0.018,t+0.15); gg.gain.setValueAtTime(sg.soft?0.03:0.018,t+dur-0.1); gg.gain.linearRampToValueAtTime(0,t+dur); oo.connect(lp); lp.connect(gg); gg.connect(out); oo.start(t); oo.stop(t+dur+0.05); }); return; }
+  o=c.createOscillator();
+  var cfg={lead:[sg.lead||"square",sg.lead==="sawtooth"?0.045:sg.lead==="sine"?0.11:0.06],harm:["triangle",0.05],bass:["triangle",0.16],arp:["square",sg.soft?0.018:0.022]}[ev.tr];
+  o.type=cfg[0]; o.frequency.value=hz(ev.n); v=cfg[1];
+  if(ev.tr==="lead"&&sg.bell){ var o2=c.createOscillator(), g2=c.createGain(); o2.type="sine"; o2.frequency.value=hz(ev.n)*3; g2.gain.setValueAtTime(0.04,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.5); o2.connect(g2); g2.connect(out); o2.start(t); o2.stop(t+0.6); }
+  if(ev.tr==="lead"&&dur>0.3){ var lfo=c.createOscillator(), lg=c.createGain(); lfo.frequency.value=5.5; lg.gain.value=hz(ev.n)*0.008; lfo.connect(lg); lg.connect(o.frequency); lfo.start(t+0.15); lfo.stop(t+dur); }
+  var rel=ev.tr==="arp"?0.08:Math.min(0.08,dur*0.3);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+0.01); g.gain.setValueAtTime(v*0.8,t+Math.max(0.02,dur-rel)); g.gain.linearRampToValueAtTime(0,t+dur);
+  o.connect(g); g.connect(out); o.start(t); o.stop(t+dur+0.02); }
+function musicTick(){ var c=MUS.c; if(!c||!MUS.cur) return; var sg=SONGS[MUS.cur], p=parseSong(sg), spd=60/sg.bpm/4;
+  while(MUS.next<c.currentTime+0.2){ var st=MUS.step%p.len; p.ev.forEach(function(e){ if(e.st===st) voice(c,e,MUS.next,sg,spd); }); MUS.next+=spd; MUS.step++; } }
+function playMusic(name){ if(MUS.cur===name) return; var c=musicBus(); if(!c) return; MUS.c=c; MUS.cur=name; MUS.step=0; MUS.next=c.currentTime+0.08; if(!MUS.timer) MUS.timer=setInterval(musicTick,40); }
+function musicVol(){ if(!MUS.gain||!MUS.c) return; var want=(SAVE.mute||SAVE.bgm===false)?0:0.9*MUS.duck; MUS.gain.gain.setTargetAtTime(want,MUS.c.currentTime,0.08); }
+function musicWant(){ if(!G||!G.info||G.mode==="menu") return "title"; if(G.mode==="panel") return "think";
+  if(G.under) return "under"; for(var i=0;i<G.gates.length;i++){ var g=G.gates[i]; if(g.type==="boss"&&g.enemy&&g.enemy.on&&!g.solved) return "boss"; }
+  return G.info.w.key in SONGS ? G.info.w.key : "w1"; }
+function musicUpdate(){ if(!AC||AC.state!=="running") return; playMusic(musicWant()); MUS.duck=(G&&G.mode==="panel")?0.55:1; musicVol(); }
+
+var sndBtn=document.getElementById("snd"), bgmBtn=document.getElementById("bgm");
+function sndLabel(){ sndBtn.textContent=SAVE.mute?"音なし":"音あり"; bgmBtn.textContent=SAVE.bgm===false?"BGM なし":"BGM あり"; }
+sndBtn.onclick=function(){ SAVE.mute=!SAVE.mute; save(); sndLabel(); ac(); musicVol(); sndBtn.blur(); };
+bgmBtn.onclick=function(){ SAVE.bgm=SAVE.bgm===false; save(); sndLabel(); ac(); musicVol(); bgmBtn.blur(); };
+addEventListener("pointerdown",function(){ ac(); },{once:true}); addEventListener("keydown",function(){ ac(); },{once:true});
+sndLabel();
+
+/* ================= SVG 部品（問題パネル用） ================= */
+function S(vb,inner,label){ return '<svg viewBox="'+vb+'" role="img" aria-label="'+(label||'図')+'">'+inner+'</svg>'; }
+function gridSVG(w,h,s){ s=s||20; var g=''; for(var x=0;x<=w;x+=s) g+='<line x1="'+x+'" y1="0" x2="'+x+'" y2="'+h+'" stroke="#CFDDE8"/>'; for(var y=0;y<=h;y+=s) g+='<line x1="0" y1="'+y+'" x2="'+w+'" y2="'+y+'" stroke="#CFDDE8"/>'; return g; }
+function tx(x,y,s,o){ o=o||{}; return '<text x="'+x+'" y="'+y+'" font-size="'+(o.size||14)+'" text-anchor="'+(o.a||'middle')+'" fill="'+(o.c||'#1D2B3A')+'"'+(o.w?' font-weight="700"':'')+'>'+s+'</text>'; }
+function ln(x1,y1,x2,y2,c,w,d){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(c||'#1D2B3A')+'" stroke-width="'+(w||2)+'"'+(d?' stroke-dasharray="'+d+'"':'')+' stroke-linecap="round"/>'; }
+function dt(x,y,c,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+(r||4)+'" fill="'+(c||'#1D2B3A')+'"/>'; }
+function arcP(cx,cy,r,a1,a2,c,w){ var p1=[cx+r*Math.cos(a1*Math.PI/180),cy+r*Math.sin(a1*Math.PI/180)],p2=[cx+r*Math.cos(a2*Math.PI/180),cy+r*Math.sin(a2*Math.PI/180)]; return '<path d="M'+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+' A'+r+' '+r+' 0 '+(((a2-a1+360)%360)>180?1:0)+' 1 '+p2[0].toFixed(1)+' '+p2[1].toFixed(1)+'" fill="none" stroke="'+(c||'#2E6FB7')+'" stroke-width="'+(w||1.6)+'"/>'; }
+function wedge(cx,cy,r,a1,a2,fill){ var p1=[cx+r*Math.cos(a1*Math.PI/180),cy+r*Math.sin(a1*Math.PI/180)],p2=[cx+r*Math.cos(a2*Math.PI/180),cy+r*Math.sin(a2*Math.PI/180)]; return '<path d="M'+cx+' '+cy+' L'+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+' A'+r+' '+r+' 0 '+(a2-a1>180?1:0)+' 1 '+p2[0].toFixed(1)+' '+p2[1].toFixed(1)+' Z" fill="'+fill+'" stroke="#1D2B3A" stroke-width="2"/>'; }
+function bridgeSVG(x,y,w,h,ghost){ return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" '+(ghost?'fill="none" stroke="#2F7D5B" stroke-width="2.5" stroke-dasharray="6 4"':'fill="#A97446" stroke="#1D2B3A" stroke-width="2"')+'/>'; }
+
+/* ================= ワールド1（教科書 5章1節・ワーク p.100〜103、p.112） =================
+   z：トレーニングの問題（items）。ワーク版ファイルがあるときは work の問題も足す。
+   sign：看板（説明）。translate / rotate / reflect：答えのとおりに動く仕掛け。 */
+var WORK=null; try{ WORK=JSON.parse(localStorage.getItem("heimen-work-v1")||"null"); }catch(e){ WORK=null; }
+var WORLDS=[
+ {key:"w1",name:"ワールド1 図形の移動（教科書 1節）",sky:["#7EC8F2","#CDEBFA"],stages:[
+  {id:"1-1",name:"線と記号の野原",ref:"教科書 p.160〜161／ワーク p.100",quiz:2,gates:[
+    {k:"sign",items:["a1"]},
+    {k:"z",items:["a2","a3","a4"]},
+    {k:"z",items:["a12","a11","a13"]},
+    {k:"z",items:["a9","a10","a5","a6"]},
+    {k:"z",items:["a7","a8","a14"],work:["w100-1"]},
+    {k:"z",items:["p1"],paper:true}]},
+  {id:"1-2",name:"平行移動の谷",ref:"教科書 p.161〜162／ワーク p.100〜101",quiz:2,gates:[
+    {k:"sign",items:["b1"]},
+    {k:"z",items:["b2","b3"]},
+    "translate",
+    {k:"z",items:["b10","b25"],work:["w100-2"]},
+    "translate",
+    {k:"z",items:["mg1"]},
+    {k:"z",items:["p2"],paper:true}]},
+  {id:"1-3",name:"回転はね橋",ref:"教科書 p.162〜164／ワーク p.100〜101",quiz:2,gates:[
+    {k:"z",items:["b4","b5"]},
+    "rotate",
+    {k:"z",items:["b11","b12","b7"],work:["w100-3a","w100-3b"]},
+    {k:"z",items:["b13","b24"],work:["w100-4a","w100-4b","w101-2","w101-3p","w101-3"]},
+    "rotate",
+    {k:"z",items:["mg2","mg3"]},
+    {k:"z",items:["p3"],paper:true}]},
+  {id:"1-4",name:"鏡のがけ",ref:"教科書 p.164〜165／ワーク p.102〜103",quiz:2,gates:[
+    {k:"z",items:["b6"]},
+    "reflect",
+    {k:"z",items:["b14","b15","b16","b8"],work:["w102-1"]},
+    {k:"z",items:["b17"],work:["w103-1"]},
+    "reflect",
+    {k:"z",items:["mg4","mg5"]},
+    {k:"z",items:["p4"],paper:true}]},
+  {id:"1-5",name:"六角形のしきつめ広場",ref:"教科書 p.166〜168／ワーク p.101〜103",quiz:1,gates:[
+    {k:"z",items:["b18","b19"]},
+    {k:"z",items:["b20","b21"]},
+    {k:"z",items:["b22","b23"],work:["w103-c"]},
+    {k:"z",items:["p5"],paper:true}]},
+  {id:"1-6",name:"移動の城（ボス）",ref:"ワーク p.112、p.116／教科書 章末",quiz:1,gates:[
+    "translate","rotate","reflect",
+    {k:"z",boss:true,items:["b24","b26","b23","b10","b15","b19"],work:["tA1a","tA1b","tA2a","tA2b","tA2c","w112-3","w112-3b","w116-1","w116-1b","t81"]}]}
+ ]},
+ {key:"w2",name:"ワールド2 基本の作図（教科書 2節）",sky:["#F6B26B","#FFE3B8"],stages:[
+  {id:"2-1",name:"コンパスの丘",ref:"教科書 p.169〜170／ワーク p.104",quiz:2,gates:[
+    {k:"sign",items:["k1"]},
+    {k:"z",items:["k2"]},
+    {k:"sign",items:["d1"]},
+    {k:"z",items:["k3","k4","k5"]}]},
+  {id:"2-2",name:"等しい距離をさがす森",ref:"教科書 p.171、p.175〜178／ワーク p.104 準備",quiz:2,gates:[
+    {k:"z",items:["k6","k7","k8"]},
+    {k:"sign",items:["c1"]},
+    {k:"z",items:["c2","c4"]},
+    {k:"z",items:["c3","c5","c6"]},
+    {k:"z",items:["c7","c8","c9"]}]},
+  {id:"2-3",name:"垂線の滝",ref:"教科書 p.172〜174／ワーク p.104 大問2〜3",quiz:2,gates:[
+    {k:"sign",items:["k9"]},
+    {k:"z",items:["k10"]},
+    "pp",
+    {k:"z",items:["k11"]},
+    {k:"z",items:["d5","k12"]},
+    {k:"z",items:["p6"],paper:true,work:["w104"]}]},
+  {id:"2-4",name:"垂直二等分線の塔",ref:"教科書 p.175〜177／ワーク p.105 大問4〜5",quiz:2,gates:[
+    {k:"z",items:["d2","d3"]},
+    "pb",
+    {k:"z",items:["k13"]},
+    {k:"z",items:["d6","k14","k15"]},
+    {k:"z",items:["d7"],paper:true}]},
+  {id:"2-5",name:"角の二等分線の光",ref:"教科書 p.177〜178／ワーク p.105〜106",quiz:2,gates:[
+    {k:"z",items:["d4"]},
+    "ab",
+    {k:"z",items:["k16"]},
+    {k:"z",items:["k17","k18"],work:["w106c"]},
+    {k:"z",items:["p7"],paper:true,work:["w105","w106"]}]},
+  {id:"2-6",name:"いろいろな作図の谷",ref:"教科書 p.179〜182／ワーク p.107",quiz:2,gates:[
+    {k:"z",items:["k19","k20"],work:["w107a","w113a"]},
+    {k:"z",items:["k21"]},
+    {k:"z",items:["k22","k23","k25"]},
+    {k:"z",items:["k24"]},
+    {k:"z",items:["p8"],paper:true,work:["w107"]}]},
+  {id:"2-7",name:"作図の文章題の道",ref:"教科書 p.176〜182／ワーク p.106〜108",quiz:1,gates:[
+    {k:"z",items:["e1"]},
+    {k:"z",items:["e2","e3","e4"]},
+    {k:"z",items:["e5","e6","e7","e8"]},
+    {k:"z",items:["e9","e10"],work:["w108b3","w108b4","w108c"]},
+    {k:"z",items:["e11"],paper:true,work:["w108"]}]},
+  {id:"2-8",name:"作図の城（ボス）",ref:"教科書 章の問題A・B、補充の問題／ワーク p.113",quiz:1,gates:[
+    "pb","ab",
+    {k:"z",boss:true,items:["k14","k20","e4","k22","k15"],work:["tA3","tA4","tB1","tB2a","tB2b","t85b","t87b","t88b","t84"]}]}
+ ]},
+ {key:"w3",name:"ワールド3 おうぎ形（教科書 3節）",sky:["#8E7CC3","#D9D2F0"],stages:[
+  {id:"3-1",name:"円周率の神殿",ref:"教科書 p.183〜184",quiz:2,gates:[
+    {k:"z",items:["f2a"]},
+    {k:"z",items:["f3"]},
+    {k:"z",items:["f3b"]},
+    {k:"z",items:["f4"]}]},
+  {id:"3-2",name:"おうぎの扉",ref:"教科書 p.184〜185／ワーク p.109〜111",quiz:2,gates:[
+    {k:"sign",items:["os1"]},
+    {k:"z",items:["f1","os2","os3"]},
+    "arc",
+    {k:"z",items:["f2","f5","f6"]},
+    {k:"z",items:["f7","f8","os4"]},
+    "area",
+    {k:"z",items:["os5","os6","f9"],work:["t89a","t89b","t89c","t89d"]},
+    {k:"z",items:["f10"],paper:true}]},
+  {id:"3-3",name:"おうぎ形の城（ボス）",ref:"教科書 章の問題A 5・補充の問題 89／ワーク p.110〜113",quiz:1,gates:[
+    "fan",
+    {k:"z",boss:true,items:["f6","f7","f8","os6"],work:["tA5a","tA5b"]}]}
+ ]}
+];
+/* 地下世界（寄り道ステージ）：ドカン（土管）の上で ↓ を押すと入る */
+var UNDER={
+ "U-pattern":{name:"地下：伝統模様とはちの巣",gates:[{k:"sign",items:["y1"]},{k:"z",items:["y2","y3"]},{k:"sign",items:["y4"]},{k:"z",items:["y5"]}]},
+ "U-aed":{name:"地下：AED と車いす",gates:[{k:"sign",items:["y12"]},{k:"z",items:["y13","y14"]},{k:"sign",items:["y9"]},{k:"z",items:["y10","y11"]}]},
+ "U-pi":{name:"地下：円周率の歴史",gates:[{k:"sign",items:["y6"]},{k:"z",items:["y7","y8"]}]}
+};
+var PIPE_IN={"1-5":"U-pattern","2-6":"U-aed","3-1":"U-pi"};
+var BOSSES={w1:{name:"ウツシゴースト",body:"#8E7CC3",eye:"#FFE07A"},w2:{name:"コンパスゴーレム",body:"#C77B3B",eye:"#FFFFFF"},w3:{name:"オウギバット",body:"#3E5C8A",eye:"#F26B6B"}};
+function zItems(spec){ var list=spec.items.slice(); if(WORK&&WORK.items&&spec.work) spec.work.forEach(function(id){ if(WORK.items[id]) list.push(id); }); return list; }
+var QUIZ={
+ w1:[
+  {q:"直線は、どこまでのびている？",o:["両方にかぎりなく","片方だけ","2点の間だけ"],c:0,ex:"直線は両方にかぎりなくのびている。"},
+  {q:"2点 A、B を通る直線は何本ひける？",o:["1本","2本","何本でも"],c:0,ex:"2点を通る直線は1つしかひけない。1点を通る直線はいくらでもひける。"},
+  {q:"三角形 ABC を記号で書くと？",o:["△ABC","∠ABC","⌒ABC"],c:0,ex:"△ を使って △ABC と書く。"},
+  {q:"平行移動では、対応する点を結ぶ線分どうしは？",o:["平行で長さが等しい","垂直に交わる","長さが2倍"],c:0,ex:"平行移動の性質。"},
+  {q:"回転移動で、対応する点と回転の中心を結んでできる角は？",o:["すべて等しい","すべて 90°","すべてちがう"],c:0,ex:"どれも回転させた角と同じ大きさ。"},
+  {q:"対称移動で、対応する点を結ぶ線分は？",o:["対称の軸で垂直に2等分される","対称の軸と平行","対称の軸と同じ長さ"],c:0,ex:"対称移動の性質。"},
+  {q:"日本の伝統模様「麻の葉」は、どうやってできている？",o:["合同な図形をしきつめてできている","大きさのちがう円を重ねている","直線を1本だけ使っている"],c:0,ex:"合同な図形を移動させてしきつめた模様とみることができる。（教科書 p.167）"}],
+ w2:[
+  {q:"コンパスでできることは？",o:["円をかく、等しい長さを写す","角度をはかる","長さを目もりではかる"],c:0,ex:"作図ではコンパスで長さを写す。"},
+  {q:"円は、どんな直線について線対称？",o:["どの直径についても","1本の直径だけ","弦について"],c:0,ex:"円はどの直径についても線対称。（教科書 p.171）"},
+  {q:"作図の方法は、どんな図形の性質をもとにしている？",o:["線対称な図形の性質","平行四辺形の性質","おうぎ形の性質"],c:0,ex:"垂線・垂直二等分線・角の二等分線は、線対称な図形の性質をもとにしている。（教科書 p.180）"},
+  {q:"円と直線が1点だけで出あうとき、その直線を何という？",o:["接線","弦","半径"],c:0,ex:"接線。出あう点を接点という。（教科書 p.179）"},
+  {q:"30° の角をつくるには？",o:["正三角形の 60° を二等分","90° を二等分","45° を二等分"],c:0,ex:"60° の二等分。"},
+  {q:"45° の角をつくるには？",o:["90° を二等分","60° を二等分","120° を二等分"],c:0,ex:"垂線で 90° をつくり二等分。"},
+  {q:"AED の場所の地図で、2つの地点 P、Q のどちらに近いかを分ける線は？",o:["PQ の垂直二等分線","PQ に平行な線","P を中心とする円"],c:0,ex:"垂直二等分線上の点は P と Q から等しい距離。それより P 側は P に近い。（教科書 活用）"}],
+ w3:[
+  {q:"弧の長さとおうぎ形の面積は、中心角にどんな関係？",o:["比例する","反比例する","関係ない"],c:0,ex:"中心角が2倍、3倍…になると、弧も面積も2倍、3倍…。"},
+  {q:"答えの書き方として正しいのは？",o:["6π cm²","π6 cm²","18.84 cm²"],c:0,ex:"π は数字のうしろ。3.14 にしない。"},
+  {q:"円を6等分したおうぎ形1つの中心角は？",o:["60°","30°","6°"],c:0,ex:"360 ÷ 6 = 60°。"},
+  {q:"ケーキ（円）を3等分するには、中心角を何度ずつにする？",o:["120°","90°","60°"],c:0,ex:"360 ÷ 3 = 120°。（教科書 p.183）"},
+  {q:"おうぎ形の周の長さは？",o:["弧の長さ ＋ 半径 × 2","弧の長さだけ","半径 × 2"],c:0,ex:"まわりには弧と2本の半径がある。"},
+  {q:"はちの巣が正六角形なのはなぜ？（教科書 p.192）",o:["同じ周の長さでしきつめるとき、面積がいちばん大きくなるから","かくのがかんたんだから","円よりかたいから"],c:0,ex:"ハニカム構造の特徴。"}]
+};
+
+function stageById(id){ if(UNDER[id]) return {w:{key:"u",name:"地下世界",sky:["#1B1530","#2E2650"]},wi:-1,s:{id:id,name:UNDER[id].name,gates:UNDER[id].gates,quiz:0},si:-1}; var r=null; WORLDS.forEach(function(w,wi){ w.stages.forEach(function(s,si){ if(s.id===id) r={w:w,wi:wi,s:s,si:si}; }); }); return r; }
+
+/* ================= ステージを組み立てる ================= */
+var G=null; // ゲーム状態
+function build(id){
+  var info=stageById(id), st=info.s, solids=[], gates=[], blocks=[], coins=[], x=0;
+  function ground(x0,x1){ solids.push({x:x0,y:GY,w:x1-x0,h:H-GY+60,k:"ground"}); }
+  ground(0,600); x=600;
+  var qLeft=st.quiz, pipe=null;
+  if(PIPE_IN[id]){ pipe={x:360,y:GY-70,w:64,h:70,k:"pipe",to:PIPE_IN[id]}; solids.push(pipe); }
+  if(UNDER[id]){ for(var cc=0;cc<8;cc++) coins.push({x:160+cc*40,y:GY-30,got:false}); }
+  st.gates.forEach(function(spec,gi){
+    var type = typeof spec==="string" ? spec : (spec.boss ? "boss" : "door");
+    // ゲートの前の飾り（足場とコイン）
+    solids.push({x:x+60,y:GY-120,w:120,h:24,k:"plat"}); coins.push({x:x+90,y:GY-150,got:false},{x:x+150,y:GY-150,got:false});
+    if(qLeft>0){ blocks.push({x:x+300,y:GY-150,w:30,h:30,used:false,world:info.w.key}); qLeft--; }
+    ground(x,x+420); x+=420;
+    var g={type:type,solved:false,x:x,world:info.w.key,anim:0,spec:(typeof spec==="string"?null:spec)};
+    if(type==="translate"||type==="rotate"||type==="fan"||type==="arc"||type==="pb"){
+      g.gap=[x,x+180]; x+=180; ground(x,x+300); g.barrier={x:g.gap[0]-6,y:0,w:6,h:H};
+    } else if(type==="reflect"){
+      // 階段（左）→ 壁 → 右は谷。軸 ℓ で写すと右に階段ができる
+      for(var s=0;s<4;s++) solids.push({x:x+s*30,y:GY-(s+1)*30,w:30,h:(s+1)*30,k:"stone"});
+      solids.push({x:x+120,y:GY-150,w:60,h:150,k:"stone"});
+      g.axis=x+150; g.wallTop=GY-150; g.stairs=[]; for(s=0;s<4;s++) g.stairs.push({x:2*g.axis-(x+s*30)-30,y:GY-(s+1)*30,w:30,h:(s+1)*30,k:"stone"});
+      g.pit=[x+180,x+300]; ground(x+300,x+600); g.barrier={x:x+174,y:0,w:6,h:GY-150}; x+=600;
+    } else if(type==="ab"||type==="pp"||type==="door"){
+      g.door={x:x+120,y:GY-210,w:40,h:210}; ground(x,x+420); g.barrier={x:x+114,y:0,w:6,h:H}; x+=420;
+    } else if(type==="area"){
+      g.gap=[x,x+180]; x+=180; ground(x,x+300); g.barrier={x:g.gap[0]-6,y:0,w:6,h:H};
+    } else if(type==="boss"){
+      ground(x,x+1000); g.door={x:x+860,y:GY-240,w:80,h:240}; g.barrier={x:x+854,y:0,w:6,h:H}; g.step=0;
+      var bq=zItems(spec); g.queue=shuffle(bq).slice(0,3); g.enemy={cx:x+470,x:x+470,y:GY-200,w:70,h:60,hp:3,max:3,t:0,inv:0,on:false,dead:0,info:BOSSES[info.w.key]||BOSSES.w1}; g.arena=x+40;
+      x+=1000;
+    }
+    if(type==="door"&&spec.k==="sign"){ g.door={x:g.x+120,y:GY-90,w:60,h:90}; g.barrier={x:g.x+114,y:0,w:6,h:H}; }
+    if(false){
+    }
+    gates.push(g);
+  });
+  ground(x,x+500); var goal= UNDER[id] ? {x:x+300,y:GY-70,w:64,h:70,exit:true} : {x:x+300,y:GY-120,w:50,h:120}; if(UNDER[id]) solids.push({x:goal.x,y:goal.y,w:64,h:70,k:"pipe",exit:true}); x+=500;
+  G={id:id,info:info,solids:solids,gates:gates,blocks:blocks,coins:coins,goal:goal,len:x,
+     pipe:pipe,under:!!UNDER[id],hero:{x:80,y:GY-36,w:24,h:36,vx:0,vy:0,on:false,face:1,inv:0},cam:0,hearts:5,coin:0,stars:0,mode:"play",t:0,anims:[],missed:0,checkpoint:80};
+  gates.forEach(prepGate);
+}
+function prepGate(g){
+  if(g.type==="translate"){ var dx=pick([3,4,5,6]), dy=pick([2,3,4]); g.dx=dx; g.dy=dy; g.piece={x:g.gap[0]-dx*TILE, y:GY-dy*TILE-0, w:180, h:24}; }
+  if(g.type==="rotate"){ g.variant=pick(["L","R","F"]); }
+  if(g.type==="fan"||g.type==="arc"||g.type==="area"){ g.prob=sectorProb(g.type); }
+}
+function sectorProb(kind){
+  var set=[[6,120],[5,216],[4,90],[8,135],[12,120],[10,108],[9,60],[6,60],[3,120],[4,45]];
+  var p=pick(set), r=p[0], a=p[1];
+  if(kind==="arc") return {r:r,a:a,ans:2*r*a/360,unit:"π cm",q:"半径 "+r+"cm、中心角 "+a+"° のおうぎ形の<b>弧の長さ</b>は？",ex:"ℓ = 2π × "+r+" × "+a+"/360 = "+fmt(2*r*a/360)+"π cm"};
+  if(kind==="area") return {r:r,a:a,ans:r*r*a/360,unit:"π cm²",q:"半径 "+r+"cm、中心角 "+a+"° のおうぎ形の<b>面積</b>は？",ex:"S = π × "+r+"² × "+a+"/360 = "+fmt(r*r*a/360)+"π cm²"};
+  var arc=2*r*a/360; return {r:r,a:a,ans:a,unit:"°",arc:arc,q:"半径 "+r+"cm、弧の長さ "+fmt(arc)+"π cm のおうぎ形の<b>中心角</b>は？",ex:"円周は 2π × "+r+" = "+(2*r)+"π。弧はその "+fmt(arc)+"/"+(2*r)+"。中心角は 360 × "+fmt(arc)+"/"+(2*r)+" = "+a+"°"};
+}
+
+/* ================= 入力 ================= */
+var keys={};
+addEventListener("keydown",function(e){
+  if(G&&G.mode==="play"&&["ArrowLeft","ArrowRight","ArrowUp","Space"," ","KeyA","KeyD","KeyW"].indexOf(e.code)>=0) e.preventDefault();
+  keys[e.code]=true;
+  if(G&&G.mode==="play"&&e.code==="Escape") openPause();
+  else if(G&&G.mode==="panel"&&e.code==="Escape"&&current&&!current.block) closePanel();
+});
+addEventListener("keyup",function(e){ keys[e.code]=false; });
+
+/* ================= 物理 ================= */
+function rectHit(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+function solidsNow(){
+  var arr=G.solids.slice();
+  G.gates.forEach(function(g){
+    if(!g.solved && g.barrier) arr.push(g.barrier);
+    if(g.solved && g.bridge) arr.push(g.bridge);
+    if(g.solved && g.type==="reflect") g.stairs.forEach(function(s){ arr.push(s); });
+    if(!g.solved && g.door) arr.push(g.door);
+  });
+  G.blocks.forEach(function(b){ arr.push({x:b.x,y:b.y,w:b.w,h:b.h,k:"block",ref:b}); });
+  return arr;
+}
+function step(dt){
+  var h=G.hero, sp=4.2;
+  if(G.mode!=="play"){ return; }
+  var L=keys.ArrowLeft||keys.KeyA, R=keys.ArrowRight||keys.KeyD, J=keys.ArrowUp||keys.Space||keys.KeyW;
+  h.vx = (R?sp:0)-(L?sp:0); if(h.vx) h.face=h.vx>0?1:-1;
+  if(J && h.on && !h.jheld){ h.vy=-13.6; h.on=false; sfx("jump"); }
+  h.jheld=!!J;
+  if(!J && h.vy<-4) h.vy+=0.6;
+  h.vy=Math.min(h.vy+0.55,14);
+  var arr=solidsNow();
+  h.x+=h.vx; if(h.x<0) h.x=0;
+  arr.forEach(function(s){ if(rectHit(h,s)){ if(h.vx>0) h.x=s.x-h.w; else if(h.vx<0) h.x=s.x+s.w; touchBarrier(s); } });
+  h.y+=h.vy; h.on=false;
+  arr.forEach(function(s){ if(rectHit(h,s)){ if(h.vy>0){ h.y=s.y-h.h; h.vy=0; h.on=true; } else if(h.vy<0){ h.y=s.y+s.h; h.vy=0; if(s.k==="block") hitBlock(s.ref); } } });
+  if(h.inv>0) h.inv--;
+  // コイン
+  G.coins.forEach(function(c){ if(!c.got && Math.abs(h.x+12-c.x)<18 && Math.abs(h.y+18-c.y)<24){ c.got=true; G.coin++; sfx("coin"); addPts(1); } });
+  // 落下
+  if(h.y>H+40){ hurt("落ちてしまった。"); h.x=G.checkpoint; h.y=GY-60; h.vy=0; }
+  // ドカン
+  var D=keys.ArrowDown||keys.KeyS;
+  if(D && h.on && G.pipe && h.x+h.w/2>G.pipe.x+8 && h.x+h.w/2<G.pipe.x+G.pipe.w-8 && Math.abs(h.y+h.h-G.pipe.y)<3) return enterUnder();
+  if(G.under){ var ex=G.solids.filter(function(o){return o.exit;})[0]; if(D && h.on && ex && h.x+h.w/2>ex.x+8 && h.x+h.w/2<ex.x+ex.w-8 && Math.abs(h.y+h.h-ex.y)<3) return leaveUnder(); }
+  // ボス
+  G.gates.forEach(function(g){ if(g.type==="boss"&&!g.solved) bossStep(g); });
+  // ゴール
+  if(!G.under && rectHit(h,G.goal)) stageClear();
+  // チェックポイント（解いたゲートの先）
+  G.gates.forEach(function(g){ if(g.solved && h.x>g.x+200 && G.checkpoint<g.x+200) G.checkpoint=g.x+220; });
+  G.cam=Math.max(0,Math.min(h.x-W*0.35, G.len-W));
+  G.anims=G.anims.filter(function(a){ a.t+=1/60; if(a.t>=a.d){ a.done&&a.done(); return false; } return true; });
+}
+function touchBarrier(s){ G.gates.forEach(function(g){ if(!g.solved && g.barrier===s && G.mode==="play") openGate(g); else if(!g.solved && g.door===s && G.mode==="play") openGate(g); }); }
+function hurt(msg){ G.hearts--; sfx("hurt"); if(G.hearts<=0){ G.mode="over"; showOver(msg); } }
+function addPts(n,x,y){ SAVE.pts+=n; while(SAVE.pts>=SAVE.nextUp){ SAVE.lives++; SAVE.nextUp+=50; sfx("clear"); G.anims.push({t:0,d:1.6,txt:"1UP！ 機が1つ増えた",x:G.hero.x,y:G.hero.y-40}); } save(); if(x!=null) G.anims.push({t:0,d:0.8,txt:"+"+n,x:x,y:y}); }
+/* ---------- 地下世界 ---------- */
+function enterUnder(){ var main=G, to=G.pipe.to; sfx("move"); build(to); G.main=main; G.hearts=main.hearts; G.mode="play"; }
+function leaveUnder(){ var main=G.main; main.hearts=G.hearts; main.coin+=G.coin; main.missed+=G.missed; G=main; G.hero.x=G.pipe.x+G.pipe.w+20; G.hero.y=GY-40; G.hero.vy=0; G.mode="play"; sfx("move"); }
+/* ---------- ボス（敵キャラ） ---------- */
+function bossStep(g){
+  var e=g.enemy, h=G.hero; if(h.x<g.arena) return;
+  if(!e.on){ e.on=true; G.anims.push({t:0,d:2.5,txt:e.info.name+" があらわれた！ 上からふんで攻撃！",x:h.x-120,y:GY-260}); sfx("hurt"); }
+  if(e.dead){ e.dead++; e.y+=4; if(e.dead>70){ g.solved=true; addPts(20,e.x,e.y-60); sfx("clear"); } return; }
+  e.t+=1/60; var t=e.t, ph=t%6;
+  var tx=e.cx+230*Math.sin(t*0.9), ty=GY-210+70*Math.sin(t*2.3);
+  if(ph>3.8&&ph<4.8){ var k=(ph-3.8); tx=e.cx+230*Math.sin(t*0.9)+((h.x-e.x)*0.04); ty=GY-210+(GY-e.h-(GY-210))*Math.sin(k*Math.PI); }
+  if(ph>1.5&&ph<1.9){ ty-=60*Math.sin((ph-1.5)/0.4*Math.PI); }
+  e.x+=(tx-e.x)*0.08; e.y+=(ty-e.y)*0.1; if(e.inv>0) e.inv--;
+  var box={x:e.x-e.w/2,y:e.y,w:e.w,h:e.h};
+  if(rectHit(h,box) && e.inv===0){
+    if(h.vy>0 && h.y+h.h-box.y<22){ h.vy=-10; e.inv=60; askBoss(g); }
+    else if(h.inv===0){ h.inv=90; h.vx=0; h.x+= (h.x<e.x?-50:50); hurt("敵にぶつかった。"); }
+  }
+}
+function askBoss(g){ var id=g.queue[0]; if(!id) return; G.mode="panel"; keys={}; current={g:g,z:true,boss:true,qid:id};
+  panel.classList.add("zpanel");
+  panel.innerHTML='<div class="zhead"><span class="tag">'+g.enemy.info.name+'への攻撃</span> <span class="hearts">'+heartsTxt()+'</span><span class="small">　正解でダメージ。のこり体力 '+g.enemy.hp+' / 3。まちがえると、正解するまで同じ問題が出る（ハートが1つへる）。</span></div><iframe id="zf" title="問題" src="train.html?embed='+encodeURIComponent(id)+'&title='+encodeURIComponent('攻撃の問題')+'"></iframe>';
+  ov.hidden=false; }
+
+/* ================= 描画 ================= */
+var HERO=[[0,4,3,1,'#C8323C'],[3,4,1,1,'#C8323C'],[0,3,3,1,'#F2C9A0'],[2,3,1,1,'#1D2B3A'],[0,1,3,2,'#2E6FB7'],[0,0,1,1,'#6B4423'],[2,0,1,1,'#6B4423']];
+function drawHero(x,y,face,scale){
+  var c=6*(scale||1), w=4*c;
+  HERO.forEach(function(r){ var rx = face>0 ? r[0]*c : w-(r[0]+r[2])*c; ctx.fillStyle=r[4]; ctx.fillRect(Math.round(x+rx), Math.round(y+ (5-(r[1]+r[3]))*c), r[2]*c, r[3]*c); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=1; ctx.strokeRect(Math.round(x+rx)+.5, Math.round(y+(5-(r[1]+r[3]))*c)+.5, r[2]*c-1, r[3]*c-1); });
+}
+function tile(x,y,w,h,k){
+  if(k==="ground"){ for(var i=0;i<w;i+=TILE){ for(var j=0;j<Math.min(h,120);j+=TILE){ ctx.fillStyle=j===0?"#4F9A3E":"#8A5A33"; ctx.fillRect(x+i,y+j,TILE,TILE); ctx.strokeStyle="#1D2B3A"; ctx.strokeRect(x+i+.5,y+j+.5,TILE-1,TILE-1); if(j===0){ ctx.fillStyle="#7CC264"; ctx.fillRect(x+i+3,y+3,12,5); } } } ctx.fillStyle="#8A5A33"; ctx.fillRect(x,y+120,w,h); return; }
+  if(k==="plat"||k==="bridge"){ ctx.fillStyle="#A97446"; ctx.fillRect(x,y,w,h); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.strokeRect(x+1,y+1,w-2,h-2); for(var b=0;b<w;b+=30){ ctx.beginPath(); ctx.moveTo(x+b,y); ctx.lineTo(x+b,y+h); ctx.stroke(); } return; }
+  if(k==="stone"){ for(var a=0;a<w;a+=TILE) for(var c2=0;c2<h;c2+=TILE){ ctx.fillStyle="#7F8B96"; ctx.fillRect(x+a,y+c2,TILE,Math.min(TILE,h-c2)); ctx.fillStyle="#A3AEB8"; ctx.fillRect(x+a+3,y+c2+3,12,5); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=1; ctx.strokeRect(x+a+.5,y+c2+.5,TILE-1,Math.min(TILE,h-c2)-1); } return; }
+}
+function draw(){
+  var w=G.info.w, gr=ctx.createLinearGradient(0,0,0,H); gr.addColorStop(0,w.sky[0]); gr.addColorStop(1,w.sky[1]); ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
+  // 遠景（方眼の雲）
+  ctx.save(); ctx.translate(-G.cam*0.3,0); ctx.fillStyle=G.under?"rgba(255,255,255,0)":"rgba(255,255,255,.7)"; for(var i=0;i<30;i++){ var cx=i*260+40, cy=60+(i%3)*40; ctx.fillRect(cx,cy,90,24); ctx.fillRect(cx+20,cy-14,50,14); } ctx.restore();
+  ctx.save(); ctx.translate(-Math.round(G.cam),0);
+  G.solids.forEach(function(s){ if(s.k==="pipe") drawPipe(s); else tile(s.x,s.y,s.w,s.h,s.k); });
+  if(G.under){ for(var ux=Math.floor(G.cam/30)*30; ux<G.cam+W+30; ux+=30){ ctx.fillStyle="#5A3E2B"; ctx.fillRect(ux,0,30,30); ctx.strokeStyle="#1D2B3A"; ctx.strokeRect(ux+.5,.5,29,29); } }
+  G.gates.forEach(drawGate);
+  G.blocks.forEach(function(b){ ctx.fillStyle=b.used?"#A3AEB8":"#F2B705"; ctx.fillRect(b.x,b.y,b.w,b.h); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.strokeRect(b.x+1,b.y+1,b.w-2,b.h-2); ctx.fillStyle="#1D2B3A"; ctx.font="bold 18px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText(b.used?"":"問",b.x+15,b.y+22);
+    if(!b.used){ var near=Math.abs(G.hero.x+12-(b.x+15)), bob=Math.sin(G.t/6)*5, glow=0.5+0.5*Math.sin(G.t/8);
+      ctx.strokeStyle="rgba(255,255,255,"+glow+")"; ctx.lineWidth=3; ctx.strokeRect(b.x-3,b.y-3,b.w+6,b.h+6);
+      if(near<320){ var ax=b.x+15, ay=b.y+b.h+18+bob; ctx.fillStyle="#E5484D"; ctx.beginPath(); ctx.moveTo(ax,ay-12); ctx.lineTo(ax-10,ay+2); ctx.lineTo(ax-4,ay+2); ctx.lineTo(ax-4,ay+16); ctx.lineTo(ax+4,ay+16); ctx.lineTo(ax+4,ay+2); ctx.lineTo(ax+10,ay+2); ctx.closePath(); ctx.fill(); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.stroke();
+        if((SAVE.qhit||0)<3 || near<120){ var msg="下からジャンプで たたこう！"; ctx.font="16px 'DotGothic16',monospace"; var tw=ctx.measureText(msg).width+16; ctx.fillStyle="rgba(255,255,255,.92)"; ctx.fillRect(ax-tw/2,b.y-46,tw,26); ctx.strokeStyle="#1D2B3A"; ctx.strokeRect(ax-tw/2+.5,b.y-45.5,tw-1,25); ctx.fillStyle="#1D2B3A"; ctx.textAlign="center"; ctx.fillText(msg,ax,b.y-27); ctx.font="13px 'DotGothic16',monospace"; ctx.fillText("正解でコイン3まい＆3ポイント",ax,b.y-52); } } } });
+  G.coins.forEach(function(c){ if(c.got) return; var s=Math.abs(Math.sin(G.t/10+c.x)); ctx.fillStyle="#F2B705"; ctx.fillRect(c.x-6*s,c.y-10,12*s+1,20); ctx.strokeStyle="#1D2B3A"; ctx.strokeRect(c.x-6*s,c.y-10,12*s+1,20); });
+  // ゴール（門）
+  var gl=G.goal; ctx.fillStyle="#7F8B96"; ctx.fillRect(gl.x-10,gl.y-20,70,20); ctx.fillRect(gl.x-10,gl.y,14,gl.h); ctx.fillRect(gl.x+46,gl.y,14,gl.h); ctx.fillStyle="#1D2B3A"; ctx.font="16px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText("ゴール",gl.x+25,gl.y-26);
+  G.gates.forEach(function(g){ if(g.type==="boss"&&g.enemy&&!g.solved&&G.hero.x>g.arena-400) drawBoss(g.enemy); });
+  var h=G.hero; if(!(h.inv>0 && Math.floor(h.inv/4)%2)) drawHero(h.x,h.y-0,h.face,1);
+  G.anims.forEach(function(a){ if(!a.txt) return; ctx.globalAlpha=Math.max(0,1-a.t/a.d); ctx.fillStyle="#fff"; ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=4; ctx.font="20px 'DotGothic16',monospace"; ctx.textAlign="left"; ctx.strokeText(a.txt,a.x,a.y-a.t*30); ctx.fillText(a.txt,a.x,a.y-a.t*30); ctx.globalAlpha=1; });
+  if(G.pipe && !G.under && Math.abs(G.hero.x-G.pipe.x)<120){ ctx.fillStyle="#1D2B3A"; ctx.font="15px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText("↓ で地下へ",G.pipe.x+32,G.pipe.y-14); }
+  if(G.under){ var ex2=G.solids.filter(function(o){return o.exit;})[0]; if(ex2&&Math.abs(G.hero.x-ex2.x)<160){ ctx.fillStyle="#fff"; ctx.font="15px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText("↓ で地上へもどる",ex2.x+32,ex2.y-14); } }
+  ctx.restore();
+  // ヒント表示
+  var near=G.gates.filter(function(g){ return !g.solved && Math.abs(g.x-G.hero.x)<260; })[0];
+  if(near && G.mode==="play"){ ctx.fillStyle="rgba(29,43,58,.75)"; ctx.fillRect(W/2-210,H-52,420,34); ctx.fillStyle="#fff"; ctx.font="18px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText(gateHint(near),W/2,H-28); }
+}
+function gateHint(g){ if(g.type==="boss") return g.enemy.on?"敵を上からふむと、攻撃の問題が出る（横からぶつかるとハートがへる）":"城の門の前に敵がいる"; if(g.type==="door") return g.spec.k==="sign"?"看板を読もう（進むと開く）":(g.spec.paper?"紙ミッション：ワークを解いてから開けよう":"問題の扉（"+zItems(g.spec).length+"問）")+"（進むと問題）"; if(false) return ({choice:"問題の扉",multi:"問題の扉（すべて選ぶ）",sym:"記号の扉：記号で書いて開けよう",num:"計算の扉",paper:"紙ミッションの扉：ワークを解いてから開けよう"})[g.spec.k]+"（進むと問題）"; return {translate:"橋を平行移動させて道をつくろう",rotate:"はね橋を回転させよう",reflect:"階段を対称移動させよう",pb:"2つの塔から等しい場所に柱を立てよう",ab:"光を角のまん中に通そう",pp:"いちばん短いロープをおろそう",arc:"弧のレールの長さを計算しよう",fan:"おうぎの扉を回して橋にしよう",area:"おうぎ形の床をぬろう",boss:"城の門のカギを3つ開けよう"}[g.type]+"（進むと問題）"; }
+function drawPipe(s){ ctx.fillStyle="#8A6A4A"; ctx.fillRect(s.x+4,s.y+14,s.w-8,s.h-14); ctx.fillStyle="#A9875F"; ctx.fillRect(s.x,s.y,s.w,16); ctx.fillStyle="#C9A97F"; ctx.fillRect(s.x+8,s.y+18,8,s.h-20); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.strokeRect(s.x+1,s.y+1,s.w-2,15); ctx.strokeRect(s.x+5,s.y+15,s.w-10,s.h-16); }
+function drawBoss(e){
+  var x=Math.round(e.x-e.w/2), y=Math.round(e.y), w=e.w, hh=e.h, flash=e.inv>0&&Math.floor(e.inv/5)%2;
+  ctx.globalAlpha=e.dead?Math.max(0,1-e.dead/70):1;
+  ctx.fillStyle=flash?"#FFFFFF":e.info.body; ctx.fillRect(x,y+10,w,hh-10); ctx.fillRect(x+8,y,w-16,12);
+  ctx.fillStyle="#1D2B3A"; ctx.fillRect(x-10,y+18,10,8); ctx.fillRect(x+w,y+18,10,8); ctx.fillRect(x-14,y+10,6,18); ctx.fillRect(x+w+8,y+10,6,18);
+  ctx.fillStyle=e.info.eye; ctx.fillRect(x+14,y+18,12,12); ctx.fillRect(x+w-26,y+18,12,12); ctx.fillStyle="#1D2B3A"; ctx.fillRect(x+19,y+22,5,6); ctx.fillRect(x+w-21,y+22,5,6);
+  ctx.fillRect(x+18,y+40,w-36,6); ctx.fillStyle="#FFFFFF"; for(var i=0;i<4;i++) ctx.fillRect(x+20+i*((w-40)/4),y+40,5,4);
+  ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.strokeRect(x+.5,y+10.5,w-1,hh-11);
+  for(var k=0;k<e.max;k++){ ctx.fillStyle=k<e.hp?"#E5484D":"#6B6B6B"; ctx.fillRect(x+k*24,y-16,20,8); ctx.strokeRect(x+k*24+.5,y-15.5,19,7); }
+  ctx.fillStyle="#1D2B3A"; ctx.font="14px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText(e.info.name,x+w/2,y-22);
+  ctx.globalAlpha=1;
+}
+function drawGate(g){
+  var t=g.anim;
+  if(g.type==="translate"){
+    ctx.setLineDash([6,4]); ctx.strokeStyle="#2F7D5B"; ctx.lineWidth=2; if(!g.solved) ctx.strokeRect(g.gap[0],GY,180,24); ctx.setLineDash([]);
+    var p=g.piece, x=p.x, y=p.y; if(g.moving){ var k=Math.min(1,(G.t-g.t0)/60), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; x=p.x+(g.gap[0]-p.x)*e; y=p.y+(GY-p.y)*e; if(k>=1){ g.moving=false; g.bridge={x:g.gap[0],y:GY,w:180,h:24,k:"bridge"}; } }
+    if(g.solved&&!g.moving){ x=g.gap[0]; y=GY; }
+    tile(x,y,180,24,"bridge"); ctx.fillStyle="#C8323C"; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill();
+    if(!g.solved){ ctx.fillStyle="#1D2B3A"; ctx.font="14px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText("橋ブロック",x+90,y-8); }
+  }
+  if(g.type==="rotate"){
+    var v=g.variant, hx = v==="R"? g.gap[1] : g.gap[0], hy=GY, ang0 = v==="L"? -90 : (v==="R"? -90 : -180), ang1 = v==="R"? -180 : 0;
+    var a=ang0; if(g.moving){ var k2=Math.min(1,(G.t-g.t0)/70), e2=k2<.5?2*k2*k2:1-Math.pow(-2*k2+2,2)/2; a=ang0+(ang1-ang0)*e2; if(k2>=1){ g.moving=false; g.bridge={x:g.gap[0],y:GY,w:180,h:24,k:"bridge"}; } } else if(g.solved) a=ang1;
+    ctx.save(); ctx.translate(hx,hy); ctx.rotate(a*Math.PI/180); tile(0,0,180,24,"bridge"); ctx.restore();
+    ctx.fillStyle="#C8323C"; ctx.beginPath(); ctx.arc(hx,hy,7,0,7); ctx.fill(); ctx.fillStyle="#1D2B3A"; ctx.font="16px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText("O",hx+(v==="R"?14:-14),hy+22);
+  }
+  if(g.type==="reflect"){
+    ctx.setLineDash([8,6]); ctx.strokeStyle="#2E6FB7"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(g.axis,GY-260); ctx.lineTo(g.axis,GY+30); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle="#2E6FB7"; ctx.font="18px 'DotGothic16',monospace"; ctx.fillText("ℓ",g.axis+12,GY-250);
+    if(g.solved){ var k3=g.moving?Math.min(1,(G.t-g.t0)/60):1; ctx.globalAlpha=k3; g.stairs.forEach(function(s){ tile(s.x,s.y,s.w,s.h,"stone"); }); ctx.globalAlpha=1; if(k3>=1) g.moving=false; }
+    else { ctx.setLineDash([4,3]); ctx.strokeStyle="#2F7D5B"; g.stairs.forEach(function(s){ ctx.strokeRect(s.x,s.y,s.w,s.h); }); ctx.setLineDash([]); }
+  }
+  if(g.type==="pb"){
+    var A=[g.gap[0]-60,GY-200], B=[g.gap[1]+60,GY-200];
+    [A,B].forEach(function(P,i){ tile(P[0]-15,P[1],30,GY-P[1],"stone"); ctx.fillStyle="#1D2B3A"; ctx.font="18px 'DotGothic16',monospace"; ctx.fillText(i?"B":"A",P[0],P[1]-10); });
+    if(g.solved){ var mx=(g.gap[0]+g.gap[1])/2; tile(mx-15,GY,30,120,"stone"); tile(g.gap[0],GY,180,24,"bridge"); ctx.strokeStyle="#C8323C"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(A[0],A[1]); ctx.lineTo(mx,GY); ctx.lineTo(B[0],B[1]); ctx.stroke(); if(!g.bridge) g.bridge={x:g.gap[0],y:GY,w:180,h:24,k:"bridge"}; }
+  }
+  if(g.type==="ab"||g.type==="pp"){
+    var d=g.door; if(!g.solved){ ctx.fillStyle="#5B4A8A"; ctx.fillRect(d.x,d.y,d.w,d.h); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.strokeRect(d.x,d.y,d.w,d.h); ctx.fillStyle="#fff"; ctx.font="16px 'DotGothic16',monospace"; ctx.fillText("扉",d.x+20,d.y+30); }
+    if(g.type==="ab"){ var ox=g.x-40, oy=GY; ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+200,oy-200); ctx.stroke(); if(g.solved){ ctx.strokeStyle="#F2B705"; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(ox,oy-2); ctx.lineTo(ox+260,oy-2-260*Math.tan(22.5*Math.PI/180)); ctx.stroke(); } }
+    if(g.type==="pp"){ var px=g.x+40, py=GY-220; ctx.fillStyle="#C8323C"; ctx.beginPath(); ctx.arc(px,py,7,0,7); ctx.fill(); ctx.fillStyle="#1D2B3A"; ctx.fillText("P",px+14,py-6); if(g.solved){ ctx.strokeStyle="#C8323C"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,GY); ctx.stroke(); } }
+  }
+  if(g.type==="arc"||g.type==="fan"||g.type==="area"){
+    var cx=g.gap[0]+90, cy=GY, r=90;
+    if(g.type==="arc"){ ctx.strokeStyle=g.solved?"#F2B705":"rgba(29,43,58,.35)"; ctx.lineWidth=g.solved?8:3; ctx.setLineDash(g.solved?[]:[6,5]); ctx.beginPath(); ctx.arc(cx,cy-10,r,Math.PI,0); ctx.stroke(); ctx.setLineDash([]); if(g.solved&&!g.bridge) g.bridge={x:g.gap[0],y:GY,w:180,h:24,k:"bridge"}; if(g.solved) tile(g.gap[0],GY,180,24,"bridge"); }
+    if(g.type==="fan"){ var a0=-90, a1=0, aa=a0; if(g.moving){ var k4=Math.min(1,(G.t-g.t0)/70); aa=a0+(a1-a0)*k4; if(k4>=1){ g.moving=false; g.bridge={x:g.gap[0],y:GY,w:180,h:24,k:"bridge"}; } } else if(g.solved) aa=a1;
+      ctx.save(); ctx.translate(g.gap[0],GY); ctx.rotate(aa*Math.PI/180); ctx.fillStyle="#FFE07A"; ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,180,-Math.PI/9,0); ctx.closePath(); ctx.fill(); ctx.stroke(); tile(0,0,180,24,"bridge"); ctx.restore(); }
+    if(g.type==="area"){ ctx.fillStyle=g.solved?"#FFE07A":"rgba(255,224,122,.25)"; ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,Math.PI,0); ctx.closePath(); ctx.fill(); ctx.stroke(); if(g.solved){ tile(g.gap[0],GY,180,24,"bridge"); if(!g.bridge) g.bridge={x:g.gap[0],y:GY,w:180,h:24,k:"bridge"}; } }
+  }
+  if(g.type==="door"){
+    var d2=g.door, kk=g.spec.k;
+    if(kk==="sign"){ ctx.fillStyle="#6B4423"; ctx.fillRect(d2.x+26,d2.y+30,8,60); ctx.fillStyle=g.solved?"#C9B08A":"#E8C98F"; ctx.fillRect(d2.x,d2.y,60,40); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.strokeRect(d2.x,d2.y,60,40); ctx.fillStyle="#1D2B3A"; ctx.font="16px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText("看板",d2.x+30,d2.y+26); return; }
+    var col=g.spec.paper?"#8A5A33":"#2E6FB7", lab=g.spec.paper?"紙":"問";
+    if(!g.solved){ ctx.fillStyle=col; ctx.fillRect(d2.x,d2.y,d2.w,d2.h); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=3; ctx.strokeRect(d2.x,d2.y,d2.w,d2.h); ctx.fillStyle="#fff"; ctx.font="18px 'DotGothic16',monospace"; ctx.textAlign="center"; for(var li=0;li<lab.length;li++) ctx.fillText(lab[li],d2.x+20,d2.y+40+li*22); }
+    else { ctx.strokeStyle="rgba(29,43,58,.3)"; ctx.lineWidth=2; ctx.strokeRect(d2.x,d2.y,d2.w,d2.h); }
+  }
+  if(g.type==="boss"){
+    var dd=g.door; if(!g.solved){ ctx.fillStyle="#3A2E4F"; ctx.fillRect(dd.x,dd.y,dd.w,dd.h); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=3; ctx.strokeRect(dd.x,dd.y,dd.w,dd.h); for(var q=0;q<3;q++){ ctx.fillStyle=g.solved?"#4F9A3E":"#F2B705"; ctx.fillRect(dd.x+20,dd.y+40+q*60,40,34); ctx.strokeRect(dd.x+20,dd.y+40+q*60,40,34); } }
+    ctx.fillStyle="#7F8B96"; ctx.fillRect(dd.x-60,dd.y-40,200,40); for(var c3=0;c3<5;c3++) ctx.fillRect(dd.x-60+c3*44,dd.y-64,26,24);
+  }
+}
+
+/* ================= 問題パネル ================= */
+var current=null;
+function openPanel(html){ G.mode="panel"; panel.innerHTML=html; ov.hidden=false; keys={}; var f=panel.querySelector("input,button.btn:not([data-close])"); if(f) setTimeout(function(){ f.focus(); },30); }
+function closePanel(){ ov.hidden=true; panel.classList.remove("zpanel"); panel.innerHTML=""; G.mode="play"; current=null; G.hero.x-=8; }
+function gateTitle(g){ if(g.type==="door"||g.type==="boss") return g.spec.k==="sign"?"看板":(g.spec.boss?"城の門":(g.spec.paper?"紙ミッション":"問題の扉")); if(false) return ({choice:"問題の扉",multi:"問題の扉",sym:"記号の扉",num:"計算の扉",paper:"紙ミッション"})[g.spec.k]; return {translate:"平行移動のゲート",rotate:"回転移動のはね橋",reflect:"対称移動の鏡",pb:"垂直二等分線の塔",ab:"角の二等分線の光",pp:"垂線のロープ",arc:"弧のレール",fan:"おうぎの扉",area:"おうぎ形の床",boss:"城の門"}[g.type]; }
+function heartsTxt(){ var s=""; for(var i=0;i<5;i++) s+= i<G.hearts?"♥":"♡"; return s; }
+function openGate(g){
+  if(g.type==="boss") return;
+  if(g.type==="door") return openZ(g);
+  current={g:g}; var h='<span class="tag">'+gateTitle(g)+'</span> <span class="hearts">'+heartsTxt()+'</span>';
+  if(g.type==="translate"){
+    h+='<h2>橋ブロックをどう動かす？</h2><div class="cols"><div class="fig">'+transFig(g)+'</div><div><p>橋ブロック（左はしの赤い点）を、点線のところまで<b>平行移動</b>させる。</p><div class="row">右に <input class="num" id="a1" inputmode="text"> マス</div><div class="row">上に <input class="num" id="a2" inputmode="text"> マス</div><p class="small">下へ動かすときは、上にマイナス（−）で入れる。</p><button class="btn main" data-act="tr">動かす</button><div id="fb"></div></div></div>';
+  }
+  if(g.type==="rotate"){
+    var v=g.variant;
+    h+='<h2>はね橋をどう回す？</h2><div class="cols"><div class="fig">'+rotFig(v)+'</div><div><p>はね橋を、点 O を中心に<b>回転移動</b>させて、点線の位置に重ねる。</p>'+choiceBtns(["時計回りに 90°","反時計回りに 90°","180°"],"rot")+'<div id="fb"></div></div></div>';
+  }
+  if(g.type==="reflect"){
+    h+='<h2>階段を写して道をつくる</h2><div class="cols"><div class="fig">'+refFig()+'</div><div><p>左の階段を<b>対称移動</b>させて、壁の右がわに下りる階段をつくる。対称の軸はどれ？</p>'+choiceBtns(["直線 ℓ（たて）","直線 m（よこ）","点 O を中心に 180° 回す"],"ref")+'<div id="fb"></div></div></div>';
+  }
+  if(g.type==="pb"){
+    g.P=null;
+    h+='<h2>柱を立てる場所をさがせ</h2><div class="cols"><div class="fig" id="pbfig">'+pbFig(null)+'</div><div><p>塔 A と塔 B から<b>同じ長さ</b>のロープで橋をつる。谷の底のどこに柱を立てる？ 図の上をクリック（タップ）して点 P を置こう。</p><p id="pbinfo" class="small">PA と PB の長さが表示される</p><div id="pbq"></div><div id="fb"></div></div></div>';
+  }
+  if(g.type==="ab"){
+    h+='<h2>光を角のまん中に通せ</h2><div class="cols"><div class="fig">'+abFig(false)+'</div><div><p>2つのかべ（角の2辺）から<b>等しい距離</b>を通る光を出すと、扉が開く。使う作図は？</p>'+choiceBtns(["角の二等分線","垂直二等分線","垂線"],"ab")+'<div id="fb"></div></div></div>';
+  }
+  if(g.type==="pp"){
+    h+='<h2>いちばん短いロープ</h2><div class="cols"><div class="fig">'+ppFig(false)+'</div><div><p>点 P から地面 ℓ まで、<b>いちばん短い</b>ロープをおろすと扉が開く。使う作図は？</p>'+choiceBtns(["P を通る ℓ の垂線","P を通る ℓ の平行線","P と ℓ の上の点の垂直二等分線"],"pp")+'<div id="fb"></div></div></div>';
+  }
+  if(g.type==="arc"||g.type==="fan"||g.type==="area"){
+    var p=g.prob;
+    h+='<h2>'+(g.type==="arc"?"弧のレールの長さ":(g.type==="fan"?"おうぎの扉の角度":"おうぎ形の床の面積"))+'</h2><div class="cols"><div class="fig">'+secFig(p,g.type)+'</div><div><p>'+p.q+'</p><p class="small">'+(g.type==="fan"?"ℓ = 2πr × a/360 を使う。":(g.type==="arc"?"ℓ = 2πr × a/360":"S = πr² × a/360"))+'　π の前の数だけ入れる。</p><div class="row"><input class="num" id="a1" inputmode="text"> <b style="font-size:20px">'+p.unit+'</b></div><button class="btn main" data-act="sec">決定</button><div id="fb"></div></div></div>';
+  }
+  if(g.type==="boss"){ return openBoss(g); }
+  if(g.type==="door"){ var sp=g.spec; current.sel=[]; current.seq=[];
+    var body='<p style="font-size:18px">'+(sp.q||'')+'</p>';
+    if(sp.k==="choice") body+=choiceBtns(sp.o,"dchoice");
+    if(sp.k==="multi") body+='<p class="small">あてはまるものを全部押してから「決定」。</p><div>'+sp.o.map(function(o,i){ return '<button class="btn" data-act="mtog" data-i="'+i+'" aria-pressed="false">'+o+'</button>'; }).join('')+'</div><button class="btn main" data-act="mok">決定</button>';
+    if(sp.k==="sym") body+='<div class="msg" id="symline" style="min-height:52px;font-size:24px;font-family:DotGothic16,monospace;background:#F6FAFD">　</div><div>'+shuffle(sp.tok).map(function(t){ return '<button class="btn" data-act="stok" data-t="'+t+'" style="font-size:20px;min-width:52px">'+t+'</button>'; }).join('')+'</div><button class="btn" data-act="sback">1つ消す</button><button class="btn main" data-act="sok">決定</button>';
+    if(sp.k==="num") body+='<div class="row"><input class="num" id="a1" inputmode="text"> <b style="font-size:20px">'+sp.unit+'</b></div>'+(/π/.test(sp.unit)?'<p class="small">π の前の数だけ入れる。</p>':'')+'<button class="btn main" data-act="dnum">決定</button>';
+    if(sp.k==="paper"){ body='<p style="font-size:20px"><b>'+sp.ref+'</b></p><p>'+sp.task+'</p><p class="small">ノートかワークに解いてから「解いた」を押す。答え合わせのあとで扉が開く（ハートはへらない）。</p><button class="btn main" data-act="pdone">解いた</button>'; }
+    h+='<h2>'+gateTitle(g)+'</h2>'+(sp.fig?'<div class="cols"><div class="fig">'+sp.fig+'</div><div>'+body+'<div id="fb"></div></div></div>':body+'<div id="fb"></div>');
+  }
+  openPanel(h);
+}
+function choiceBtns(opts,act){ var ord=shuffle(opts.map(function(o,i){return i;})); return '<div>'+ord.map(function(i){ return '<button class="btn" data-act="'+act+'" data-i="'+i+'">'+opts[i]+'</button>'; }).join('')+'</div>'; }
+function transFig(g){
+  var cw=24, cols=14, rows=8, gx=10, gy=5, s=gridSVG(cols*cw,rows*cw,cw);
+  s+='<rect x="'+(gx*cw)+'" y="'+(gy*cw)+'" width="'+(3*cw)+'" height="'+(rows-gy)*cw+'" fill="#CDEBFA"/>'; // gap (空)
+  s+='<rect x="0" y="'+(gy*cw)+'" width="'+(gx*cw)+'" height="'+(rows-gy)*cw+'" fill="#8A5A33" opacity=".5"/><rect x="'+((gx+3)*cw)+'" y="'+(gy*cw)+'" width="'+cw+'" height="'+(rows-gy)*cw+'" fill="#8A5A33" opacity=".5"/>';
+  s+=bridgeSVG(gx*cw,gy*cw,3*cw,cw*0.8,true)+tx((gx+1.5)*cw,gy*cw-6,'ここ',{size:12,c:'#2F7D5B',w:1});
+  var px=(gx-g.dx)*cw, py=(gy-g.dy)*cw; s+=bridgeSVG(px,py,3*cw,cw*0.8,false)+dt(px,py,'#C8323C',5)+dt(gx*cw,gy*cw,'#2F7D5B',4);
+  return S('0 0 '+(cols*cw)+' '+(rows*cw),s,'橋ブロックと置く場所');
+}
+function rotFig(v){
+  var s=gridSVG(320,200), gx0=100, gx1=220, gy=130, L=120;
+  s+='<rect x="0" y="'+gy+'" width="'+gx0+'" height="70" fill="#8A5A33" opacity=".5"/><rect x="'+gx1+'" y="'+gy+'" width="100" height="70" fill="#8A5A33" opacity=".5"/>';
+  s+=bridgeSVG(gx0,gy,L,14,true);
+  var O = v==="R"? [gx1,gy] : [gx0,gy], body;
+  if(v==="L") body='<rect x="'+(gx0)+'" y="'+(gy-L)+'" width="14" height="'+L+'" fill="#A97446" stroke="#1D2B3A" stroke-width="2"/>';
+  if(v==="R") body='<rect x="'+(gx1-14)+'" y="'+(gy-L)+'" width="14" height="'+L+'" fill="#A97446" stroke="#1D2B3A" stroke-width="2"/>';
+  if(v==="F") body='<rect x="'+(gx0-L)+'" y="'+gy+'" width="'+L+'" height="14" fill="#A97446" stroke="#1D2B3A" stroke-width="2"/>';
+  return S('0 0 320 200',s+body+dt(O[0],O[1],'#C8323C',6)+tx(O[0]+(v==="R"?14:-14),O[1]+22,'O',{w:1}),'はね橋');
+}
+function refFig(){
+  var s=gridSVG(320,200), base=170, X=160;
+  for(var i=0;i<4;i++) s+='<rect x="'+(40+i*20)+'" y="'+(base-(i+1)*20)+'" width="20" height="'+(i+1)*20+'" fill="#A3AEB8" stroke="#1D2B3A"/>';
+  s+='<rect x="120" y="'+(base-100)+'" width="80" height="100" fill="#7F8B96" stroke="#1D2B3A"/>';
+  for(i=0;i<4;i++) s+='<rect x="'+(2*X-(40+i*20)-20)+'" y="'+(base-(i+1)*20)+'" width="20" height="'+(i+1)*20+'" fill="none" stroke="#2F7D5B" stroke-dasharray="4 3"/>';
+  s+=ln(X,10,X,195,'#2E6FB7',2.5,'6 4')+tx(X+10,22,'ℓ',{a:'start',c:'#2E6FB7'})+ln(5,base-100,315,base-100,'#2E6FB7',2,'6 4')+tx(308,base-106,'m',{c:'#2E6FB7'})+dt(X,base-100,'#C8323C',5)+tx(X+12,base-108,'O',{a:'start'});
+  return S('0 0 320 200',s,'階段と軸');
+}
+function pbFig(P){
+  var s=gridSVG(320,220), A=[60,60], B=[260,60], floorY=190;
+  s+='<rect x="45" y="60" width="30" height="'+(floorY-60)+'" fill="#7F8B96" stroke="#1D2B3A"/><rect x="245" y="60" width="30" height="'+(floorY-60)+'" fill="#7F8B96" stroke="#1D2B3A"/>'+ln(75,floorY,245,floorY,'#1D2B3A',3)+tx(160,212,'谷の底',{size:12,c:'#4E6274'});
+  s+=dt(A[0],A[1])+dt(B[0],B[1])+tx(A[0],A[1]-10,'A',{w:1})+tx(B[0],B[1]-10,'B',{w:1});
+  if(P){ s+=ln(A[0],A[1],P[0],P[1],'#2E6FB7',2.5)+ln(B[0],B[1],P[0],P[1],'#2F7D5B',2.5)+dt(P[0],P[1],'#F2B705',8)+tx(P[0],P[1]+22,'P',{w:1}); }
+  return '<svg viewBox="0 0 320 220" id="pbsvg" style="cursor:crosshair" role="img" aria-label="塔AとBと谷の底">'+s+'</svg>';
+}
+function abFig(on){ var s=gridSVG(320,200), O=[40,180]; s+=ln(O[0],O[1],310,O[1],'#1D2B3A',3)+ln(O[0],O[1],O[0]+200,O[1]-200,'#1D2B3A',3)+dt(O[0],O[1])+tx(O[0]-6,O[1]+16,'O');
+  if(on){ var a=-22.5*Math.PI/180; s+=ln(O[0],O[1],O[0]+300*Math.cos(a),O[1]+300*Math.sin(a),'#F2B705',5); }
+  return S('0 0 320 200',s,'角'); }
+function ppFig(on){ var s=gridSVG(320,200); s+=ln(10,170,310,170,'#1D2B3A',3)+tx(300,160,'ℓ')+dt(160,40,'#C8323C',6)+tx(172,36,'P',{a:'start'})+ln(160,40,240,170,'#B84A62',1.5,'5 4')+ln(160,40,90,170,'#B84A62',1.5,'5 4');
+  if(on) s+=ln(160,40,160,170,'#C8323C',4)+'<rect x="160" y="158" width="12" height="12" fill="none" stroke="#C8323C" stroke-width="2"/>';
+  return S('0 0 320 200',s,'点Pと直線ℓ'); }
+function secFig(p,type){
+  var s=gridSVG(320,200), cx=110, cy=110, r=80, a=p.a;
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#A9C0D2" stroke-width="2" stroke-dasharray="5 4"/>';
+  s+= a>=360 ? '' : wedge(cx,cy,r,-90,-90+a,'#FFE07A');
+  if(type==="arc") s+=arcP(cx,cy,r,-90,-90+a,'#F2B705',7);
+  s+=ln(cx,cy,cx,cy-r,'#C8323C',2.5)+tx(cx-8,cy-r/2,(p.r)+'cm',{a:'end',size:13,c:'#C8323C',w:1})+dt(cx,cy);
+  s+=tx(cx+22,cy-14,(type==="fan"?'？°':a+'°'),{a:'start',size:14,c:'#C8323C',w:1});
+  s+=tx(250,60,'円全体',{size:12,c:'#4E6274'})+tx(250,80,'360°',{size:15,w:1})+tx(250,110,type==="area"?'円の面積':'円周',{size:12,c:'#4E6274'})+tx(250,130,(type==="area"?(p.r*p.r)+'π':(2*p.r)+'π'),{size:15,w:1});
+  if(type==="fan") s+=tx(250,165,'弧 '+fmt(p.arc)+'π',{size:14,c:'#9A7300',w:1});
+  return S('0 0 320 200',s,'おうぎ形');
+}
+function bossFig(k){ if(k!=="boss1") return ''; var s=gridSVG(320,190), C=[160,160];
+  s+='<polygon points="'+C[0]+','+C[1]+' 60,90 140,40" fill="#FFE07A" stroke="#1D2B3A" stroke-width="2"/>'+'<g transform="rotate(35 '+C[0]+' '+C[1]+')"><polygon points="'+C[0]+','+C[1]+' 60,90 140,40" fill="none" stroke="#2E6FB7" stroke-width="2.5" stroke-dasharray="5 4"/></g>';
+  s+=tx(52,92,'B',{a:'end'})+tx(140,34,'A')+tx(C[0],C[1]+18,'C')+tx(230,60,'△PQC',{c:'#2E6FB7'})+tx(160,184,'C を中心に時計回り 35°',{size:12,c:'#4E6274'});
+  return S('0 0 320 190',s,'回転移動の図'); }
+
+/* ================= 答えの判定 ================= */
+panel.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b||!current) return;
+  var g=current.g, act=b.dataset.act, fb=document.getElementById("fb");
+  if(b.dataset.close!=null){ closePanel(); return; }
+  if(act==="tr"){ var x=num(val("a1")), y=num(val("a2")); if(x===null||y===null){ say(fb,"ng","2つとも入れよう"); return; }
+    var ok=(x===g.dx && y===-g.dy);
+    return judge(ok, ok? "右に "+g.dx+"、上に −"+g.dy+"（下に "+g.dy+"）。<br>ゲームのコードなら <code>x = x + "+g.dx+"; y = y − "+g.dy+";</code>" : "赤い点（ブロックの左はし）から、緑の点（置く場所の左はし）まで数えよう。右に "+g.dx+" マス、下に "+g.dy+" マス（上に −"+g.dy+"）。", function(){ g.moving=true; g.t0=G.t; sfx("move"); }); }
+  if(act==="rot"){ var need = g.variant==="L"?0:(g.variant==="R"?1:2); return judgeChoice(b,+b.dataset.i===need, ["左の O を中心に、立っている橋を右へたおす → 時計回りに 90°","右の O を中心に、立っている橋を左へたおす → 反時計回りに 90°","左にのびた橋を O を中心にくるっと反対へ → 180°（点対称移動）"][need], function(){ g.moving=true; g.t0=G.t; sfx("move"); }); }
+  if(act==="ref"){ return judgeChoice(b,+b.dataset.i===0,"たての直線 ℓ で左右に折り返すと、上りの階段が右がわに下りの階段としてできる。対称移動では、対応する点を結ぶ線分は軸で垂直に二等分される。", function(){ g.moving=true; g.t0=G.t; sfx("move"); }); }
+  if(act==="ab"){ return judgeChoice(b,+b.dataset.i===0,"2つの辺から等しい距離の点は、角の二等分線の上に並ぶ。", null, function(){ panel.querySelector(".fig").innerHTML=abFig(true); }); }
+  if(act==="pp"){ return judgeChoice(b,+b.dataset.i===0,"点と直線のあいだでいちばん短いのは、垂直におろした線（垂線）。その長さが点と直線の距離。", null, function(){ panel.querySelector(".fig").innerHTML=ppFig(true); }); }
+  if(act==="pbname"){ return judgeChoice(b,+b.dataset.i===0,"A と B から等しい点は、AB の垂直二等分線の上にある。谷の底との交点に柱を立てればいい。"); }
+  if(act==="sec"){ var v=num(val("a1")); if(v===null){ say(fb,"ng","数を入れよう"); return; } var p=g.prob; var ok2=Math.abs(v-p.ans)<1e-6; var extra=''; if(!ok2 && /π/.test(p.unit) && Math.abs(v-p.ans*3.14)<0.05) extra='π を 3.14 にしないで、π のまま残す。'; return judge(ok2,(ok2?'':'正しくは '+fmt(p.ans)+p.unit+'。'+extra+'<br>')+p.ex, function(){ g.moving=true; g.t0=G.t; sfx("move"); }); }
+  if(act==="dchoice"){ var sp=g.spec; panel.querySelectorAll('[data-act="dchoice"]').forEach(function(x){ if(+x.dataset.i===sp.c) x.classList.add("right"); }); return judgeChoice(b,+b.dataset.i===sp.c,(+b.dataset.i===sp.c?'':'答えは「'+sp.o[sp.c]+'」。')+sp.ex); }
+  if(act==="mtog"){ var i=+b.dataset.i, k=current.sel.indexOf(i); if(k>=0) current.sel.splice(k,1); else current.sel.push(i); b.setAttribute("aria-pressed",k<0); b.style.background=k<0?"#FFE07A":""; return; }
+  if(act==="mok"){ var sp2=g.spec; if(!current.sel.length){ say(fb,"ng","選んでから決定しよう"); return; } var a1=current.sel.slice().sort().join(","), a2=sp2.c.slice().sort().join(","); panel.querySelectorAll('[data-act="mtog"]').forEach(function(x){ var ii=+x.dataset.i; if(sp2.c.indexOf(ii)>=0) x.classList.add("right"); else if(current.sel.indexOf(ii)>=0) x.classList.add("wrong"); }); return judge(a1===a2,(a1===a2?'':'答えは「'+sp2.c.map(function(i){return sp2.o[i];}).join('、')+'」。')+sp2.ex); }
+  if(act==="stok"){ current.seq.push(b.dataset.t); document.getElementById("symline").textContent=current.seq.join(" ")||"　"; sfx("bump"); return; }
+  if(act==="sback"){ current.seq.pop(); document.getElementById("symline").textContent=current.seq.join(" ")||"　"; return; }
+  if(act==="sok"){ var sp3=g.spec; if(!current.seq.length){ say(fb,"ng","記号を並べてから決定しよう"); return; } var got=current.seq.join(" "); var okS=sp3.ans.some(function(a){ return a.join(" ")===got; }); return judge(okS,(okS?'':'正しくは「'+sp3.ans[0].join(" ")+'」。')+sp3.ex); }
+  if(act==="dnum"){ var sp4=g.spec, vv=num(val("a1")); if(vv===null){ say(fb,"ng","数を入れよう"); return; } var okN=Math.abs(vv-sp4.ans)<1e-6; var ext=(!okN&&/π/.test(sp4.unit)&&Math.abs(vv-sp4.ans*3.14)<0.05)?'π を 3.14 にしないで、π のまま残す。':''; return judge(okN,(okN?'':'正しくは '+fmt(sp4.ans)+sp4.unit+'。'+ext)+sp4.ex); }
+  if(act==="pdone"){ var sp5=g.spec; fb.innerHTML='<div class="msg ok"><b>答え合わせ</b><br>'+sp5.model+'</div><p>自分の答えに入っていたものを押そう。</p><div>'+sp5.checks.map(function(c,i){ return '<button class="btn" data-act="pchk" data-i="'+i+'" style="display:block;text-align:left;font-weight:400">□ '+c+'</button>'; }).join('')+'</div><p class="small">入っていなかったものは、ノートに書き足そう。まちがえた問題は、ワークに直しを書く。</p><button class="btn main" data-act="popen">扉を開ける</button>'; b.disabled=true; return; }
+  if(act==="pchk"){ var on=b.textContent.indexOf("✓")===0; b.textContent=(on?"□ ":"✓ ")+b.textContent.slice(2); b.style.background=on?"":"#DDF1E7"; return; }
+  if(act==="popen"){ g.solved=true; sfx("ok"); closePanel(); return; }
+  if(act==="go"){ closePanel(); return; }
+  if(act==="retry"){ var gg=g; closePanel(); prepGate(gg); openGate(gg); return; }
+  if(act==="quiz"){ return quizAnswer(b); }
+  if(act==="boss"){ return bossAnswer(b); }
+  if(act==="bossnum"){ return bossAnswer(null); }
+});
+function val(id){ var e=document.getElementById(id); return e?e.value:""; }
+function say(el,cls,html){ if(el) el.innerHTML='<div class="msg '+cls+'">'+html+'</div>'; }
+function lockPanel(){ panel.querySelectorAll("button[data-act],input").forEach(function(x){ if(x.dataset.act!=="go"&&x.dataset.act!=="retry") x.disabled=true; }); }
+function judge(ok,html,onOk){
+  var g=current.g, fb=document.getElementById("fb"); lockPanel();
+  if(ok){ sfx("ok"); g.solved=true; if(["translate","rotate","fan","arc","area","pb"].indexOf(g.type)>=0 && g.gap) g.bridge={x:g.gap[0],y:GY,w:180,h:24,k:"bridge"}; say(fb,"ok","<b>正解！</b> "+html); fb.innerHTML+='<button class="btn main" data-act="go">ステージにもどる</button>'; if(onOk) onOk(); }
+  else { sfx("ng"); G.missed++; logMiss(gateTitle(g)); G.hearts--; say(fb,"ng","<b>ざんねん。</b> "+html+'<br>ハートが1つへった（のこり '+Math.max(0,G.hearts)+'）。'); if(G.hearts<=0){ fb.innerHTML+='<button class="btn" data-act="go">つづける</button>'; setTimeout(function(){},0); G.pendingOver=true; } else fb.innerHTML+='<button class="btn gold" data-act="retry">'+(g.type==="door"?'もう一度':'数を変えてもう一度')+'</button>'; }
+}
+function judgeChoice(b,ok,ex,onOk,after){
+  panel.querySelectorAll('button[data-act="'+b.dataset.act+'"]').forEach(function(x){ if(x===b) x.classList.add(ok?"right":"wrong"); });
+  if(ok&&after) after(); if(!ok&&after) {}
+  judge(ok,ex,onOk);
+}
+function logMiss(what){ SAVE.miss.push({stage:G.id,what:what,at:new Date().toISOString().slice(0,10)}); if(SAVE.miss.length>60) SAVE.miss.shift(); save(); }
+
+/* 柱の場所：クリックで点 P */
+panel.addEventListener("pointerdown",function(e){
+  var sv=e.target.closest("#pbsvg"); if(!sv||!current||current.g.type!=="pb"||current.pbDone) return;
+  var pt=sv.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; var q=pt.matrixTransform(sv.getScreenCTM().inverse());
+  var P=[Math.max(80,Math.min(240,q.x)),190];
+  var a=Math.hypot(P[0]-60,P[1]-60)/20, b2=Math.hypot(P[0]-260,P[1]-60)/20;
+  document.getElementById("pbfig").innerHTML=pbFig(P);
+  var info=document.getElementById("pbinfo"); info.innerHTML='PA ＝ <b style="color:#2E6FB7">'+a.toFixed(1)+'</b>　PB ＝ <b style="color:#2F7D5B">'+b2.toFixed(1)+'</b>';
+  if(Math.abs(a-b2)<0.15){ current.pbDone=true; sfx("coin"); info.innerHTML+='　<b style="color:#2F7D5B">同じ！</b>'; document.getElementById("pbq").innerHTML='<p>この場所を作図で見つけるには、どの線をひく？（1回だけ）</p>'+choiceBtns(["AB の垂直二等分線","∠A の二等分線","A から谷の底への垂線"],"pbname"); }
+  else sfx("bump");
+});
+
+/* ================= トレーニングの問題をステージの中で開く ================= */
+function openZ(g){
+  G.mode="panel"; keys={}; current={g:g,z:true};
+  var ids=zItems(g.spec), title=gateTitle(g)+(g.spec.boss?"（ワークとふり返り）":"");
+  panel.classList.add("zpanel");
+  panel.innerHTML='<div class="zhead"><span class="tag">'+gateTitle(g)+'</span> <span class="hearts">'+heartsTxt()+'</span>'+(g.spec.k==="sign"?'':'<span class="small">　1回目でまちがえるとハートが1つへる。まちがえた問題は、最後にもう一度出る。</span>')+'</div><iframe id="zf" title="問題" src="train.html?embed='+encodeURIComponent(ids.join(","))+'&title='+encodeURIComponent(title)+'"></iframe>';
+  ov.hidden=false;
+}
+window.addEventListener("message",function(ev){
+  var d=ev.data; if(!d||d.type!=="zdone"||!current||!current.z) return;
+  var g=current.g, ng=(d.miss||[]).length, nok=Object.keys(d.first||{}).length-ng;
+  if(nok>0) addPts(nok*5,G.hero.x,G.hero.y-30);
+  if(current.boss){ var e=g.enemy; g.queue.shift(); e.hp--; e.inv=90; sfx("bump"); G.anims.push({t:0,d:1,txt:"ダメージ！",x:e.x-30,y:e.y-20}); if(e.hp<=0){ e.dead=1; G.anims.push({t:0,d:2,txt:e.info.name+" をたおした！",x:e.x-60,y:e.y-50}); } }
+  if(ng){ G.missed+=ng; G.hearts-=ng; sfx("ng"); d.miss.forEach(function(m){ SAVE.miss.push({stage:G.id,what:m.q||m.id,at:new Date().toISOString().slice(0,10)}); }); if(SAVE.miss.length>80) SAVE.miss=SAVE.miss.slice(-80); save(); }
+  else sfx("ok");
+  if(!current.boss) g.solved=true; panel.classList.remove("zpanel");
+  if(G.hearts<=0){ ov.hidden=true; panel.innerHTML=""; current=null; G.mode="over"; showOver("まちがいが多かった。"); return; }
+  ov.hidden=true; panel.innerHTML=""; current=null; G.mode="play"; keys={}; try{ window.focus(); }catch(e){}
+});
+
+/* ================= 問ブロック ================= */
+function hitBlock(b){ if(b.used||G.mode!=="play") return; sfx("bump"); var pool=QUIZ[b.world]; var q=pool[Math.floor(Math.random()*pool.length)]; current={block:b,q:q,g:{type:"quiz"}};
+  var h='<span class="tag">問ブロック</span><h2>問題</h2><p style="font-size:19px">'+q.q+'</p>'+choiceBtns(q.o,"quiz")+'<div id="fb"></div><p class="small">正解するとコイン3まい。まちがえてもハートはへらない。</p>';
+  openPanel(h); }
+function quizAnswer(b){ var q=current.q, ok=+b.dataset.i===q.c, fb=document.getElementById("fb"); b.classList.add(ok?"right":"wrong"); panel.querySelectorAll('button[data-act="quiz"]').forEach(function(x){ x.disabled=true; if(+x.dataset.i===q.c) x.classList.add("right"); });
+  current.block.used=true; SAVE.qhit=(SAVE.qhit||0)+1; save();
+  if(ok){ sfx("coin"); G.coin+=3; addPts(3); say(fb,"ok","<b>正解！</b> "+q.ex); } else { sfx("ng"); logMiss("問ブロック："+q.q.slice(0,24)); say(fb,"ng","<b>ざんねん。</b> 答えは「"+q.o[q.c]+"」。"+q.ex); }
+  fb.innerHTML+='<button class="btn main" data-act="go">ステージにもどる</button>'; }
+
+/* ================= ボス ================= */
+function openBoss(g){
+  var list=g.spec.list, q=list[g.step]; current={g:g,boss:q};
+  var h='<span class="tag">城の門　カギ '+(g.step+1)+' / '+list.length+'</span> <span class="hearts">'+heartsTxt()+'</span><h2>カギの問題</h2>';
+  h+= q.fig ? '<div class="cols"><div class="fig">'+q.fig+'</div><div>' : '<div>';
+  h+='<p style="font-size:18px">'+q.q+'</p>';
+  if(q.type==="num") h+='<div class="row"><input class="num" id="a1" inputmode="text"> <b style="font-size:20px">'+q.unit+'</b></div><button class="btn main" data-act="bossnum">決定</button>';
+  else h+=choiceBtns(q.o,"boss");
+  h+='<div id="fb"></div></div>'+(q.fig?'</div>':'');
+  openPanel(h);
+}
+function bossAnswer(b){
+  var g=current.g, q=current.boss, fb=document.getElementById("fb"), ok;
+  if(q.type==="num"){ var v=num(val("a1")); if(v===null){ say(fb,"ng","数を入れよう"); return; } ok=Math.abs(v-q.ans)<1e-6; }
+  else { ok=+b.dataset.i===q.c; b.classList.add(ok?"right":"wrong"); }
+  lockPanel();
+  if(ok){ sfx("ok"); g.step++; say(fb,"ok","<b>正解！</b> "+q.ex); if(g.step>=g.spec.list.length){ g.solved=true; fb.innerHTML+='<button class="btn main" data-act="go">門が開いた！ 進む</button>'; } else fb.innerHTML+='<button class="btn main" data-act="next">次のカギ</button>'; }
+  else { sfx("ng"); G.missed++; logMiss("城の門："+q.q.slice(0,24)); G.hearts--; say(fb,"ng","<b>ざんねん。</b> "+(q.type==="num"?"正しくは "+q.ans+q.unit+"。":"答えは「"+q.o[q.c]+"」。")+q.ex+'<br>ハートのこり '+Math.max(0,G.hearts)+'。'); if(G.hearts<=0){ G.pendingOver=true; fb.innerHTML+='<button class="btn" data-act="go">つづける</button>'; } else fb.innerHTML+='<button class="btn gold" data-act="next">もう一度このカギ</button>'; }
+  var nb=fb.querySelector('[data-act="next"]'); if(nb) nb.onclick=function(){ closePanel(); openBoss(g); };
+}
+
+/* ================= 画面 ================= */
+function showTitle(){
+  G=G||{mode:"menu"}; G.mode="menu";
+  var nx=null; WORLDS.forEach(function(w,wi){ if(w.soon) return; w.stages.forEach(function(st,si){ if(nx) return; var open=(wi===0&&si===0)||SAVE.clear[prevId(wi,si)]; if(open&&!SAVE.clear[st.id]) nx=st; }); });
+  var h='<h2>平面図形 ステージ攻略</h2><p>問題を解いて、橋をかけたり扉を開けたりしながら、ステージを進もう。</p>';
+  h+='<div class="startbox">'+(nx?'<button class="btn main big" data-stage="'+nx.id+'">▶ ステージ '+nx.id+'「'+nx.name+'」から始める</button>':'<p><b>全ステージクリア！</b> ★が3つでないステージに、もう一度ちょうせんしよう。</p>')+'<p class="small" style="margin:6px 0 0">機×'+SAVE.lives+'　★'+SAVE.pts+' ポイント（50ポイントごとに機が1つ増える）</p></div>';
+  h+='<p><span class="keys">←</span> <span class="keys">→</span> 移動　<span class="keys">スペース</span> または <span class="keys">↑</span> ジャンプ　<span class="keys">↓</span> 土管に入る　<span class="keys">Esc</span> メニュー</p><p class="small">ゲートの前まで進むと問題が出る。まちがえるとハートが1つへる（5つなくなると機が1つへる）。「問」ブロックは下からジャンプでたたくと問題が出る。</p>';
+  h+='<div class="stagegrid">'+WORLDS.map(function(w,wi){ if(w.soon) return '<div class="world"><h3>'+w.name+'</h3><p class="small">準備中</p></div>'; return '<div class="world"><h3>'+w.name+'</h3>'+w.stages.map(function(s,si){ var open = (wi===0&&si===0) || SAVE.clear[prevId(wi,si)] || SAVE.clear[s.id]; var star=SAVE.stars[s.id]||0; return '<button class="btn sbtn" data-stage="'+s.id+'"'+(open?'':' disabled')+'><span>'+s.id+' '+s.name+'<br><span class="small">'+(s.ref||'')+'</span></span><span>'+(SAVE.clear[s.id]?'★'.repeat(star)+'☆'.repeat(3-star):'')+'</span></button>'; }).join('')+'</div>'; }).join('')+'</div>';
+  h+='<div class="trainbox"><b>おさらい用：トレーニング</b>　<span class="small">ステージを進めたあと、まちがえた問題をまとめて練習したいときに使う。</span> <a class="btn" href="train.html" style="text-decoration:none;display:inline-block;font-size:14px;min-height:32px;padding:4px 10px">トレーニングを開く</a></div>';
+  var wn=WORK&&WORK.items?Object.keys(WORK.items).length:0;
+  h+='<details style="margin-top:12px"><summary>ワーク版ファイル（おうちの人用）</summary><p class="small">ワークの問題そのものは、公開しないファイルに入っている。このパソコンで1回読みこむと、ステージとトレーニングにワークの問題が出るようになる。</p><p>'+(wn?'<b>読みこみ済み：'+wn+' 問</b>　<button class="btn" id="wkoff">外す</button>':'まだ読みこんでいない')+'</p><input type="file" id="wkfile" accept=".json,application/json"></details>';
+  if(SAVE.miss.length) h+='<details style="margin-top:12px"><summary>まちがえた問題の記録（'+SAVE.miss.length+'）</summary><ul class="small">'+SAVE.miss.slice(-15).reverse().map(function(m){return '<li>'+m.at+'　'+m.stage+'　'+m.what+'</li>';}).join('')+'</ul></details>';
+  panel.innerHTML=h; ov.hidden=false;
+  panel.querySelectorAll("[data-stage]").forEach(function(b){ b.onclick=function(){ ac(); startStage(b.dataset.stage); }; });
+  var wf=document.getElementById("wkfile"); if(wf) wf.onchange=function(){ var f=wf.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ try{ var o=JSON.parse(r.result); if(!o.items) throw 0; localStorage.setItem("heimen-work-v1",r.result); WORK=o; showTitle(); }catch(e){ alert("ワーク版ファイルではないようです"); } }; r.readAsText(f); };
+  var wo=document.getElementById("wkoff"); if(wo) wo.onclick=function(){ localStorage.removeItem("heimen-work-v1"); WORK=null; showTitle(); };
+}
+function prevId(wi,si){ if(si>0) return WORLDS[wi].stages[si-1].id; if(wi>0){ var pw=WORLDS[wi-1]; return pw.stages[pw.stages.length-1].id; } return null; }
+function startStage(id){ build(id); ov.hidden=true; panel.innerHTML=""; G.mode="play"; }
+function stageClear(){
+  if(G.mode!=="play") return; G.mode="clear"; sfx("clear");
+  var star = G.missed===0?3:(G.missed<=2?2:1); SAVE.clear[G.id]=true; SAVE.stars[G.id]=Math.max(SAVE.stars[G.id]||0,star); save();
+  var h='<h2>ステージクリア！</h2><p style="font-size:30px">'+'★'.repeat(star)+'☆'.repeat(3-star)+'</p><p>まちがい：'+G.missed+' 回　コイン：'+G.coin+'</p><p class="small">★3つ＝まちがい0　★2つ＝まちがい2回まで</p><p><b>紙でやろう：</b>ワークの同じところを、ノートに図をかいて解こう。</p><button class="btn main" id="toMenu">ステージえらびへ</button>';
+  panel.innerHTML=h; ov.hidden=false; document.getElementById("toMenu").onclick=showTitle;
+}
+function showOver(msg){
+  SAVE.lives--; save();
+  if(SAVE.lives>0){ var h0='<h2>ハートがなくなった</h2><p>'+(msg||'')+'</p><p style="font-size:22px">のこり <b>'+SAVE.lives+' 機</b></p><p>コインと正解でポイントがたまると、機が増える（50ポイントごとに1機）。</p><button class="btn main" id="again">このステージをもう一度</button><button class="btn" id="toMenu">ステージえらびへ</button>'; panel.innerHTML=h0; ov.hidden=false; document.getElementById("again").onclick=function(){ startStage(G.main?G.main.id:G.id); }; document.getElementById("toMenu").onclick=showTitle; return; }
+  SAVE.lives=3; save();
+  var h='<h2>ゲームオーバー</h2><p>'+(msg||'')+' ハートがなくなった。</p><p>まちがえた問題は、もう一度出るときに数が変わる。図をよく見て考えよう。</p><button class="btn main" id="again">もう一度</button><button class="btn" id="toMenu">ステージえらびへ</button>';
+  panel.innerHTML=h; ov.hidden=false; document.getElementById("again").onclick=function(){ startStage(G.id); }; document.getElementById("toMenu").onclick=showTitle;
+}
+function openPause(){ G.mode="pause"; var h='<h2>メニュー</h2><button class="btn main" id="resume">つづける</button><button class="btn" id="again">最初からやり直す</button><button class="btn" id="toMenu">ステージえらびへ</button>'; panel.innerHTML=h; ov.hidden=false;
+  document.getElementById("resume").onclick=function(){ ov.hidden=true; G.mode="play"; }; document.getElementById("again").onclick=function(){ startStage(G.id); }; document.getElementById("toMenu").onclick=showTitle; }
+// パネルを閉じたとき、ハート0ならゲームオーバー
+var _close=closePanel; closePanel=function(){ _close(); if(G.pendingOver){ G.pendingOver=false; G.mode="over"; showOver(""); } };
+
+/* ================= ループ ================= */
+function hud(){ var L=document.getElementById("hudL"), C=document.getElementById("hudCoin"), Hh=document.getElementById("hudHeart");
+  if(!G||!G.info){ L.textContent=""; C.textContent=""; Hh.textContent=""; return; }
+  L.textContent=(G.under?"":G.id+" ")+G.info.s.name; C.textContent="機×"+SAVE.lives+"　● "+G.coin+"　★"+SAVE.pts; Hh.textContent=heartsTxt(); }
+var last=0, acc=0;
+function loop(ts){ requestAnimationFrame(loop); musicUpdate(); if(!G||!G.info){ hud(); drawMenuBg(); return; } var d=Math.min(50,ts-last); last=ts; acc+=d; while(acc>=16.67){ if(G.mode==="play"||G.mode==="panel") { G.t++; } if(G.mode==="play") step(); acc-=16.67; } draw(); hud(); }
+function drawMenuBg(){ var gr=ctx.createLinearGradient(0,0,0,H); gr.addColorStop(0,"#7EC8F2"); gr.addColorStop(1,"#CDEBFA"); ctx.fillStyle=gr; ctx.fillRect(0,0,W,H); for(var i=0;i<W;i+=TILE){ tile(i,GY,TILE,90,"ground"); } drawHero(120,GY-36,1,1); }
+showTitle(); requestAnimationFrame(loop);
+window.__game={get MUS(){return MUS;},get G(){return G;}, openGate:function(i){ openGate(G.gates[i]); }, start:startStage};
+})();
+</script>
+</body>
+</html>

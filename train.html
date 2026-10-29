@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>平面図形 トレーニング</title>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EAF1F6; --grid:#CFDDE8; --grid5:#A9C0D2; --ink:#1D2B3A; --sub:#4E6274;
+  --card:#FFFFFF; --line:#1D2B3A;
+  --grass:#4F9A3E; --grass2:#7CC264; --dirt:#8A5A33; --dirt2:#A97446;
+  --stone:#7F8B96; --stone2:#A3AEB8;
+  --gold:#F2B705; --gold2:#FFE07A;
+  --rasp:#B84A62; --rasp2:#E07A92;
+  --good:#2F7D5B; --goodbg:#DDF1E7; --hintbg:#FFF4CF;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#132131; --grid:#1F3346; --grid5:#2E4A63; --ink:#E7EEF5; --sub:#A7B7C6;
+    --card:#1A2B3E; --line:#0A121C;
+    --good:#7FD3A8; --goodbg:#16362A; --hintbg:#3A3215;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#132131; --grid:#1F3346; --grid5:#2E4A63; --ink:#E7EEF5; --sub:#A7B7C6;
+  --card:#1A2B3E; --line:#0A121C;
+  --good:#7FD3A8; --goodbg:#16362A; --hintbg:#3A3215;
+  color-scheme: dark;
+}
+:root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+*,*::before,*::after{ box-sizing:inherit; }
+html{ scroll-padding-top:env(safe-area-inset-top,0px); }
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  font-size:17px; line-height:1.7;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+}
+.wrap{ max-width:680px; margin:0 auto; padding:16px 14px 64px; }
+h1,h2,.pix{ font-family:"DotGothic16","Zen Kaku Gothic New",monospace; font-weight:400; }
+h1{ font-size:26px; line-height:1.3; margin:8px 0 4px; }
+.lead{ margin:0 0 14px; color:var(--sub); font-size:15px; }
+nav.steps{ display:flex; gap:6px; overflow-x:auto; padding:4px 0 10px; }
+nav.steps button{
+  flex:0 0 auto; font:inherit; font-size:14px; padding:6px 10px;
+  border:2px solid var(--line); border-bottom-width:4px; background:var(--card); color:var(--ink);
+  border-radius:4px; cursor:pointer; white-space:nowrap;
+}
+nav.steps button[aria-current="step"]{ background:var(--gold); color:#1D2B3A; }
+nav.steps button:disabled{ opacity:.4; cursor:default; }
+section.stage{ background:var(--card); border:2px solid var(--line); border-radius:6px; padding:16px 14px 18px; }
+h2{ font-size:22px; margin:0 0 6px; line-height:1.35; }
+p{ margin:6px 0 10px; }
+.row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.btn{
+  font:inherit; font-weight:700; font-size:16px; padding:8px 14px; min-height:44px;
+  border:2px solid var(--line); border-bottom-width:5px; border-radius:6px;
+  background:var(--card); color:var(--ink); cursor:pointer;
+}
+.btn:active{ transform:translateY(2px); border-bottom-width:3px; }
+.btn.main{ background:var(--grass); color:#fff; }
+.btn.gold{ background:var(--gold); color:#1D2B3A; }
+.btn:disabled{ opacity:.45; cursor:default; transform:none; border-bottom-width:5px; }
+.btn.sq{ width:48px; padding:0; font-size:24px; }
+button:focus-visible, input:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+.big{ font-family:"DotGothic16",monospace; font-size:30px; min-width:2.2em; text-align:center; }
+input[type=range]{ width:100%; accent-color:var(--grass); }
+svg{ display:block; width:100%; height:auto; }
+.board{ margin:10px 0; border:2px solid var(--line); border-radius:4px; background:var(--paper); }
+.msg{ padding:10px 12px; border-radius:6px; border:2px solid var(--line); margin:10px 0; }
+.msg.ok{ background:var(--goodbg); }
+.msg.hint{ background:var(--hintbg); }
+.msg.warn{ background:var(--hintbg); }
+table{ border-collapse:collapse; width:100%; margin:8px 0; font-variant-numeric:tabular-nums; }
+.tscroll{ overflow-x:auto; }
+th,td{ border:2px solid var(--line); padding:4px 6px; text-align:center; min-width:34px; }
+th{ background:var(--paper); font-weight:700; white-space:nowrap; }
+td.dim{ opacity:.35; }
+td.hl, th.hl{ background:var(--gold2); color:#1D2B3A; }
+td.prod{ font-weight:900; color:var(--good); }
+.q{ margin:14px 0 4px; padding-top:12px; border-top:2px dashed var(--grid5); }
+.q h3{ margin:0 0 8px; font-size:18px; }
+.opts{ display:flex; flex-wrap:wrap; gap:8px; }
+.opts .btn{ font-weight:400; }
+.opts .btn.right{ background:var(--goodbg); border-color:var(--good); }
+.opts .btn.right:disabled{ opacity:1; font-weight:700; }
+.opts .btn.wrong{ opacity:.5; text-decoration:line-through; }
+.acard{ display:flex; gap:14px; align-items:center; padding:12px; border:3px solid var(--line); border-radius:6px; background:var(--gold2); color:#1D2B3A; margin:10px 0; }
+.acard .a{ font-family:"DotGothic16",monospace; font-size:40px; line-height:1; white-space:nowrap; }
+.acard b{ font-size:18px; }
+.cmp{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0; }
+.cmp > div{ border:2px solid var(--line); border-radius:6px; padding:10px; }
+.cmp h3{ margin:0 0 4px; font-size:18px; }
+.cmp .f{ font-family:"DotGothic16",monospace; font-size:22px; }
+.ex{ border:2px solid var(--line); border-radius:6px; padding:10px 12px; margin:8px 0; }
+.ex.bad{ border-style:dashed; }
+.ex .tag{ font-weight:900; }
+.ex.good .tag{ color:var(--good); }
+.ex.bad .tag{ color:var(--rasp); }
+.note{ font-family:"DotGothic16",monospace; font-size:19px; line-height:1.9; }
+.frac{ display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; line-height:1.05; margin:0 2px; }
+.frac span:first-child{ border-bottom:2px solid currentColor; padding:0 3px; }
+.eq{ font-family:"DotGothic16",monospace; font-size:24px; }
+input.num{ font:inherit; font-size:22px; width:7em; padding:6px 8px; border:2px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); }
+.prog{ font-size:14px; color:var(--sub); }
+.foot{ margin-top:16px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.sit{ font-size:17px; padding:10px 12px; border-left:6px solid var(--grass); background:var(--paper); margin:8px 0; }
+@media (max-width:480px){ .cmp{ grid-template-columns:1fr; } h1{ font-size:22px; } }
+@media (prefers-reduced-motion: no-preference){
+  .pop{ animation:pop .35s ease-out; }
+  @keyframes pop{ from{ transform:scale(.6); opacity:0; } to{ transform:scale(1); opacity:1; } }
+}
+.howto{ border:2px solid var(--line); border-radius:6px; padding:10px 12px; background:var(--paper); margin:8px 0 12px; }
+.howto p{ margin:4px 0; }
+.howto .ex{ background:var(--card); }
+.step{ display:flex; gap:10px; align-items:flex-start; margin:12px 0 6px; }
+.step .n{ flex:0 0 auto; width:30px; height:30px; border:2px solid var(--line); border-radius:50%; display:grid; place-items:center; font-family:"DotGothic16",monospace; background:var(--gold); color:#1D2B3A; }
+.step .body{ flex:1; }
+input.num.s{ width:4.2em; font-size:20px; padding:4px 6px; }
+input.num.bad{ border-color:var(--rasp); background:var(--hintbg); }
+.tog .btn[aria-pressed="true"]{ background:var(--gold); color:#1D2B3A; }
+.once{ font-size:14px; color:var(--sub); margin:2px 0 6px; }
+.opts .btn.picked-wrong{ background:var(--hintbg); border-color:var(--rasp); opacity:1; }
+.opts .btn:disabled{ opacity:.55; }
+.msg.miss{ background:var(--hintbg); }
+.empty{ position:relative; }
+.empty .over{ position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
+.empty .over span{ background:var(--card); border:2px solid var(--line); border-radius:6px; padding:6px 10px; font-weight:700; }
+td input.num.s{ width:3.6em; font-size:17px; }
+
+:root{ --comp:#2E6FB7; --red:#C8323C; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --comp:#7FB2EE; --red:#F07A80; } }
+.cap{ margin:2px 0 12px; }
+.btn.sm{ font-size:14px; min-height:38px; padding:4px 10px; }
+.chiprow{ border:2px solid var(--line); border-radius:6px; padding:6px 8px; margin:6px 0; background:var(--card); }
+.steps-list{ padding-left:1.5em; margin:8px 0; }
+.steps-list li{ margin:3px 0; color:var(--sub); }
+.steps-list li.done{ color:var(--ink); }
+.steps-list li.now{ color:var(--ink); font-weight:700; background:var(--gold2); color:#1D2B3A; border-radius:4px; padding:0 4px; }
+.board svg{ max-width:100%; }
+.stepchip{ display:inline-grid; place-items:center; width:30px; height:30px; border:2px solid var(--line); border-radius:50%; font-family:"DotGothic16",monospace; background:var(--card); }
+.stepchip.on{ background:var(--gold); color:#1D2B3A; }
+.stepchip.done{ background:var(--goodbg); }
+.dlist{ display:flex; flex-direction:column; gap:8px; margin:8px 0; touch-action:none; }
+.dcard{ display:flex; gap:10px; align-items:center; padding:10px 12px; border:2px solid var(--line); border-bottom-width:4px; border-radius:6px; background:var(--card); cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; }
+.dcard.drag{ background:var(--gold2); color:#1D2B3A; box-shadow:0 6px 14px rgba(0,0,0,.18); cursor:grabbing; position:relative; z-index:2; }
+.dcard.good{ background:var(--goodbg); } .dcard.bad{ background:var(--hintbg); border-color:var(--rasp); }
+.dcard .grip{ font-size:20px; color:var(--sub); } .dcard .dnum{ font-family:"DotGothic16",monospace; font-size:20px; min-width:1.2em; }
+.cgrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:6px; }
+.ccell{ border:2px solid var(--line); border-radius:6px; padding:6px; background:var(--card); }
+code{ font-family:"DotGothic16",monospace; background:var(--paper); padding:1px 6px; border-radius:4px; }
+.symline{ min-height:56px; border:2px solid var(--line); border-radius:6px; background:var(--card); padding:8px 12px; margin:8px 0; font-family:"DotGothic16",monospace; font-size:26px; letter-spacing:.04em; }
+.symline.good{ background:var(--goodbg); } .symline.bad{ background:var(--hintbg); border-color:var(--rasp); }
+.btn.tok{ font-family:"DotGothic16",monospace; font-size:22px; min-width:56px; }
+.btn.on{ background:var(--gold2); color:#1D2B3A; }
+/* パソコン向け：広い画面では図を大きく */
+@media (min-width:900px){ .wrap{ max-width:980px; } .board svg{ max-height:420px; } }
+/* ステージの中で開くとき */
+html.embed body{ background:var(--card); }
+html.embed h1, html.embed .tolink, html.embed .lead, html.embed #nav, html.embed .wrap > .row{ display:none !important; }
+html.embed .wrap{ max-width:none; padding:10px 18px; }
+html.embed .board svg{ max-height:56vh; }
+.cdboard{ background:var(--card); } .cdboard svg{ max-height:60vh; width:100%; user-select:none; -webkit-user-select:none; }
+.cdtools .btn.on{ background:var(--gold2); }
+details.hint{ margin:6px 0; } details.hint summary{ cursor:pointer; font-weight:700; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <h1>平面図形 トレーニング</h1><p class="tolink" style="margin:0 0 6px"><a href="index.html">← ステージ攻略にもどる</a></p>
+  <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap"><p class="lead">合言葉は「何が等しい？」。予想してから動かし、最後は自分で描く。</p><button type="button" id="snd" class="btn" style="flex:0 0 auto;font-size:14px;min-height:38px;padding:4px 10px"></button></div>
+  <nav class="steps" id="nav" aria-label="まとまり"></nav>
+  <main id="app"></main>
+</div>
+<script>
+(function(){
+"use strict";
+var QS=new URLSearchParams(location.search), EMB=QS.get("embed"), EMB_TITLE=QS.get("title")||"";
+var KEY= EMB ? "heimen-zukei-embed" : "heimen-zukei-v1";
+if(EMB) document.documentElement.classList.add("embed");
+/* ---------- 小道具 ---------- */
+function shuffle(n){ var a=[]; for(var i=0;i<n;i++) a.push(i); for(i=n-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function m(n){ return n<0 ? "−"+Math.abs(n) : String(n); }
+function parseNum(s){
+  s=String(s==null?"":s).trim().replace(/[−ー―－‐]/g,"-").replace(/／/g,"/").replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/．/g,".").replace(/\s/g,"").replace(/π/g,"");
+  if(!s) return null;
+  if(s.indexOf("/")>=0){ var p=s.split("/"); if(p.length!==2) return null; var a=parseFloat(p[0]),b=parseFloat(p[1]); if(isNaN(a)||isNaN(b)||b===0) return null; return a/b; }
+  var v=Number(s); return isNaN(v)?null:v;
+}
+function same(a,b){ return a!==null && Math.abs(a-b)<1e-6; }
+function val(id){ var e=document.getElementById(id); return e?e.value:""; }
+function fmt(v){ if(Math.abs(v-Math.round(v))<1e-9) return m(Math.round(v)); for(var d=2;d<=12;d++){ var n=v*d; if(Math.abs(n-Math.round(n))<1e-9) return (v<0?"−":"")+Math.abs(Math.round(n))+"/"+d; } return String(v); }
+
+/* ---------- 効果音 ---------- */
+var AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } } if(AC&&AC.state==="suspended") AC.resume(); return AC; }
+function tone(f,t0,dur,type,vol){ var c=ac(); if(!c) return; var o=c.createOscillator(),g=c.createGain(),t=c.currentTime+t0; o.type=type||"triangle"; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||0.16,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.02); }
+function sfx(n){ if(S&&S.mute) return;
+  if(n==="ok"){ tone(659,0,0.12); tone(880,0.1,0.22); }
+  else if(n==="soft"){ tone(294,0,0.18,"sine",0.07); }
+  else if(n==="move"){ for(var i=0;i<3;i++) tone(392+i*98,i*0.08,0.09,"square",0.05); }
+  else if(n==="dot"){ tone(988,0,0.07,"sine",0.08); }
+  else if(n==="done"){ [523,659,784,659,1047].forEach(function(f,i){ tone(f,i*0.11,0.25,"triangle",0.15); }); }
+}
+function fb(ok){ sfx(ok?"ok":"soft"); }
+
+/* ---------- 図の部品（方眼 20px） ---------- */
+function svg(vb,inner,label,extra){ return '<svg viewBox="'+vb+'" role="img" aria-label="'+(label||'図')+'"'+(extra||'')+'>'+inner+'</svg>'; }
+function grid(w,h,s){ s=s||20; var g=''; for(var x=0;x<=w;x+=s) g+='<line x1="'+x+'" y1="0" x2="'+x+'" y2="'+h+'" stroke="var(--grid)" stroke-width="1"/>'; for(var y=0;y<=h;y+=s) g+='<line x1="0" y1="'+y+'" x2="'+w+'" y2="'+y+'" stroke="var(--grid)" stroke-width="1"/>'; return g; }
+function T(x,y,s,o){ o=o||{}; return '<text x="'+x+'" y="'+y+'" font-size="'+(o.size||14)+'" text-anchor="'+(o.a||'middle')+'" fill="'+(o.c||'var(--ink)')+'"'+(o.w?' font-weight="700"':'')+'>'+s+'</text>'; }
+function dot(x,y,c,r){ return '<circle cx="'+x+'" cy="'+y+'" r="'+(r||4)+'" fill="'+(c||'var(--ink)')+'"/>'; }
+function ln(x1,y1,x2,y2,c,w,dash){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(c||'var(--ink)')+'" stroke-width="'+(w||2)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+' stroke-linecap="round"/>'; }
+function arrowHead(x,y,ang,c){ var a=ang*Math.PI/180, l=9, s=0.45; return '<polygon points="'+x+','+y+' '+(x-l*Math.cos(a-s))+','+(y-l*Math.sin(a-s))+' '+(x-l*Math.cos(a+s))+','+(y-l*Math.sin(a+s))+'" fill="'+(c||'var(--ink)')+'"/>'; }
+function arcPath(cx,cy,r,a1,a2,c,w,dash){ var p1=[cx+r*Math.cos(a1*Math.PI/180),cy+r*Math.sin(a1*Math.PI/180)],p2=[cx+r*Math.cos(a2*Math.PI/180),cy+r*Math.sin(a2*Math.PI/180)]; var large=((a2-a1+360)%360)>180?1:0; return '<path d="M'+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+' A'+r+' '+r+' 0 '+large+' 1 '+p2[0].toFixed(1)+' '+p2[1].toFixed(1)+'" fill="none" stroke="'+(c||'var(--comp)')+'" stroke-width="'+(w||1.6)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'; }
+
+/* 直線・線分・半直線 */
+function lineKind(k){
+  var g=grid(320,100), ax=110, bx=210, y=50, c='var(--ink)';
+  if(k==='line'){ g+=ln(20,y,300,y,c,2.5)+arrowHead(306,y,0,c)+arrowHead(14,y,180,c); }
+  if(k==='seg'){ g+=ln(ax,y,bx,y,c,2.5); }
+  if(k==='rayAB'){ g+=ln(ax,y,300,y,c,2.5)+arrowHead(306,y,0,c); }
+  if(k==='rayBA'){ g+=ln(20,y,bx,y,c,2.5)+arrowHead(14,y,180,c); }
+  g+=dot(ax,y)+dot(bx,y)+T(ax,y+24,'A')+T(bx,y+24,'B');
+  return svg('0 0 320 100',g,'2点A、Bを通る線');
+}
+function angleFig(){ var g=grid(240,140); g+=ln(60,110,210,110)+ln(60,110,150,20)+dot(60,110)+dot(210,110)+dot(150,20)+T(48,128,'B')+T(214,130,'C')+T(160,18,'A')+arcPath(60,110,26,-45,0,'var(--gold)',3); return svg('0 0 240 140',g,'角ABC'); }
+function distFig(){ var g=grid(240,140); g+=ln(10,110,230,110,'var(--ink)',2.5)+T(222,100,'ℓ')+dot(120,50)+T(132,46,'A')+ln(120,50,120,110,'var(--comp)',2,'5 4')+'<rect x="120" y="98" width="12" height="12" fill="none" stroke="var(--comp)" stroke-width="1.5"/>'; return svg('0 0 240 140',g,'点Aと直線ℓ'); }
+
+/* ---------- 移動パズル ---------- */
+var TRI=[[0,0],[3,0],[0,2]];
+function polyPts(pts,ox,oy,s){ s=s||20; return pts.map(function(p){ return (ox+p[0]*s)+','+(oy-p[1]*s); }).join(' '); }
+
+/* ---------- 作図ステップ（垂直二等分線・角の二等分線・垂線） ---------- */
+function constructSVG(kind){
+  var g=grid(340,220), steps=[], bad='';
+  if(kind==='pb'){
+    var A=[110,120],B=[230,120],r=80,dx=60,dy=Math.sqrt(r*r-dx*dx);
+    g+=ln(A[0],A[1],B[0],B[1])+dot(A[0],A[1])+dot(B[0],B[1])+T(A[0]-12,A[1]+20,'A')+T(B[0]+12,B[1]+20,'B');
+    steps=[arcPath(A[0],A[1],r,-60,60),arcPath(B[0],B[1],r,120,240),dot(170,120-dy,'var(--red)',5)+dot(170,120+dy,'var(--red)',5),ln(170,20,170,215,'var(--red)',2.5)];
+    bad=arcPath(A[0],A[1],40,-40,40,'var(--rasp)',2)+arcPath(B[0],B[1],40,140,220,'var(--rasp)',2)+T(170,200,'半径が小さいと交わらない',{size:13,c:'var(--rasp)'});
+  }
+  if(kind==='ab'){
+    var O=[70,180],r1=90, e1=[310,180], e2=[70+240*Math.cos(-50*Math.PI/180),180+240*Math.sin(-50*Math.PI/180)];
+    g+=ln(O[0],O[1],e1[0],e1[1])+ln(O[0],O[1],e2[0],e2[1])+dot(O[0],O[1])+T(O[0]-12,O[1]+18,'O')+T(e1[0]-10,e1[1]+18,'X')+T(70+190*Math.cos(-50*Math.PI/180)+14,180+190*Math.sin(-50*Math.PI/180),'Y');
+    var P1=[O[0]+r1,O[1]],P2=[O[0]+r1*Math.cos(-50*Math.PI/180),O[1]+r1*Math.sin(-50*Math.PI/180)];
+    var mid=[(P1[0]+P2[0])/2,(P1[1]+P2[1])/2], dd=Math.hypot(P1[0]-P2[0],P1[1]-P2[1])/2, r2=70, hh=Math.sqrt(r2*r2-dd*dd);
+    var ux=(mid[0]-O[0])/Math.hypot(mid[0]-O[0],mid[1]-O[1]), uy=(mid[1]-O[1])/Math.hypot(mid[0]-O[0],mid[1]-O[1]);
+    var Q=[mid[0]+ux*hh,mid[1]+uy*hh];
+    steps=[arcPath(O[0],O[1],r1,-60,10)+dot(P1[0],P1[1],'var(--comp)',4)+dot(P2[0],P2[1],'var(--comp)',4),
+           arcPath(P1[0],P1[1],r2,-110,-30)+arcPath(P2[0],P2[1],r2,-30,40),
+           dot(Q[0],Q[1],'var(--red)',5),
+           ln(O[0],O[1],O[0]+ux*250,O[1]+uy*250,'var(--red)',2.5)];
+    bad=arcPath(P1[0],P1[1],45,-130,-60,'var(--rasp)',2)+arcPath(P2[0],P2[1],75,-40,40,'var(--rasp)',2)+T(255,215,'2つの弧の半径がちがう',{size:13,c:'var(--rasp)'});
+  }
+  if(kind==='perp'){
+    var Pp=[170,40], ly=140, r3=125, hx=Math.sqrt(r3*r3-(ly-Pp[1])*(ly-Pp[1]));
+    g+=ln(10,ly,330,ly)+T(322,ly-8,'ℓ')+dot(Pp[0],Pp[1])+T(Pp[0]+14,Pp[1]-4,'P');
+    var X1=[Pp[0]-hx,ly],X2=[Pp[0]+hx,ly], r4=95, yy=ly+Math.sqrt(r4*r4-hx*hx);
+    steps=[arcPath(Pp[0],Pp[1],r3,25,155)+dot(X1[0],X1[1],'var(--comp)',4)+dot(X2[0],X2[1],'var(--comp)',4),
+           arcPath(X1[0],X1[1],r4,15,60)+arcPath(X2[0],X2[1],r4,120,165),
+           dot(Pp[0],yy,'var(--red)',5),
+           ln(Pp[0],Pp[1]-30,Pp[0],Math.min(yy+10,215),'var(--red)',2.5)];
+    bad=ln(150,ly,150,40,'var(--rasp)',2,'6 4')+'<rect x="150" y="'+(ly-14)+'" width="14" height="14" fill="none" stroke="var(--rasp)" stroke-width="2"/>'+T(170,22,'三角定規の直角で引くのは作図ではない',{size:13,c:'var(--rasp)'});
+  }
+  return {base:g,steps:steps,bad:bad};
+}
+var CSTEPS = {
+  pb:["A を中心に、AB の半分より大きい半径で弧をかく","B を中心に、同じ半径で弧をかく","2つの弧が交わる点を2つとる","2つの交点を直線で結ぶ。これが垂直二等分線。線は消さない"],
+  ab:["O を中心に円をかき、2辺と交わる点をとる","交わった2点を中心に、同じ半径で弧をかく","2つの弧が交わる点をとる","O とその点を結ぶ。これが角の二等分線"],
+  perp:["P を中心に、ℓ と2点で交わる円をかく","交わった2点を中心に、同じ半径で弧をかく","2つの弧が交わる点をとる","P とその点を結ぶ。これが P を通る ℓ の垂線"]
+};
+
+/* ---------- 点をさがす（軌跡） ---------- */
+function locusBase(mode){
+  var g=grid(340,240);
+  if(mode==='pb') g+=dot(110,130)+dot(230,130)+T(98,152,'A')+T(242,152,'B');
+  if(mode==='xy') return xyPlane();
+  if(mode==='ab') g+=ln(60,200,330,200)+ln(60,200,60+300*Math.cos(-50*Math.PI/180),200+300*Math.sin(-50*Math.PI/180))+dot(60,200)+T(48,218,'O');
+  return g;
+}
+
+/* ---------- テープ図（おうぎ形） ---------- */
+function sectorTape(o){
+  var x0=64,W=200,f=o.frac,g='',ys=[14,70],h=36;
+  [[o.topName,o.topPart,o.topAll],[o.botName,o.botPart,o.botAll]].forEach(function(r,i){
+    var y=ys[i];
+    g+=T(x0-8,y+24,r[0],{a:'end',size:16});
+    g+='<rect x="'+x0+'" y="'+y+'" width="'+W+'" height="'+h+'" fill="var(--stone2)" stroke="var(--line)" stroke-width="1.5"/>';
+    g+='<rect x="'+x0+'" y="'+y+'" width="'+(W*f)+'" height="'+h+'" fill="var(--gold2)" stroke="var(--line)" stroke-width="1.5"/>';
+    g+=T(x0+W*f/2,y+24,r[1],{size:15,c:/（/.test(r[1])?'var(--rasp)':'#1D2B3A'});
+    g+=T(x0+W+8,y+24,r[2],{a:'start',size:16,c:/（/.test(r[2])?'var(--rasp)':'var(--ink)'});
+  });
+  g+=ln(x0+W*f,ys[0]+h,x0+W*f,ys[1],'var(--gold)',2,'4 3');
+  return svg('0 0 340 116',g,'中心角と弧（または面積）の2本のテープ図');
+}
+
+function miniPie(frac){ var cx=44,cy=44,r=36,a2=-Math.PI/2+frac*2*Math.PI, g='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="var(--stone2)" stroke="var(--line)" stroke-width="1.5"/>';
+  g+= frac>=1 ? '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="var(--gold2)" stroke="var(--line)" stroke-width="1.5"/>' : '<path d="'+wedgePath(cx,cy,r,-Math.PI/2,a2)+'" fill="var(--gold2)" stroke="var(--line)" stroke-width="1.5"/>';
+  return svg('0 0 88 88',g,'円の'+fmt(frac)+'のおうぎ形',' style="width:88px;flex:0 0 88px"'); }
+function tapeWithPie(o){ return '<div class="row" style="flex-wrap:nowrap;gap:4px;align-items:center">'+miniPie(o.frac)+'<div style="flex:1;min-width:0">'+sectorTape(o)+'</div></div>'; }
+/* ---------- 問題 ---------- */
+var UNITS=[
+ {key:"u1", label:"用語と記号"},
+ {key:"u2", label:"図形の移動"},
+ {key:"u3", label:"作図の意味"},
+ {key:"u4", label:"基本の作図"},
+ {key:"u5", label:"作図の文章題"},
+ {key:"u6", label:"おうぎ形"},
+ {key:"u7", label:"ワークの直し"},
+ {key:"u8", label:"寄り道"}
+];
+var ITEMS={
+ /* 1 用語と記号 */
+ a1:{u:"u1",type:"card",html:'<b>線は3種類</b><p>どこで止まるかで名前が変わる。</p>'+lineKind('line')+'<p class="cap"><b>直線AB</b>　両方にどこまでものびる</p>'+lineKind('seg')+'<p class="cap"><b>線分AB</b>　A から B まで</p>'+lineKind('rayAB')+'<p class="cap"><b>半直線AB</b>　A から始まり、B の方へのびる</p><div class="ex bad"><span class="tag">悪い例</span>　半直線AB と 半直線BA を同じと思う。始まる点がちがう。</div>'},
+ a2:{u:"u1",type:"choice",q:"この線の名前は？",fig:lineKind('rayAB'),opts:["直線AB","線分AB","半直線AB","半直線BA"],c:2,ex:"A から始まって B の方へのびるので、半直線AB。"},
+ a3:{u:"u1",type:"choice",q:"この線の名前は？",fig:lineKind('rayBA'),opts:["直線AB","線分AB","半直線AB","半直線BA"],c:3,ex:"B から始まって A の方へのびるので、半直線BA。最初に書くのは始まる点。"},
+ a4:{u:"u1",type:"choice",q:"この線の名前は？",fig:lineKind('seg'),opts:["直線AB","線分AB","半直線AB","半直線BA"],c:1,ex:"両はしが A と B で止まっているので、線分AB。"},
+ a5:{u:"u1",type:"choice",q:"「AB と CD は垂直」を記号で書くと？",opts:["AB ⊥ CD","AB // CD","AB = CD"],c:0,ex:"垂直は ⊥。平行は //。"},
+ a6:{u:"u1",type:"choice",q:"「AB と CD は平行」を記号で書くと？",opts:["AB ⊥ CD","AB // CD","∠ABCD"],c:1,ex:"平行は //。2本の線がずっと交わらない形。"},
+ a7:{u:"u1",type:"choice",q:"黄色の角 ∠ABC の頂点はどれ？",fig:angleFig(),opts:["A","B","C"],c:1,ex:"∠ABC は、まん中の B が頂点。"},
+ a8:{u:"u1",type:"num",q:"点 A と直線 ℓ との距離は？（方眼1目もり 1cm）",fig:distFig(),ans:3,unit:"cm",ex:"距離は、A から ℓ に垂直に下ろした線（垂線）の長さ。3cm。ななめに測るのはまちがい。"},
+ /* 2 図形の移動 */
+ b1:{u:"u2",type:"card",html:'<b>移動は3種類。ゲームのキャラを動かすのと同じ</b><div class="cmp" style="grid-template-columns:1fr"><div><b>平行移動</b>　ずらす。決めるのは「どの向きに何マス」</div><div><b>回転移動</b>　回す。決めるのは「中心」と「角度」。180°回すのは点対称移動</div><div><b>対称移動</b>　折り返す。決めるのは「対称の軸」。キャラの左右反転</div></div><p>どの移動でも、<b>形と大きさは変わらない</b>。</p>'},
+ b2:{u:"u2",type:"move",kind:"t",q:"三角形をゴールにぴったり重ねるには？　予想を入れてから動かす。",start:[2,2],goal:[8,4],ex:"頂点を1つ選んで数える。右に6マス、上に2マス。"},
+ b3:{u:"u2",type:"move",kind:"t",q:"今度はゴールが左下。左や下はマイナスで入れる。",start:[9,6],goal:[4,3],ex:"右に −5（左に5）、上に −3（下に3）。"},
+ b4:{u:"u2",type:"move",kind:"r",q:"点 O を中心に回して、ゴールに重ねる。どう回す？",opts:["時計回りに 90°","反時計回りに 90°","180°"],c:1,deg:-90,ex:"反時計回りに 90°。O からの距離は回しても変わらない。"},
+ b5:{u:"u2",type:"move",kind:"r",q:"点 O を中心に回して、ゴールに重ねる。どう回す？",opts:["時計回りに 90°","反時計回りに 90°","180°"],c:2,deg:180,ex:"180°。180°回す移動を「点対称移動」という。"},
+ b6:{u:"u2",type:"move",kind:"s",q:"折り返してゴールに重ねる。対称の軸はどっち？",opts:["直線 ℓ（たて）","直線 m（よこ）"],c:0,ex:"たての直線 ℓ で左右に折り返す。キャラの左右反転と同じ。"},
+ b7:{u:"u2",type:"choice",q:"回転移動で、変わらないものは？",opts:["中心からの距離","図形の向き","図形の位置"],c:0,ex:"回すと向きと位置は変わる。中心 O から各頂点までの距離は変わらない。"},
+ b8:{u:"u2",type:"choice",q:"対称移動で、対応する点を結ぶ線分と対称の軸の関係は？",opts:["軸によって垂直に二等分される","軸と平行になる","軸と同じ長さになる"],c:0,ex:"折り返すと、対応する点は軸から同じ距離。結んだ線分は軸で垂直に二等分される。"},
+ b9:{u:"u2",type:"draw",q:"<b>方眼ノートにかこう。</b><br>三角形を1つかき、それを右に4マス、上に2マス平行移動した図をかく。<br>描けたらボタンを押す。",model:moveModel(),checks:["3つの頂点をそれぞれ同じだけずらした","対応する頂点に同じ記号（A と A′ など）をつけた","形と大きさが同じになっている"]},
+ /* 3 作図の意味 */
+ c1:{u:"u3",type:"card",html:'<b>作図の合言葉は「何が等しい？」</b><div class="cmp" style="grid-template-columns:1fr"><div>2つの<b>点</b>から等しい → <b>垂直二等分線</b></div><div>角の2つの<b>辺</b>から等しい → <b>角の二等分線</b></div><div>1つの点から同じ距離 → <b>円</b></div></div><p>まずは点を動かして、本当にそうなるか自分でたしかめる。</p>'},
+ c2:{u:"u3",type:"locus",mode:"pb",need:6,q:"点 P を動かして、A と B から<b>等しい距離</b>の点を6つ見つけよう。"},
+ c3:{u:"u3",type:"locus",mode:"ab",need:6,q:"点 P を動かして、角の<b>2つの辺から等しい距離</b>の点を6つ見つけよう。"},
+ c4:{u:"u3",type:"choice",q:"2点 A、B から等しい距離の点を全部集めると？",opts:["垂直二等分線","角の二等分線","円"],c:0,ex:"さっき見つけた点は1本の線に並んだ。それが垂直二等分線。"},
+ c5:{u:"u3",type:"choice",q:"角の2辺から等しい距離の点を全部集めると？",opts:["垂直二等分線","角の二等分線","円"],c:1,ex:"角のまん中を通る線。角の二等分線。"},
+ c6:{u:"u3",type:"choice",q:"点 O から 3cm の点を全部集めると？",opts:["垂直二等分線","角の二等分線","円"],c:2,ex:"中心 O、半径 3cm の円。コンパスでかける。"},
+ /* 4 基本の作図 */
+ d1:{u:"u4",type:"card",html:'<b>作図で使ってよいのは、定規とコンパスだけ</b><div class="ex bad"><span class="tag">悪い例</span>　定規の目もりで長さを測る。分度器で角度を測る。三角定規の直角で垂直を引く。</div><div class="ex good"><span class="tag">いい例</span>　定規は線を引くだけ。長さや角度はコンパスで写す。作図の線は消さずに残す。</div>'},
+ d2:{u:"u4",type:"construct",kind:"pb",q:"<b>垂直二等分線</b>の作図。「次の手順」で1つずつ進む。"},
+ d3:{u:"u4",type:"order",q:"垂直二等分線を作図する順番に、上から押して並べよう。",opts:["A を中心に、AB の半分より大きい半径で弧をかく","B を中心に、同じ半径で弧をかく","2つの弧の交点を2つとる","2つの交点を直線で結ぶ"],ex:"弧 → 弧 → 交点 → 結ぶ。半径は AB の半分より大きく。"},
+ d4:{u:"u4",type:"construct",kind:"ab",q:"<b>角の二等分線</b>の作図。「次の手順」で1つずつ進む。"},
+ d5:{u:"u4",type:"construct",kind:"perp",q:"<b>垂線</b>（点 P を通り、直線 ℓ に垂直な線）の作図。"},
+ d6:{u:"u4",type:"choice",q:"垂直二等分線の作図で、弧が交わらなかった。どうする？",opts:["半径を AB の半分より大きくしてかき直す","交わりそうな所に点を打つ","定規で AB のまん中を測る"],c:0,ex:"半径が小さいと交わらない。半分より大きい半径でかき直す。"},
+ d7:{u:"u4",type:"draw",q:"<b>ノートに作図しよう。</b><br>線分 AB を1本かき、垂直二等分線を作図する。<br>描けたらボタンを押す。",model:constructFull('pb'),checks:["弧の半径は AB の半分より大きい","2つの弧が2か所で交わった","交点どうしを直線で結んだ","作図の線（弧）を消していない","定規の目もりを使っていない"]},
+ /* 5 作図の文章題 */
+ e1:{u:"u5",type:"card",html:'<b>作図の文章題も4つの順番</b><ol style="margin:6px 0;padding-left:1.4em"><li>わかる・わからないを分ける。条件に下線と番号 ①②</li><li>条件ごとに「何が等しい？」→ 使う作図を決める</li><li>条件ごとに線を1本ずつかく</li><li><b>条件が2つなら、2本の線の交点</b>が答え。線は消さない</li></ol><div class="cmp" style="grid-template-columns:1fr"><div>2点から等しい → 垂直二等分線</div><div>2辺から等しい → 角の二等分線</div><div>点から○cm → 円</div><div>直線に垂直・最短距離 → 垂線</div><div>円の接線 → 接点を通る半径に垂線</div><div>円の中心 → 弦の垂直二等分線を2本</div></div>'},
+ e2:{u:"u5",type:"sort",ctx:"2点 A、B から等しい距離にあり、直線 ℓ 上にある点 P を作図しなさい。",q:"<b>1 わかる・わからないを分ける</b>",chips:["点 A","点 B","直線 ℓ","点 P"],cats:["k","k","k","u"],ex:"聞かれているのは点 P。条件は ① A、B から等しい　② ℓ 上にある。"},
+ e3:{u:"u5",type:"choice",ctx:"条件① A、B から等しい　条件② ℓ 上にある",q:"<b>2 条件①は何から等しい？</b>使う作図は？",opts:["垂直二等分線","角の二等分線","垂線"],c:0,ex:"2つの「点」から等しい → 垂直二等分線。"},
+ e4:{u:"u5",type:"choice",ctx:"条件① → 垂直二等分線をかいた。条件② → 直線 ℓ はもうある。",fig:probFig1(),q:"<b>4 点 P はどこ？</b>",opts:["2本の線（垂直二等分線と ℓ）の交点","線分 AB のまん中","A から ℓ に下ろした垂線と ℓ の交点"],c:0,ex:"条件が2つ → 2本の線の交点。ここなら①も②も満たす。"},
+ e5:{u:"u5",type:"sort",ctx:"∠XOY の2辺から等しい距離にあり、点 O から 3cm の点 P を作図しなさい。",q:"<b>1 わかる・わからないを分ける</b>",chips:["∠XOY","点 O からの距離 3cm","点 P"],cats:["k","k","u"],ex:"条件は ① 2辺から等しい　② O から 3cm。"},
+ e6:{u:"u5",type:"choice",ctx:"条件① ∠XOY の2辺から等しい",q:"<b>2 条件①で使う作図は？</b>",opts:["垂直二等分線","角の二等分線","円"],c:1,ex:"角の2辺から等しい → 角の二等分線。"},
+ e7:{u:"u5",type:"choice",ctx:"条件② 点 O から 3cm",q:"<b>2 条件②でかく線は？</b>",opts:["O を中心に半径 3cm の円","O を通る垂線","角の二等分線"],c:0,ex:"1つの点から同じ距離 → 円。コンパスを 3cm に開いてかく。"},
+ e8:{u:"u5",type:"choice",ctx:"角の二等分線と、半径 3cm の円をかいた。",q:"<b>4 点 P はどこ？</b>",opts:["角の二等分線と円の交点","円と辺 OX の交点","O"],c:0,ex:"条件が2つ → 2本の線の交点。"},
+ e9:{u:"u5",type:"choice",ctx:"円の一部（弧）だけが残っている。この円の中心 O を作図しなさい。",q:"使う作図は？",opts:["弦を2本ひき、それぞれの垂直二等分線の交点","弧の両はしを結んだ線分のまん中","弧に接線をひく"],c:0,ex:"円の中心は、弦の両はしから等しい距離 → 弦の垂直二等分線の上。2本ひけば交点が中心。"},
+ e10:{u:"u5",type:"choice",ctx:"円 O の周上の点 A を通る、円 O の接線を作図しなさい。",q:"使う作図は？",opts:["直線 OA をひき、A を通る OA の垂線","OA の垂直二等分線","∠AOX の二等分線"],c:0,ex:"接線は、接点を通る半径に垂直。A を通る OA の垂線をかく。"},
+ e11:{u:"u5",type:"draw",q:"<b>ノートでやろう。</b><br>ワークの作図の文章題を1問選び、4つの順番で解く。<br>描けたらボタンを押す。",model:probFig1(),checks:["条件に下線と番号 ①② をつけた","条件ごとに使う作図を書いた","条件ごとに線を1本ずつかいた","2本の線の交点に P を書いた","作図の線を消していない"]},
+ /* 6 おうぎ形 */
+ f1:{u:"u6",type:"sector",q:"中心角を動かして、弧の長さと面積の変わり方を見よう（半径 6cm）。"},
+ f2:{u:"u6",type:"card",html:'<b>おうぎ形は比例の①の型（1°あたりが変わらない）</b><p>円全体（360°）の何分のいくつかを考える。</p>'+tapeWithPie({frac:1/6,topName:'中心角',topPart:'60°',topAll:'360°',botName:'弧',botPart:'？',botAll:'12π'})+'<div class="ex bad"><span class="tag">悪い例</span>　π を 3.14 にする ／ 「π6」と書く ／ 単位がない</div><div class="ex good"><span class="tag">いい例</span>　12π × 60/360 = 2π　答え 2π cm</div>'},
+ f2a:{u:"u6",type:"roll",q:"<b>円周と直径の関係</b>　円周をまっすぐにのばして、直径とくらべよう。"},
+ f3:{u:"u6",type:"num",q:"半径 5cm の円の円周は？　（円周 ＝ 直径 × π）",ans:10,unit:"π cm",live:{kind:"circ",r:5},ex:"直径は 2 × 5 ＝ 10cm。円周 ＝ 10 × π ＝ 10π。答え 10π cm。"},
+ f3b:{u:"u6",type:"circlearea",q:"<b>円の面積の公式</b>　円を細い三角形に切って並べかえると、知っている形になる。"},
+ f4:{u:"u6",type:"num",q:"半径 5cm の円の面積は？　（面積 ＝ 半径 × 半径 × π）",ans:25,unit:"π cm²",live:{kind:"tiles",r:5},ex:"半径 × 半径 ＝ 5 × 5 ＝ 25。面積 ＝ 25 × π ＝ 25π。答え 25π cm²。"},
+ f5:{u:"u6",type:"slots",ctx:"半径 6cm、中心角 60° のおうぎ形の弧の長さを求める。",q:"<b>図に入れる</b><br>上が中心角、下が弧の長さ。（ア）〜（エ）に入るものを選ぼう。",slotFig:function(L){ var a=/°/.test(L[0])?parseFloat(L[0]):NaN, b=/°/.test(L[1])?parseFloat(L[1]):NaN, has=isFinite(a)&&isFinite(b)&&b>0, f=has?a/b:1/6, note='', warn=false;
+    if(has&&f>1){ note='（ア）が（イ）より大きい → おうぎ形が円より大きくなってしまう。'; warn=true; }
+    else if(has) note='おうぎ形は円の '+fmt(f)+'。'+(L[2]==='？'&&L[3]==='12π'?'弧（？）は円周 12π の '+fmt(f)+'。':(L[2]==='12π'?'弧が 12π だと、円周と同じ長さになってしまう。':''));
+    if(L[2]==='12π'&&L[3]==='？') warn=true;
+    return {svg:tapeWithPie({frac:Math.min(f,1),topName:'中心角',topPart:L[0],topAll:L[1],botName:'弧',botPart:L[2],botAll:L[3]}),note:note,warn:warn}; },slots:["（ア）おうぎ形の中心角","（イ）円全体の角","（ウ）おうぎ形の弧","（エ）円周（2π × 6）"],chips:["60°","360°","？","12π"],ans:[0,1,2,3],ex:"円全体は 360° と 12π。おうぎ形はその 60/360 ＝ 1/6。"},
+ f6:{u:"u6",type:"num",ctx:"半径 6cm、中心角 60° のおうぎ形。",fig:tapeWithPie({frac:1/6,topName:'中心角',topPart:'60°',topAll:'360°',botName:'弧',botPart:'？',botAll:'12π'}),q:"弧の長さは？　12π × 60/360 ＝ ？",ans:2,unit:"π cm",live:{kind:"arc",total:12,deg:60},ex:"12π × 1/6 ＝ 2π。答え 2π cm。"},
+ f7:{u:"u6",type:"num",ctx:"半径 6cm、中心角 60° のおうぎ形。",fig:tapeWithPie({frac:1/6,topName:'中心角',topPart:'60°',topAll:'360°',botName:'面積',botPart:'？',botAll:'36π'}),q:"面積は？　36π × 60/360 ＝ ？",ans:6,unit:"π cm²",live:{kind:"area",total:36,deg:60},ex:"円の面積 36π の 1/6。答え 6π cm²。"},
+ f8:{u:"u6",type:"num",ctx:"半径 6cm、弧の長さ 4π cm のおうぎ形。",fig:tapeWithPie({frac:1/3,topName:'中心角',topPart:'？',topAll:'360°',botName:'弧',botPart:'4π',botAll:'12π'}),q:"中心角は？　弧は円周の 4π/12π ＝ 1/3",ans:120,unit:"°",live:{kind:"angle",deg:120},ex:"360 × 1/3 ＝ 120。答え 120°。"},
+ f9:{u:"u6",type:"choice",q:"答えの書き方として正しいのは？",opts:["6π cm²","π6 cm²","18.84 cm²"],c:0,ex:"π は数字のうしろ。3.14 にしない。単位まで書く。"},
+ f10:{u:"u6",type:"draw",q:"<b>ノートでやろう。</b><br>半径 9cm、中心角 40° のおうぎ形の弧の長さを、2本のテープ図をかいてから求める。<br>描けたらボタンを押す。",model:tapeWithPie({frac:1/9,topName:'中心角',topPart:'40°',topAll:'360°',botName:'弧',botPart:'？',botAll:'18π'}),checks:["上に中心角、下に弧のテープをかいた","円全体（360° と 18π）を書いた","40/360 ＝ 1/9 を計算した","答えを 2π cm と、π と単位つきで書いた"]},
+ /* 7 ワークの直し */
+ g1:{u:"u7",type:"card",html:'<b>ワークの直しは、ここに入る</b><p>ワークを解いて丸つけしたら、写真をおうちの人に渡そう。まちがえた問題が、前に書いた答えつきでここに追加される。</p>'}
+};
+/* ===== 追加：回答後のイメージ・ゲームとのつながり・傾きとのつながり ===== */
+function DR(el,t0,t1){ /* 線を描くアニメーション（最後の形を基本値に） */
+  return el.replace(/\/?>$/, ' pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" values="1;1;0" keyTimes="0;'+(t0/t1).toFixed(3)+';1" dur="'+t1+'s" fill="freeze"/></'+(el.indexOf('<path')===0?'path':(el.indexOf('<circle')===0?'circle':'line'))+'>');
+}
+function FD(inner,t0,t1){ return '<g opacity="1"><animate attributeName="opacity" values="0;0;1" keyTimes="0;'+(t0/t1).toFixed(3)+';1" dur="'+t1+'s" fill="freeze"/>'+inner+'</g>'; }
+function rightMark(x,y,dx,dy,c){ return '<path d="M'+(x+dx*12)+' '+(y+dy*0)+' L'+(x+dx*12)+' '+(y-12)+' L'+x+' '+(y-12)+'" fill="none" stroke="'+(c||'var(--red)')+'" stroke-width="2"/>'; }
+
+/* --- 1 用語と記号 --- */
+ITEMS.a5.exfig = svg('0 0 300 150', grid(300,150)+ln(30,90,270,90,'var(--ink)',2.5)+ln(150,15,150,140,'var(--ink)',2.5)+'<rect x="150" y="76" width="14" height="14" fill="none" stroke="var(--red)" stroke-width="2"/>'+dot(40,90)+dot(260,90)+dot(150,24)+dot(150,132)+T(36,110,'A')+T(264,110,'B')+T(164,26,'C',{a:'start'})+T(164,138,'D',{a:'start'})+T(205,60,'AB ⊥ CD',{size:18,c:'var(--red)',w:1})+T(205,80,'直角に交わる',{size:12,c:'var(--red)'}),'垂直のイメージ');
+ITEMS.a6.exfig = svg('0 0 300 150', grid(300,150)+ln(30,50,270,50,'var(--ink)',2.5)+ln(30,110,270,110,'var(--ink)',2.5)+dot(40,50)+dot(260,50)+dot(40,110)+dot(260,110)+T(36,40,'A')+T(264,40,'B')+T(36,132,'C')+T(264,132,'D')+'<path d="M146 44 L154 50 L146 56 M146 104 L154 110 L146 116" fill="none" stroke="var(--red)" stroke-width="2"/>'+ln(100,50,100,110,'var(--comp)',1.5,'4 3')+ln(200,50,200,110,'var(--comp)',1.5,'4 3')+T(150,84,'どこでも同じはば → AB // CD',{size:13,c:'var(--red)',w:1}),'平行のイメージ');
+ITEMS.a7.exfig = svg('0 0 240 140', grid(240,140)+ln(60,110,210,110)+ln(60,110,150,20)+DR('<path d="M150 20 L60 110 L210 110" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>',0.3,1.8)+dot(60,110,'var(--red)',7)+T(48,128,'B',{c:'var(--red)',w:1,size:16})+T(214,130,'C')+T(160,18,'A')+T(150,78,'A → B → C と読む',{size:12,c:'#9A7300',w:1})+T(150,94,'まん中の B が頂点',{size:12,c:'var(--red)',w:1}),'角ABCの読み方');
+ITEMS.a8.exfig = svg('0 0 240 140', grid(240,140)+ln(10,110,230,110,'var(--ink)',2.5)+T(18,100,'ℓ')+dot(120,50)+T(132,46,'A')+ln(120,50,200,110,'var(--rasp)',2,'5 4')+T(166,70,'✕ ななめは長い',{size:12,c:'var(--rasp)',a:'start'})+DR('<line x1="120" y1="50" x2="120" y2="110" stroke="var(--good)" stroke-width="4"/>',0.2,1.2)+'<rect x="120" y="98" width="12" height="12" fill="none" stroke="var(--good)" stroke-width="2"/>'+T(100,84,'◯ 3cm',{size:13,c:'var(--good)',w:1,a:'end'})+T(120,132,'垂線の長さ ＝ 距離（いちばん短い）',{size:12,c:'var(--good)'}),'点と直線の距離のイメージ');
+
+/* --- 2 図形の移動：ゲームのキャラ --- */
+function hero(mode){ /* 自作キャラ（4×5マス、1マス10px）。左下が原点 */
+  var R=[[0,4,3,1,'#C8323C'],[3,4,1,1,'#C8323C'],[0,3,3,1,'#F2C9A0'],[2,3,1,1,'#1D2B3A'],[0,1,3,2,'#2E6FB7'],[0,0,1,1,'#6B4423'],[2,0,1,1,'#6B4423']], g='';
+  R.forEach(function(r){ g+='<rect x="'+(r[0]*10)+'" y="'+(-(r[1]+r[3])*10)+'" width="'+(r[2]*10)+'" height="'+(r[3]*10)+'" '+(mode==='ghost'?'fill="none" stroke="var(--good)" stroke-width="1.6" stroke-dasharray="3 2"':'fill="'+r[4]+'" stroke="#1D2B3A" stroke-width="1"')+'/>'; });
+  return g;
+}
+moveSVG = function(it,c,animate){
+  var W=340,H=220,g=grid(W,H), O=[170,110];
+  if(it.kind==="t"){
+    var s=it.start,go=it.goal, sx=s[0]*20, sy=H-s[1]*20, gx=go[0]*20, gy=H-go[1]*20;
+    g+='<g transform="translate('+gx+' '+gy+')">'+hero('ghost')+'</g>'+T(gx+20,gy+16,'ゴール',{size:12,c:'var(--good)'});
+    var dx=0,dy=0; if(animate){ dx=(+c.vals[0]||0)*20; dy=-(+c.vals[1]||0)*20; }
+    g+='<g id="mvshape" style="transition:transform 1s ease;transform:translate('+dx+'px,'+dy+'px)"><g transform="translate('+sx+' '+sy+')">'+hero()+'</g>'+dot(sx,sy,'var(--gold)',5)+'</g>';
+  }
+  if(it.kind==="r"){
+    var place='translate('+(O[0]+20)+' '+O[1]+')';
+    g+='<g transform="rotate('+it.deg+' '+O[0]+' '+O[1]+')"><g transform="'+place+'">'+hero('ghost')+'</g></g>';
+    var ang=0; if(animate && c.pick!=null){ ang = c.pick===0?90:(c.pick===1?-90:180); }
+    g+='<g id="mvshape" style="transform-box:view-box;transform-origin:'+O[0]+'px '+O[1]+'px;transition:transform 1s ease;transform:rotate('+ang+'deg)"><g transform="'+place+'">'+hero()+'</g>'+ln(O[0],O[1],O[0]+20,O[1],'var(--gold)',2,'3 2')+'</g>';
+    g+=dot(O[0],O[1],'var(--red)',5)+T(O[0]-12,O[1]+20,'O',{w:1});
+  }
+  if(it.kind==="s"){
+    var X=170,Y=150, place2='translate(90 120)';
+    g+=ln(X,5,X,215,'var(--comp)',2.5)+T(X+10,18,'ℓ',{c:'var(--comp)'})+ln(5,Y,335,Y,'var(--comp)',2.5)+T(325,Y-8,'m',{c:'var(--comp)'});
+    g+='<g transform="translate('+(2*X)+' 0) scale(-1 1)"><g transform="'+place2+'">'+hero('ghost')+'</g></g>';
+    var tf='none'; if(animate && c.pick!=null){ tf = c.pick===0 ? 'scale(-1,1)' : 'scale(1,-1)'; }
+    var org = (animate && c.pick===1) ? '0px '+Y+'px' : X+'px 0px';
+    g+='<g id="mvshape" style="transform-box:view-box;transform-origin:'+org+';transition:transform 1s ease;transform:'+tf+'"><g transform="'+place2+'">'+hero()+'</g></g>';
+  }
+  return svg('0 0 '+W+' '+H,g,'キャラを動かすパズル');
+};
+function gameScene(){
+  var g=grid(340,170);
+  for(var i=0;i<17;i++) g+='<rect x="'+(i*20)+'" y="150" width="20" height="20" fill="#8A5A33" stroke="#1D2B3A" stroke-width="1"/><rect x="'+(i*20)+'" y="150" width="20" height="5" fill="#4F9A3E"/>';
+  g+='<g transform="translate(30 150)">'+hero()+'</g><g transform="translate(110 150)" opacity=".55">'+hero()+'</g>'+ln(66,128,104,128,'var(--red)',3)+arrowHead(110,128,0,'var(--red)')+T(85,84,'平行移動',{size:12,c:'var(--red)',w:1})+T(85,70,'x = x + 8',{size:11,c:'var(--sub)'});
+  g+='<g transform="translate(230 150) scale(-1 1)">'+hero()+'</g>'+ln(236,60,236,150,'var(--comp)',1.5,'4 3')+T(200,40,'左を向く ＝ 対称移動',{size:12,c:'var(--comp)',w:1});
+  g+='<g transform="translate(306 76)"><circle r="12" fill="var(--gold)" stroke="#1D2B3A" stroke-width="1.5"/><rect x="-3" y="-8" width="6" height="16" fill="var(--gold2)"/></g><path d="M288 56 A26 26 0 0 1 324 56" fill="none" stroke="var(--red)" stroke-width="2"/>'+arrowHead(326,58,60,'var(--red)')+T(300,108,'回るコイン',{size:12,c:'var(--red)',w:1})+T(300,124,'＝ 回転移動',{size:12,c:'var(--red)',w:1});
+  return svg('0 0 340 170',g,'横スクロールゲームのキャラの動き');
+}
+ITEMS.b1.html = '<b>たっくんの横スクロールゲームのキャラは、3つの移動で動いている</b>'+gameScene()+
+  '<div class="cmp" style="grid-template-columns:1fr"><div><b>平行移動</b>　歩く・ジャンプ。コードなら <code>x = x + 速さ</code>、<code>y = y + 高さ</code>。決めるのは「どの向きに何マス」</div><div><b>対称移動</b>　キャラが左を向く（左右反転）。決めるのは「対称の軸」</div><div><b>回転移動</b>　回るコインや回転する床。決めるのは「中心」と「角度」。180°回すのは点対称移動</div></div><p>どの移動でも、キャラの<b>形と大きさは変わらない</b>。</p>';
+ITEMS.b2.q="キャラをゴールの位置まで歩かせる。右に何マス、上に何マス？　予想を入れてから動かす。"; ITEMS.b2.code="x = x + 6;  y = y + 2;";
+ITEMS.b2.ex="足もとの ● から数える。右に6マス、上に2マス。";
+ITEMS.b3.q="今度はゴールが左下。左や下はマイナスで入れる。"; ITEMS.b3.code="x = x − 5;  y = y − 3;";
+ITEMS.b4.q="回転する床に乗ったキャラ。点 O を中心にどう回すとゴールに重なる？"; ITEMS.b4.code="角度 = 角度 − 90;　（中心 O）";
+ITEMS.b5.q="点 O を中心に回して、ゴールに重ねる。どう回す？"; ITEMS.b5.code="角度 = 角度 + 180;　（さかさまになる）";
+ITEMS.b6.q="キャラを反対向きにして、ゴールに重ねる。対称の軸はどっち？"; ITEMS.b6.code="向き = 左;　（左右反転 ＝ 対称移動）";
+ITEMS.b7.exfig = (function(){ var O=[140,150], g=grid(340,200);
+  g+='<g transform="translate('+(O[0]+60)+' '+O[1]+')" opacity=".55">'+hero()+'</g><g transform="rotate(-90 '+O[0]+' '+O[1]+')"><g transform="translate('+(O[0]+60)+' '+O[1]+')">'+hero()+'</g></g>';
+  g+=ln(O[0],O[1],O[0]+60,O[1],'var(--gold)',4)+ln(O[0],O[1],O[0],O[1]-60,'var(--gold)',4)+DR('<path d="M200 150 A60 60 0 0 0 140 90" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-dasharray="6 4"/>',0.2,1.2)+arrowHead(141,90,180,'var(--red)');
+  g+=dot(O[0],O[1],'var(--red)',6)+T(O[0]-6,O[1]+18,'O',{w:1,a:'end'})+T(O[0]+30,O[1]+18,'3マス',{size:12,c:'#9A7300',w:1})+T(O[0]-8,O[1]-28,'3マス',{size:12,c:'#9A7300',w:1,a:'end'})+T(250,40,'回しても、O から',{size:13,c:'var(--red)',w:1})+T(250,58,'足もとまでの距離は同じ',{size:13,c:'var(--red)',w:1});
+  return svg('0 0 340 200',g,'回転しても中心からの距離は同じ'); })();
+ITEMS.b8.exfig = (function(){ var X=170, g=grid(340,180); g+=ln(X,5,X,175,'var(--comp)',2.5)+T(X+8,18,'軸',{a:'start',c:'var(--comp)'});
+  g+='<g transform="translate(90 150)">'+hero()+'</g><g transform="translate(340 0) scale(-1 1)"><g transform="translate(90 150)">'+hero()+'</g></g>';
+  var py=110; g+=dot(110,py,'var(--red)',5)+dot(230,py,'var(--red)',5)+T(110,py-10,'P')+T(230,py-10,'P′')+DR('<line x1="110" y1="'+py+'" x2="230" y2="'+py+'" stroke="var(--red)" stroke-width="2.5"/>',0.2,1.2)+'<rect x="'+X+'" y="'+(py-12)+'" width="12" height="12" fill="none" stroke="var(--red)" stroke-width="2"/>'+T(140,py+20,'同じ',{size:12,c:'var(--red)'})+T(200,py+20,'同じ',{size:12,c:'var(--red)'})+T(170,40,'軸と垂直に交わり、同じ長さに分かれる',{size:12,c:'var(--red)',w:1});
+  return svg('0 0 340 180',g,'対称移動で対応する点を結ぶ線分'); })();
+
+/* --- 3 作図の意味：比例のグラフとつなげる --- */
+function pbFig(){ var g=grid(340,200); g+=dot(110,110)+dot(230,110)+T(98,130,'A')+T(242,130,'B')+DR('<line x1="170" y1="5" x2="170" y2="195" stroke="var(--red)" stroke-width="3"/>',0.1,1)+dot(170,50,'var(--gold)',6)+ln(170,50,110,110,'var(--comp)',2)+ln(170,50,230,110,'var(--good)',2)+T(128,72,'同じ',{size:12,c:'var(--comp)'})+T(212,72,'同じ',{size:12,c:'var(--good)'})+'<rect x="170" y="98" width="12" height="12" fill="none" stroke="var(--red)" stroke-width="2"/>'+T(240,30,'垂直二等分線',{size:13,c:'var(--red)',w:1}); return svg('0 0 340 200',g,'垂直二等分線のイメージ'); }
+function abFig(){ var g=grid(340,200), O=[60,180], a2=-50*Math.PI/180, a3=-25*Math.PI/180; g+=ln(O[0],O[1],330,O[1])+ln(O[0],O[1],O[0]+300*Math.cos(a2),O[1]+300*Math.sin(a2))+DR('<line x1="'+O[0]+'" y1="'+O[1]+'" x2="'+(O[0]+300*Math.cos(a3)).toFixed(1)+'" y2="'+(O[1]+300*Math.sin(a3)).toFixed(1)+'" stroke="var(--red)" stroke-width="3"/>',0.1,1);
+  var P=[O[0]+180*Math.cos(a3),O[1]+180*Math.sin(a3)], f1=[P[0],O[1]], t2=(P[0]-O[0])*Math.cos(a2)+(P[1]-O[1])*Math.sin(a2), f2=[O[0]+t2*Math.cos(a2),O[1]+t2*Math.sin(a2)];
+  g+=dot(P[0],P[1],'var(--gold)',6)+ln(P[0],P[1],f1[0],f1[1],'var(--comp)',2.5)+ln(P[0],P[1],f2[0],f2[1],'var(--good)',2.5)+T(P[0]+8,(P[1]+f1[1])/2,'同じ',{a:'start',size:12,c:'var(--comp)'})+T((P[0]+f2[0])/2-6,(P[1]+f2[1])/2-4,'同じ',{a:'end',size:12,c:'var(--good)'})+T(250,40,'角の二等分線',{size:13,c:'var(--red)',w:1})+dot(O[0],O[1])+T(O[0]-10,O[1]+16,'O');
+  return svg('0 0 340 200',g,'角の二等分線のイメージ'); }
+function circFig(){ var g=grid(340,200); g+=DR('<circle cx="170" cy="100" r="80" fill="none" stroke="var(--red)" stroke-width="3"/>',0.1,1.2)+dot(170,100)+T(160,96,'O',{a:'end'}); [0,70,150,220,290].forEach(function(d,i){ var a=d*Math.PI/180, x=170+80*Math.cos(a), y=100+80*Math.sin(a); g+=FD(dot(x,y,'var(--gold)',6)+ln(170,100,x,y,'var(--comp)',1.5,'4 3'),0.2+i*0.2,1.4); }); g+=T(170,196,'O から 3cm の点を全部集めると円',{size:12,c:'var(--red)',w:1}); return svg('0 0 340 200',g,'円のイメージ'); }
+ITEMS.c4.exfig=pbFig(); ITEMS.c5.exfig=abFig(); ITEMS.c6.exfig=circFig();
+function xyPlane(extra){ var g='', X=function(x){return 40+x*20;}, Y=function(y){return 200-y*20;};
+  for(var i=0;i<=14;i++) g+=ln(X(i),Y(0),X(i),Y(9.5),'var(--grid)',1); for(var j=0;j<=9;j++) g+=ln(X(0),Y(j),X(14.5),Y(j),'var(--grid)',1);
+  g+=ln(X(0),Y(0),X(14.5),Y(0),'var(--ink)',2)+ln(X(0),Y(0),X(0),Y(9.7),'var(--ink)',2)+T(X(14.5),Y(0)-6,'x',{a:'end'})+T(X(0)+8,Y(9.6)+4,'y',{a:'start'})+T(X(0)-6,Y(0)+14,'O');
+  for(i=2;i<=14;i+=2) g+=T(X(i),Y(0)+14,i,{size:10,c:'var(--sub)'}); for(j=2;j<=8;j+=2) g+=T(X(0)-6,Y(j)+4,j,{size:10,c:'var(--sub)',a:'end'});
+  return g+(extra||''); }
+ITEMS.c7={u:"u3",type:"locus",mode:"xy",need:5,q:"今度は座標で。点 P を動かして、<b>x 軸と y 軸から等しい距離</b>の点を5つ見つけよう。見つけた点の座標を見てみよう。"};
+ITEMS.c8={u:"u3",type:"choice",q:"x 軸と y 軸から等しい点は、どんな式のグラフに並んだ？",fig:svg('0 0 340 220',xyPlane(),'座標平面'),opts:["y = x","y = 2x","y = −x + 8"],c:0,ex:"見つけた点は (2, 2)、(3, 3)、(5, 5)…。y がいつも x と同じなので <b>y = x</b>。比例のグラフで、比例定数（傾き）は 1。x が1増えると y も1増える、ななめ45°の線。",
+  exfig:svg('0 0 340 220',xyPlane(DR('<line x1="40" y1="200" x2="230" y2="10" stroke="var(--red)" stroke-width="3"/>',0.1,1.2)+[2,4,6].map(function(v){return dot(40+v*20,200-v*20,'var(--gold)',6);}).join('')+'<path d="M80 160 L100 160 L100 140" fill="none" stroke="var(--comp)" stroke-width="2.5"/>'+T(90,174,'右へ1',{size:11,c:'var(--comp)'})+T(106,152,'上へ1',{a:'start',size:11,c:'var(--comp)'})+T(250,40,'y = x（比例、a = 1）',{size:14,c:'var(--red)',w:1})+T(250,60,'角の二等分線',{size:12,c:'var(--red)'})),'y = x のグラフ')};
+ITEMS.c9={u:"u3",type:"choice",q:"A(4, 0) と B(0, 4) から等しい距離の点を全部集めた線（垂直二等分線）は？",fig:svg('0 0 340 220',xyPlane(dot(120,200,'var(--ink)',5)+dot(40,120,'var(--ink)',5)+T(126,192,'A(4, 0)',{a:'start',size:12})+T(48,116,'B(0, 4)',{a:'start',size:12})+ln(120,200,40,120,'var(--sub)',1.5,'4 3')),'AとB'),opts:["y = x","y = 4x","y = −x + 4"],c:0,ex:"A と B のまん中は (2, 2)。そこを垂直に通る線は (0, 0)、(2, 2)、(4, 4)… を通る。<b>y = x</b>。作図の線が、比例のグラフになっている。",
+  exfig:svg('0 0 340 220',xyPlane(dot(120,200,'var(--ink)',5)+dot(40,120,'var(--ink)',5)+T(126,192,'A',{a:'start'})+T(48,116,'B',{a:'start'})+ln(120,200,40,120,'var(--sub)',2)+DR('<line x1="40" y1="200" x2="230" y2="10" stroke="var(--red)" stroke-width="3"/>',0.1,1.2)+dot(80,160,'var(--gold)',6)+'<path d="M'+(80+5.7)+' '+(160+5.7)+' L'+(80+11.4)+' 160 L'+(80+5.7)+' '+(160-5.7)+'" fill="none" stroke="var(--red)" stroke-width="2"/>'+T(250,40,'y = x',{size:15,c:'var(--red)',w:1})+T(250,60,'AB の垂直二等分線',{size:12,c:'var(--red)'})),'垂直二等分線が y = x')};
+
+/* --- 4 基本の作図 --- */
+ITEMS.d3.type="dragorder"; ITEMS.d3.q="垂直二等分線を作図する順番に、カードを<b>指（マウス）で動かして</b>並べかえよう。";
+ITEMS.d6.exfig = svg('0 0 340 170', grid(340,170)+ln(110,85,230,85)+dot(110,85)+dot(230,85)+T(110,104,'A')+T(230,104,'B')+arcPath(110,85,40,-40,40,'var(--rasp)',2.5)+arcPath(230,85,40,140,220,'var(--rasp)',2.5)+T(170,24,'✕ 半径 40（AB の半分 60 より小さい）→ 交わらない',{size:11,c:'var(--rasp)'})+DR(arcPath(110,85,80,-50,50,'var(--good)',2.5),0.3,1.2)+DR(arcPath(230,85,80,130,230,'var(--good)',2.5),0.6,1.5)+FD(dot(170,85-Math.sqrt(6400-3600),'var(--good)',5)+dot(170,85+Math.sqrt(6400-3600),'var(--good)',5),1.4,1.8)+T(170,162,'◯ 半径 80（半分より大きい）→ 2か所で交わる',{size:11,c:'var(--good)',w:1}),'弧の半径と交わり方');
+
+/* --- 5 作図の文章題 --- */
+function cAnim(kind){
+  var g=grid(160,120), d=2.2;
+  if(kind==='pb'){ g+=dot(50,70)+dot(110,70)+T(46,88,'A',{size:11})+T(114,88,'B',{size:11})+DR(arcPath(50,70,42,-50,50,'var(--comp)',1.5),0.2,d)+DR(arcPath(110,70,42,130,230,'var(--comp)',1.5),0.6,d)+DR('<line x1="80" y1="8" x2="80" y2="115" stroke="var(--red)" stroke-width="3"/>',1.2,d); }
+  if(kind==='ab'){ g+=ln(20,105,150,105)+ln(20,105,110,15)+DR('<line x1="20" y1="105" x2="150" y2="50" stroke="var(--red)" stroke-width="3"/>',0.6,d)+dot(20,105); }
+  if(kind==='ci'){ g+=dot(80,60)+DR('<line x1="80" y1="60" x2="122" y2="60" stroke="var(--comp)" stroke-width="2"/>',0.1,d)+DR('<circle cx="80" cy="60" r="42" fill="none" stroke="var(--red)" stroke-width="3"/>',0.6,d); }
+  if(kind==='pp'){ g+=ln(10,95,150,95)+dot(80,25)+T(90,24,'P',{size:11,a:'start'})+DR('<line x1="80" y1="25" x2="80" y2="95" stroke="var(--red)" stroke-width="3"/>',0.4,d)+FD('<rect x="80" y="83" width="12" height="12" fill="none" stroke="var(--red)" stroke-width="2"/>',1.4,d); }
+  if(kind==='tg'){ g+='<circle cx="65" cy="65" r="38" fill="none" stroke="var(--ink)" stroke-width="2"/>'+dot(65,65)+dot(103,65)+DR('<line x1="65" y1="65" x2="103" y2="65" stroke="var(--comp)" stroke-width="2.5"/>',0.2,d)+DR('<line x1="103" y1="8" x2="103" y2="115" stroke="var(--red)" stroke-width="3"/>',0.9,d)+FD('<rect x="91" y="53" width="12" height="12" fill="none" stroke="var(--red)" stroke-width="2"/>',1.5,d); }
+  if(kind==='ce'){ var C=[80,64], r=46, P=[200,250,330].map(function(dg){ var t=dg*Math.PI/180; return [C[0]+r*Math.cos(t),C[1]+r*Math.sin(t)]; });
+    function bs(p,q){ var m=[(p[0]+q[0])/2,(p[1]+q[1])/2], v=[q[0]-p[0],q[1]-p[1]], L=Math.hypot(v[0],v[1]), n=[-v[1]/L,v[0]/L]; return '<line x1="'+(m[0]-n[0]*70).toFixed(1)+'" y1="'+(m[1]-n[1]*70).toFixed(1)+'" x2="'+(m[0]+n[0]*70).toFixed(1)+'" y2="'+(m[1]+n[1]*70).toFixed(1)+'" stroke="var(--red)" stroke-width="2"/>'; }
+    g+=arcPath(C[0],C[1],r,180,350,'var(--ink)',2)+ln(P[0][0],P[0][1],P[1][0],P[1][1],'var(--comp)',2)+ln(P[1][0],P[1][1],P[2][0],P[2][1],'var(--comp)',2)+DR(bs(P[0],P[1]),0.4,d)+DR(bs(P[1],P[2]),0.9,d)+FD(dot(C[0],C[1],'var(--gold)',6),1.6,d); }
+  if(kind==='x2'){ g+=DR('<line x1="10" y1="100" x2="150" y2="20" stroke="var(--red)" stroke-width="3"/>',0.2,d)+DR('<line x1="20" y1="15" x2="140" y2="110" stroke="var(--comp)" stroke-width="3"/>',0.8,d)+FD('<circle cx="81" cy="59" r="7" fill="var(--gold)" stroke="#1D2B3A" stroke-width="1.5"/>',1.6,d); }
+  return svg('0 0 160 120',g,'作図のイメージ');
+}
+var CONCEPTS=[['pb','2つの<b>点</b>から等しい','垂直二等分線'],['ab','2つの<b>辺</b>から等しい','角の二等分線'],['ci','1つの点から ○cm','円'],['pp','直線に垂直・<b>いちばん近い</b>','垂線'],['tg','円の<b>接線</b>','接点を通る半径に垂線'],['ce','円の<b>中心</b>を見つける','弦の垂直二等分線を2本'],['x2','<b>条件が2つ</b>','2本の線の<b>交点</b>']];
+ITEMS.e1.type="conceptanim";
+ITEMS.e1.html='<b>作図の文章題も4つの順番</b><ol style="margin:6px 0;padding-left:1.4em"><li>わかる・わからないを分ける。条件に下線と番号 ①②</li><li>条件ごとに「何が等しい？」→ 使う作図を決める</li><li>条件ごとに線を1本ずつかく</li><li><b>条件が2つなら、2本の線の交点</b>が答え。線は消さない</li></ol>';
+function probBase(extra){ var g=grid(340,220), A=[110,60],B=[230,150]; g+=ln(20,170,330,50,'var(--ink)',2.5)+T(322,44,'ℓ')+dot(A[0],A[1])+dot(B[0],B[1])+T(96,52,'A')+T(240,168,'B'); return svg('0 0 340 220',g+(extra||''),'作図の文章題の図'); }
+ITEMS.e2.fig=probBase(FD(T(170,206,'点 P は、まだどこかわからない（？）',{size:12,c:'var(--rasp)',w:1}),0.2,0.8));
+ITEMS.e3.fig=probBase(ln(110,60,230,150,'var(--comp)',1.5,'4 3')+T(185,96,'①は A と B の2つの「点」',{size:12,c:'var(--comp)',w:1,a:'start'}));
+ITEMS.e3.exfig=probBase(DR('<line x1="290" y1="-55" x2="50" y2="265" stroke="var(--red)" stroke-width="3"/>',0.2,1.4)+T(64,206,'垂直二等分線',{size:12,c:'var(--red)',w:1,a:'start'}));
+ITEMS.e4.exfig=probBase(ln(290,-55,50,265,'var(--red)',2.5)+FD('<circle cx="171" cy="103" r="9" fill="var(--gold)" stroke="#1D2B3A" stroke-width="2"/>'+T(150,96,'P',{w:1,size:16}),0.3,1)+T(240,204,'①の線と②の線が交わる所',{size:12,c:'var(--red)',w:1}));
+function angBase(extra){ var g=grid(340,220), O=[50,190], aY=-55*Math.PI/180; g+=ln(O[0],O[1],330,O[1])+ln(O[0],O[1],O[0]+260*Math.cos(aY),O[1]+260*Math.sin(aY))+dot(O[0],O[1])+T(O[0]-10,O[1]+16,'O')+T(326,O[1]-8,'X')+T(O[0]+250*Math.cos(aY)+12,O[1]+250*Math.sin(aY),'Y'); return svg('0 0 340 220',g+(extra||''),'角XOY'); }
+var aMid=-27.5*Math.PI/180;
+ITEMS.e5.fig=angBase(T(200,214,'点 P は、まだどこかわからない（？）',{size:12,c:'var(--rasp)',w:1}));
+ITEMS.e6.fig=angBase(); ITEMS.e6.exfig=angBase(DR('<line x1="50" y1="190" x2="'+(50+290*Math.cos(aMid)).toFixed(1)+'" y2="'+(190+290*Math.sin(aMid)).toFixed(1)+'" stroke="var(--red)" stroke-width="3"/>',0.2,1.3)+T(240,60,'角の二等分線',{size:12,c:'var(--red)',w:1}));
+ITEMS.e7.fig=angBase(); ITEMS.e7.exfig=angBase(DR('<line x1="50" y1="190" x2="110" y2="190" stroke="var(--comp)" stroke-width="3"/>',0.1,0.8)+DR('<circle cx="50" cy="190" r="60" fill="none" stroke="var(--comp)" stroke-width="3"/>',0.6,1.6)+T(80,210,'3cm',{size:12,c:'var(--comp)',w:1}));
+ITEMS.e8.fig=angBase(ln(50,190,50+290*Math.cos(aMid),190+290*Math.sin(aMid),'var(--red)',2.5)+'<circle cx="50" cy="190" r="60" fill="none" stroke="var(--comp)" stroke-width="2.5"/>');
+ITEMS.e8.exfig=angBase(ln(50,190,50+290*Math.cos(aMid),190+290*Math.sin(aMid),'var(--red)',2.5)+'<circle cx="50" cy="190" r="60" fill="none" stroke="var(--comp)" stroke-width="2.5"/>'+FD('<circle cx="'+(50+60*Math.cos(aMid)).toFixed(1)+'" cy="'+(190+60*Math.sin(aMid)).toFixed(1)+'" r="8" fill="var(--gold)" stroke="#1D2B3A" stroke-width="2"/>'+T(50+60*Math.cos(aMid)+12,190+60*Math.sin(aMid)-8,'P',{w:1,size:16,a:'start'}),0.2,0.9));
+function arcBase(extra){ var g=grid(340,200), C=[170,120], r=80; g+='<path d="M'+(C[0]-r)+' '+C[1]+' A'+r+' '+r+' 0 0 1 '+(C[0]+r*Math.cos(-0.35))+' '+(C[1]+r*Math.sin(-0.35))+'" fill="none" stroke="var(--ink)" stroke-width="3"/>'; return svg('0 0 340 200',g+(extra||''),'円の一部'); }
+ITEMS.e9.fig=arcBase();
+ITEMS.e9.exfig=(function(){ var C=[170,120], r=80, P1=[C[0]-r,C[1]], P2=[C[0]+r*Math.cos(-2.2),C[1]+r*Math.sin(-2.2)], P3=[C[0]+r*Math.cos(-0.5),C[1]+r*Math.sin(-0.5)];
+  function bis(p,q){ var m=[(p[0]+q[0])/2,(p[1]+q[1])/2], v=[q[0]-p[0],q[1]-p[1]], L=Math.hypot(v[0],v[1]), n=[-v[1]/L,v[0]/L]; return '<line x1="'+(m[0]-n[0]*140).toFixed(1)+'" y1="'+(m[1]-n[1]*140).toFixed(1)+'" x2="'+(m[0]+n[0]*140).toFixed(1)+'" y2="'+(m[1]+n[1]*140).toFixed(1)+'" stroke="var(--red)" stroke-width="2.5"/>'; }
+  return arcBase(ln(P1[0],P1[1],P2[0],P2[1],'var(--comp)',2.5)+ln(P2[0],P2[1],P3[0],P3[1],'var(--comp)',2.5)+DR(bis(P1,P2),0.2,1.2)+DR(bis(P2,P3),0.8,1.8)+FD(dot(C[0],C[1],'var(--gold)',7)+T(C[0]+10,C[1]+18,'中心 O',{a:'start',w:1}),1.6,2)+T(60,30,'弦（青）2本の垂直二等分線（赤）の交点',{size:11,c:'var(--red)',w:1,a:'start'})); })();
+function tanBase(extra){ var g=grid(340,200); g+='<circle cx="140" cy="100" r="70" fill="none" stroke="var(--ink)" stroke-width="2.5"/>'+dot(140,100)+T(128,96,'O',{a:'end'})+dot(210,100)+T(216,94,'A',{a:'start'}); return svg('0 0 340 200',g+(extra||''),'円Oと点A'); }
+ITEMS.e10.fig=tanBase();
+ITEMS.e10.exfig=tanBase(DR('<line x1="140" y1="100" x2="210" y2="100" stroke="var(--comp)" stroke-width="3"/>',0.1,0.8)+DR('<line x1="210" y1="5" x2="210" y2="195" stroke="var(--red)" stroke-width="3"/>',0.7,1.6)+FD('<rect x="198" y="88" width="12" height="12" fill="none" stroke="var(--red)" stroke-width="2"/>'+T(240,30,'接線は OA に垂直',{size:12,c:'var(--red)',w:1,a:'start'}),1.4,1.9));
+
+function moveModel(){ var g=grid(240,140); g+='<polygon points="'+polyPts(TRI,40,120)+'" fill="var(--stone2)" stroke="var(--line)" stroke-width="2"/>'+'<polygon points="'+polyPts(TRI,120,80)+'" fill="var(--grass2)" stroke="var(--line)" stroke-width="2"/>'+ln(40,120,120,80,'var(--gold)',2,'4 3')+T(34,134,'A')+T(114,94,'A′'); return svg('0 0 240 140',g,'平行移動のお手本'); }
+function constructFull(k){ var c=constructSVG(k); return svg('0 0 340 220',c.base+c.steps.join(''),'作図のお手本'); }
+function probFig1(){ var g=grid(340,220); var A=[110,60],B=[230,150]; g+=ln(20,170,330,50,'var(--ink)',2.5)+T(322,44,'ℓ')+dot(A[0],A[1])+dot(B[0],B[1])+T(96,52,'A')+T(240,168,'B');
+  g+=ln(290,-55,50,265,'var(--red)',2.5)+arcPath(110,60,110,-20,100)+arcPath(230,150,110,160,280); var P=[171,103]; g+=dot(P[0],P[1],'var(--gold)',7)+T(150,96,'P',{w:1}); return svg('0 0 340 220',g,'作図の文章題の図'); }
+
+/* ---------- 教科書 1節 図形の移動：たりない内容（ワールド1） ---------- */
+function hexFig(){ var g=grid(300,240), cx=150, cy=120, R=100, L='ABCDEF', ang=[120,180,240,300,0,60], P=ang.map(function(a){ return [cx+R*Math.cos(a*Math.PI/180), cy-R*Math.sin(a*Math.PI/180)]; }), lab=['ア','イ','ウ','エ','オ','カ'];
+  for(var i=0;i<6;i++){ var p=P[i], q=P[(i+1)%6]; g+='<polygon points="'+cx+','+cy+' '+p[0].toFixed(1)+','+p[1].toFixed(1)+' '+q[0].toFixed(1)+','+q[1].toFixed(1)+'" fill="'+(i===0?'var(--gold2)':'var(--card)')+'" stroke="var(--line)" stroke-width="2"/>'; var m2=[(cx+p[0]+q[0])/3,(cy+p[1]+q[1])/3]; g+=T(m2[0],m2[1]+5,lab[i],{size:16,w:1}); }
+  P.forEach(function(p,i){ var d=[p[0]-cx,p[1]-cy]; g+=T(cx+d[0]*1.14,cy+d[1]*1.14+5,L[i],{size:14,w:1}); }); g+=dot(cx,cy)+T(cx+10,cy+16,'O',{size:13,a:'start'});
+  return svg('0 0 300 240',g,'正六角形を6つの正三角形に分けた図'); }
+function paraFig(){ var g=grid(300,170), P=[[70,130],[210,130],[250,40],[110,40]]; g+='<polygon points="'+P.map(function(p){return p.join(',');}).join(' ')+'" fill="var(--card)" stroke="var(--line)" stroke-width="2.5"/>'+ln(70,130,250,40,'var(--comp)',1.5,'5 4')+ln(210,130,110,40,'var(--comp)',1.5,'5 4')+dot(160,85,'var(--red)',5);
+  return svg('0 0 300 170',g,'平行四辺形と2本の対角線'); }
+function rotFig(deg,acb){ var g=grid(320,190), C=[160,160]; g+='<polygon points="'+C[0]+','+C[1]+' 60,90 140,40" fill="var(--gold2)" stroke="var(--line)" stroke-width="2"/><g transform="rotate('+deg+' '+C[0]+' '+C[1]+')"><polygon points="'+C[0]+','+C[1]+' 60,90 140,40" fill="none" stroke="var(--comp)" stroke-width="2.5" stroke-dasharray="5 4"/></g>';
+  return svg('0 0 320 190',g+T(52,92,'B',{a:'end'})+T(140,34,'A')+T(C[0],C[1]+18,'C')+T(250,70,'△PQC',{c:'var(--comp)'})+T(160,186,'C を中心に時計回り '+deg+'°',{size:12,c:'var(--sub)'}),'回転移動の図'); }
+function sqAxesFig(){ var g=grid(240,200), x0=70,y0=50,s=100; g+='<rect x="'+x0+'" y="'+y0+'" width="'+s+'" height="'+s+'" fill="var(--gold2)" stroke="var(--line)" stroke-width="2.5"/>'; return svg('0 0 240 200',g,'正方形'); }
+function sqAxesEx(){ var g=grid(240,200), x0=70,y0=50,s=100; g+='<rect x="'+x0+'" y="'+y0+'" width="'+s+'" height="'+s+'" fill="var(--gold2)" stroke="var(--line)" stroke-width="2.5"/>'+ln(120,30,120,170,'var(--red)',2.5,'6 4')+ln(50,100,190,100,'var(--red)',2.5,'6 4')+ln(55,35,185,165,'var(--red)',2.5,'6 4')+ln(185,35,55,165,'var(--red)',2.5,'6 4')+T(120,192,'たて・よこ・ななめ2本 ＝ 4本',{size:12,c:'var(--red)',w:1}); return svg('0 0 240 200',g,'正方形の対称の軸'); }
+var W1={
+ a9:{u:"u1",type:"sym",q:"線分 AB と線分 CD の長さが等しいことを、記号で表そう。",tok:["AB","CD","=","//","⊥"],ans:[["AB","=","CD"],["CD","=","AB"]],ex:"長さが等しいことは「=」で AB = CD と書く。"},
+ a10:{u:"u1",type:"sym",q:"2直線 AB と CD が平行であることを、記号で表そう。",tok:["AB","CD","=","//","⊥"],ans:[["AB","//","CD"],["CD","//","AB"]],ex:"平行は「//」。平行な2直線を平行線という。図では「＞」の印をつけて表すこともある。"},
+ a11:{u:"u1",type:"choice",q:"2点 A、B 間の距離とは？",opts:["線分 AB の長さ","直線 AB の長さ","半直線 AB の長さ"],c:0,ex:"2点を結ぶ線のうち、もっとも短いのは線分 AB。その長さが2点間の距離。"},
+ a12:{u:"u1",type:"choice",q:"2点 A、B を通る直線は何本ひける？",opts:["1本だけ","2本","何本でも"],c:0,ex:"2点を通る直線は1つしかない。1点だけを通る直線なら、いくらでもひける。"},
+ a13:{u:"u1",type:"choice",q:"三角形 ABC を記号で書くと？",opts:["△ABC","∠ABC","ABC//"],c:0,ex:"三角形は △ を使って △ABC と書く。∠ABC は角。"},
+ a14:{u:"u1",type:"multi",q:"正しいものをすべて選ぼう。",opts:["直線は、両方にかぎりなくのびている","線分は、片方だけかぎりなくのびている","1点を通る直線は、いくらでもひける","2点を結ぶ線のうち、もっとも短いのは直線"],c:[0,2],ex:"線分は両はしがある（のびない）。2点を結ぶいちばん短い線は線分。"},
+ b10:{u:"u2",type:"sym",q:"△ABC を平行移動して △A′B′C′。線分 AA′ と BB′ の関係を記号で表そう（2つ書く）。",tok:["AA′","BB′","//","=","⊥","、"],ans:[["AA′","//","BB′","、","AA′","=","BB′"],["AA′","=","BB′","、","AA′","//","BB′"]],ex:"平行移動では、対応する点を結ぶ線分どうしは平行で、長さが等しい。AA′ // BB′、AA′ = BB′"},
+ b11:{u:"u2",type:"sym",q:"点 O を中心に回転移動して、A が A′ に移った。OA と OA′ の関係を記号で表そう。",tok:["OA","OA′","=","//","⊥"],ans:[["OA","=","OA′"],["OA′","=","OA"]],ex:"対応する点は、回転の中心から等しい距離にある。OA = OA′"},
+ b12:{u:"u2",type:"num",q:"△ABC を点 O を中心に反時計回りに 60° 回転移動して △A′B′C′。∠BOB′ は何度？",ans:60,unit:"°",ex:"対応する点と回転の中心を結んでできる角は、どれも回転させた角と同じ。∠AOA′ = ∠BOB′ = ∠COC′ = 60°"},
+ b13:{u:"u2",type:"choice",q:"平行四辺形は、180° 回転するともとの形に重なる（点対称な図形）。回転の中心はどこ？",fig:paraFig(),opts:["2本の対角線の交点","1つの頂点","1辺の中点"],c:0,ex:"点対称な図形の中心は、対角線の交点。ひし形も同じ。"},
+ b14:{u:"u2",type:"choice",q:"線分を2等分する点を何という？",opts:["中点","交点","頂点"],c:0,ex:"中点。中点を通り、その線分に垂直な直線が垂直二等分線。"},
+ b15:{u:"u2",type:"sym",q:"対称移動で A が A′ に移った。線分 AA′ と対称の軸 ℓ の関係を記号で表そう。",tok:["AA′","ℓ","⊥","//","="],ans:[["AA′","⊥","ℓ"],["ℓ","⊥","AA′"]],ex:"対応する点を結ぶ線分は、対称の軸と垂直に交わる。AA′ ⊥ ℓ"},
+ b16:{u:"u2",type:"sym",q:"AA′ と ℓ の交点を M とする。AM と A′M の関係を記号で表そう。",tok:["AM","A′M","AA′","=","⊥","//"],ans:[["AM","=","A′M"],["A′M","=","AM"]],ex:"対称の軸で2等分されるので AM = A′M。ℓ は AA′ の垂直二等分線になっている。"},
+ b17:{u:"u2",type:"num",q:"正方形の対称の軸は何本？",fig:sqAxesFig(),ans:4,unit:"本",ex:"たて・よこ・2本の対角線で4本。",exfig:sqAxesEx()},
+ b18:{u:"u2",type:"multi",q:"ア（△OAB）を平行移動だけで重ねられる三角形をすべて選ぼう。",fig:hexFig(),opts:["イ","ウ","エ","オ","カ"],c:[1,3],ex:"ア、ウ、オは同じ向き。平行移動はずらすだけなので、向きが同じ三角形にしか重ならない。"},
+ b19:{u:"u2",type:"choice",q:"ア を点 O を中心に回転移動して ウ に重ねるには？",fig:hexFig(),opts:["反時計回りに 120°","時計回りに 120°","180°"],c:0,ex:"A → C、B → D。O を中心に反時計回りに 120°（60° の2つ分）。"},
+ b20:{u:"u2",type:"choice",q:"ア を対称移動して イ に重ねるとき、対称の軸は？",fig:hexFig(),opts:["直線 BE","直線 AD","直線 CF"],c:0,ex:"直線 BE で折り返すと A が C に重なる。△OAB が △OCB（イ）に重なる。"},
+ b21:{u:"u2",type:"choice",q:"ア を点 O を中心に点対称移動（180°）すると、どれに重なる？",fig:hexFig(),opts:["エ","ウ","オ"],c:0,ex:"A は D に、B は E に移る。△ODE ＝ エ。"},
+ b22:{u:"u2",type:"choice",q:"移動させて、ぴったり重ね合わせることのできる2つの図形を何という？",opts:["合同","対称","平行"],c:0,ex:"合同。重ねるときは、対応する頂点・辺・角とその位置関係に注目する。"},
+ b23:{u:"u2",type:"choice",q:"図形を直線 ℓ で対称移動し、さらに ℓ に垂直な直線 m で対称移動した。1回の移動でいうと？",opts:["ℓ と m の交点を中心とする 180° の回転移動","平行移動","直線 m での対称移動"],c:0,ex:"垂直な2本の直線で2回折り返すと、交点を中心に 180° 回したのと同じ（点対称移動）。"},
+ b24:{u:"u2",type:"num",q:"△ABC を、点 C を中心に時計回りに 40° 回転移動したのが △PQC。∠ACB = 75° のとき、∠ACQ は何度？",fig:rotFig(40),ans:35,unit:"°",ex:"B は Q に移るので ∠BCQ = 40°。∠ACQ = ∠ACB − ∠BCQ = 75 − 40 = 35°。"},
+ b25:{u:"u2",type:"choice",q:"図形を、ある方向に、ある長さだけ動かす移動は？",opts:["平行移動","回転移動","対称移動"],c:0,ex:"「向き」と「長さ」で決まるのは平行移動。"},
+ p1:{u:"u1",type:"draw",q:"<b>紙ミッション：ワーク p.100 の大問1</b><br>ワークで解いて、丸つけしてからボタンを押す。",model:lineKind('seg'),checks:["文を1つずつ読んで ○× をつけた","まちがっている文は、どこがちがうかを書きこんだ","線分・半直線・直線のちがいを言える"]},
+ p2:{u:"u2",type:"draw",q:"<b>紙ミッション：ワーク p.100 大問2、p.101 大問1</b><br>方眼に平行移動した図をかき、記号の問題も解いてからボタンを押す。",model:moveModel(),checks:["3つの頂点を、同じ向き・同じマス数だけずらした","対応する頂点に記号（P、Q、R など）を書いた","「// と =」の2つを記号で書いた"]},
+ p3:{u:"u2",type:"draw",q:"<b>紙ミッション：ワーク p.100 大問3〜4、p.101 大問2〜3</b><br>回転移動の問題を解いてからボタンを押す。",model:rotFig(35),checks:["中心からの距離が等しいことを使った","回転させた角と同じ角をさがした","角度の計算は、式を書いてから答えた"]},
+ p4:{u:"u2",type:"draw",q:"<b>紙ミッション：ワーク p.102 大問1〜2、p.103 大問1</b><br>対称移動の図をかき、記号の問題も解いてからボタンを押す。",model:sqAxesEx(),checks:["各頂点から軸に垂直な線をひいた","軸までと同じ長さだけ反対側に点をとった","「⊥ と =」の2つを記号で書いた"]},
+ p5:{u:"u2",type:"draw",q:"<b>紙ミッション：ワーク p.101 大問4、p.102 大問3、p.103 大問2〜3・C、p.112 大問1〜3</b><br>移動の組み合わせと、ふり返りの問題を解いてからボタンを押す。",model:hexFig(),checks:["平行移動は「向きが同じ」三角形をさがした","回転は中心と角度、対称は軸を書いた","2回の移動は、1回ずつ順番に書いた"]}
+};
+Object.keys(W1).forEach(function(k){ ITEMS[k]=W1[k]; });
+
+/* ---------- マウスで作図（定規とコンパス） ---------- */
+var CW=520, CH=360;
+function cdScene(k){
+  var d2r=Math.PI/180;
+  if(k==="pb") return {pts:{A:[160,210],B:[360,170]},giv:[{t:"seg",a:[160,210],b:[360,170]}],goal:{kind:"line",p:[260,190],q:[260+40,190+200]},tip:"A を中心にコンパスをドラッグして円をかき、B を中心に同じ半径の円をかく。2つの交点を定規で結ぶ。"};
+  if(k==="ab"){ var O=[110,290], Y=[110+330*Math.cos(-50*d2r),290+330*Math.sin(-50*d2r)]; return {pts:{O:O},giv:[{t:"ray",a:O,b:[500,290]},{t:"ray",a:O,b:Y}],lab:[["X",490,280],["Y",Y[0]+6,Y[1]+30]],goal:{kind:"line",p:O,q:[O[0]+100*Math.cos(-25*d2r),O[1]+100*Math.sin(-25*d2r)]},tip:"O を中心に円をかき、2辺との交点をとる。その2点を中心に同じ半径の円をかき、交点と O を定規で結ぶ。"}; }
+  if(k==="perp1") return {pts:{P:[270,80],A:[150,200],B:[400,200]},giv:[{t:"line",a:[20,200],b:[500,200]}],lab:[["ℓ",500,190]],goal:{kind:"line",p:[270,80],q:[270,200]},tip:"<b>垂線の作図①</b>　A を中心に半径 AP の円、B を中心に半径 BP の円をかく（コンパスを P までドラッグ）。2つの円の交点を定規で結ぶ。"};
+  if(k==="perp2") return {pts:{P:[270,80]},giv:[{t:"line",a:[20,200],b:[500,200]}],lab:[["ℓ",500,190]],goal:{kind:"line",p:[270,80],q:[270,200]},tip:"<b>垂線の作図②</b>　P を中心に ℓ と2点で交わる円をかく。その2点を中心に同じ半径の円をかき、交点と P を定規で結ぶ。"};
+  if(k==="perpOn") return {pts:{O:[260,240]},giv:[{t:"line",a:[20,240],b:[500,240]}],lab:[["A",30,232],["B",490,232]],goal:{kind:"line",p:[260,240],q:[260,120]},tip:"直線 AB は 180° の角。O を中心に円をかいて AB と交わる2点をとり、その2点を中心に同じ半径の円をかく。交点と O を結ぶ。"};
+  if(k==="tan"){ var C=[210,190], r=110, a=-20*d2r, A=[C[0]+r*Math.cos(a),C[1]+r*Math.sin(a)]; return {pts:{O:C,A:A},giv:[{t:"circ",c:C,r:r}],goal:{kind:"line",p:A,q:[A[0]+50*Math.sin(-a),A[1]+50*Math.cos(a)]},tip:"まず定規で O と A を結ぶ（直線 OA）。次に、A を通る OA の垂線を作図する（A を中心に円 → 交点から同じ半径の円 → 交点と A を結ぶ）。"}; }
+  if(k==="center"){ var c=[260,230], R=140, P=[200,270,335].map(function(dg){ return [c[0]+R*Math.cos(dg*d2r), c[1]+R*Math.sin(dg*d2r)]; }); return {pts:{A:P[0],B:P[1],C:P[2]},giv:[{t:"arc",c:c,r:R,a1:190,a2:350}],goal:{kind:"pt",p:c},tip:"A と B、B と C を定規で結んで弦にする。それぞれの垂直二等分線を作図して、2本の交点を見つける。"}; }
+  if(k==="hex") return {pts:{O:[260,180],A:[370,180]},giv:[{t:"seg",a:[260,180],b:[370,180]}],goal:{kind:"hex",c:[260,180],r:110},tip:"O を中心に、A までの円をかく。次に A を中心に、同じ半径（OA）の円をかく。できた交点を中心に、また同じ半径の円…と続けて、円周を6つに区切る。"};
+  if(k==="square") return {pts:{A:[200,260],B:[320,260]},giv:[{t:"seg",a:[200,260],b:[320,260]}],goal:{kind:"pts",ps:[[200,140],[320,140]]},tip:"A と B で、AB に垂直な線を作図する（直線 AB をのばして、A・B を中心に円をかく）。コンパスで AB の長さを写して、正方形の残りの2つの頂点をとる。"};
+  return null;
+}
+function lineFrom(o){ return {a:o.a||[o.x1,o.y1], b:o.b||[o.x2,o.y2], dom:o.t==="seg"?[0,1]:(o.t==="ray"?[0,1e9]:[-1e9,1e9])}; }
+function cdObjs(sc,c){ var arr=[]; sc.giv.forEach(function(g){ arr.push(g); }); c.objs.forEach(function(o){ arr.push(o); }); return arr; }
+function onArc(o,p){ if(o.t!=="arc") return true; var ang=(Math.atan2(p[1]-o.c[1],p[0]-o.c[0])*180/Math.PI+360)%360; return ang>=o.a1-0.5 && ang<=o.a2+0.5; }
+function interLL(o1,o2){ var L1=lineFrom(o1),L2=lineFrom(o2), d1=[L1.b[0]-L1.a[0],L1.b[1]-L1.a[1]], d2=[L2.b[0]-L2.a[0],L2.b[1]-L2.a[1]], den=d1[0]*d2[1]-d1[1]*d2[0]; if(Math.abs(den)<1e-9) return [];
+  var t=((L2.a[0]-L1.a[0])*d2[1]-(L2.a[1]-L1.a[1])*d2[0])/den, u=((L2.a[0]-L1.a[0])*d1[1]-(L2.a[1]-L1.a[1])*d1[0])/den;
+  if(t<L1.dom[0]-1e-6||t>L1.dom[1]+1e-6||u<L2.dom[0]-1e-6||u>L2.dom[1]+1e-6) return []; return [[L1.a[0]+t*d1[0],L1.a[1]+t*d1[1]]]; }
+function interLC(lo,co){ var L=lineFrom(lo), d=[L.b[0]-L.a[0],L.b[1]-L.a[1]], f=[L.a[0]-co.c[0],L.a[1]-co.c[1]], A=d[0]*d[0]+d[1]*d[1], B=2*(f[0]*d[0]+f[1]*d[1]), Cc=f[0]*f[0]+f[1]*f[1]-co.r*co.r, disc=B*B-4*A*Cc; if(disc<0) return [];
+  var out=[]; [(-B-Math.sqrt(disc))/(2*A),(-B+Math.sqrt(disc))/(2*A)].forEach(function(t){ if(t>=L.dom[0]-1e-6&&t<=L.dom[1]+1e-6){ var p=[L.a[0]+t*d[0],L.a[1]+t*d[1]]; if(onArc(co,p)) out.push(p); } }); return out; }
+function interCC(a,b){ var dx=b.c[0]-a.c[0], dy=b.c[1]-a.c[1], d=Math.hypot(dx,dy); if(d<1e-6||d>a.r+b.r+1e-6||d<Math.abs(a.r-b.r)-1e-6) return [];
+  var x=(a.r*a.r-b.r*b.r+d*d)/(2*d), h=Math.sqrt(Math.max(0,a.r*a.r-x*x)), m=[a.c[0]+x*dx/d,a.c[1]+x*dy/d]; var out=[[m[0]-h*dy/d,m[1]+h*dx/d],[m[0]+h*dy/d,m[1]-h*dx/d]]; return out.filter(function(p){ return onArc(a,p)&&onArc(b,p); }); }
+function isLine(o){ return o.t==="seg"||o.t==="ray"||o.t==="line"||o.t==="l"; }
+function cdSnaps(sc,c){
+  var pts=[]; Object.keys(sc.pts).forEach(function(k){ pts.push({p:sc.pts[k],given:true}); });
+  var objs=cdObjs(sc,c), nGiv=sc.giv.length;
+  for(var i=0;i<objs.length;i++) for(var j=i+1;j<objs.length;j++){ var a=objs[i], b=objs[j], r=[];
+    if(isLine(a)&&isLine(b)) r=interLL(a,b); else if(isLine(a)) r=interLC(a,b); else if(isLine(b)) r=interLC(b,a); else r=interCC(a,b);
+    r.forEach(function(p){ if(p[0]<-5||p[0]>CW+5||p[1]<-5||p[1]>CH+5) return; if(!pts.some(function(q){ return Math.hypot(q.p[0]-p[0],q.p[1]-p[1])<3; })) pts.push({p:p,user:(i>=nGiv||j>=nGiv)}); }); }
+  return pts;
+}
+function clipLine(a,b){ var d=[b[0]-a[0],b[1]-a[1]], L=Math.hypot(d[0],d[1]); d=[d[0]/L,d[1]/L]; return [[a[0]-d[0]*900,a[1]-d[1]*900],[a[0]+d[0]*900,a[1]+d[1]*900]]; }
+function distPL(p,a,b){ var d=[b[0]-a[0],b[1]-a[1]], L=Math.hypot(d[0],d[1]); return Math.abs((p[0]-a[0])*d[1]-(p[1]-a[1])*d[0])/L; }
+function cdGoal(sc,c){
+  var g=sc.goal, snaps=cdSnaps(sc,c);
+  if(g.kind==="line") return c.objs.some(function(o){ return o.t==="l" && distPL(g.p,o.a,o.b)<4 && distPL(g.q,o.a,o.b)<4; });
+  if(g.kind==="pt") return snaps.some(function(s){ return s.user && Math.hypot(s.p[0]-g.p[0],s.p[1]-g.p[1])<5; });
+  if(g.kind==="pts") return g.ps.every(function(q){ return snaps.some(function(s){ return s.user && Math.hypot(s.p[0]-q[0],s.p[1]-q[1])<5; }); });
+  if(g.kind==="hex"){ var n=0; for(var k=0;k<6;k++){ var q=[g.c[0]+g.r*Math.cos(k*Math.PI/3),g.c[1]+g.r*Math.sin(k*Math.PI/3)]; if(snaps.some(function(s){ return Math.hypot(s.p[0]-q[0],s.p[1]-q[1])<5; })) n++; } return n>=6; }
+  return false;
+}
+function cdSVG(it,c,preview){
+  var sc=cdScene(it.scene), g=grid(CW,CH);
+  sc.giv.forEach(function(o){
+    if(o.t==="seg") g+=ln(o.a[0],o.a[1],o.b[0],o.b[1],'var(--ink)',2.5);
+    if(o.t==="ray"||o.t==="line"){ var e=o.t==="line"?clipLine(o.a,o.b):[o.a,[o.a[0]+(o.b[0]-o.a[0])*3,o.a[1]+(o.b[1]-o.a[1])*3]]; g+=ln(e[0][0],e[0][1],e[1][0],e[1][1],'var(--ink)',2.5); }
+    if(o.t==="circ") g+='<circle cx="'+o.c[0]+'" cy="'+o.c[1]+'" r="'+o.r+'" fill="none" stroke="var(--ink)" stroke-width="2.5"/>';
+    if(o.t==="arc") g+=arcPath(o.c[0],o.c[1],o.r,o.a1,o.a2,'var(--ink)',3);
+  });
+  (sc.lab||[]).forEach(function(l){ g+=T(l[1],l[2],l[0],{size:16,w:1}); });
+  c.objs.forEach(function(o){ if(o.t==="c") g+='<circle cx="'+o.c[0].toFixed(1)+'" cy="'+o.c[1].toFixed(1)+'" r="'+o.r.toFixed(1)+'" fill="none" stroke="var(--comp)" stroke-width="1.6"/>'; if(o.t==="l"){ var e=clipLine(o.a,o.b); g+=ln(e[0][0],e[0][1],e[1][0],e[1][1],'var(--red)',2.2); } });
+  if(c.model){ var G=sc.goal; if(G.kind==="line"){ var e2=clipLine(G.p,G.q); g+=ln(e2[0][0],e2[0][1],e2[1][0],e2[1][1],'var(--good)',4,'8 6'); } if(G.kind==="pt") g+='<circle cx="'+G.p[0]+'" cy="'+G.p[1]+'" r="9" fill="none" stroke="var(--good)" stroke-width="4"/>'; if(G.kind==="pts") G.ps.forEach(function(q){ g+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="9" fill="none" stroke="var(--good)" stroke-width="4"/>'; }); if(G.kind==="hex"){ var hp=[]; for(var k=0;k<6;k++) hp.push((G.c[0]+G.r*Math.cos(k*Math.PI/3)).toFixed(1)+','+(G.c[1]+G.r*Math.sin(k*Math.PI/3)).toFixed(1)); g+='<polygon points="'+hp.join(' ')+'" fill="none" stroke="var(--good)" stroke-width="4" stroke-dasharray="8 6"/>'; } }
+  cdSnaps(sc,c).forEach(function(s){ g+='<circle cx="'+s.p[0].toFixed(1)+'" cy="'+s.p[1].toFixed(1)+'" r="'+(s.given?5:4.5)+'" fill="'+(s.given?'var(--ink)':'var(--gold)')+'" stroke="#1D2B3A" stroke-width="1"/>'; });
+  Object.keys(sc.pts).forEach(function(k){ var p=sc.pts[k]; g+=T(p[0]-12,p[1]-10,k,{size:17,w:1}); });
+  if(c.rp) g+='<circle cx="'+c.rp[0]+'" cy="'+c.rp[1]+'" r="10" fill="none" stroke="var(--red)" stroke-width="3"/>';
+  g+='<g id="cdprev"></g>';
+  return '<svg viewBox="0 0 '+CW+' '+CH+'" id="cdsvg" role="img" aria-label="作図の画面" style="cursor:crosshair;touch-action:none">'+g+'</svg>';
+}
+function cdNear(sc,c,p,tol){ var best=null,bd=tol||14; cdSnaps(sc,c).forEach(function(s){ var d=Math.hypot(s.p[0]-p[0],s.p[1]-p[1]); if(d<bd){ bd=d; best=s.p; } }); return best; }
+var K2={
+ k1:{u:"u4",type:"card",html:'<b>正六角形を正確にかくには？（教科書 p.169）</b><p>正六角形の1辺の長さは、まわりの円の半径と同じ。だから、円をかいたら、<b>コンパスの開きを変えずに</b>円周を区切っていけば、6つの頂点がとれる。</p><p>正六角形は、半径と同じ長さの辺をもつ<b>正三角形が6つ</b>集まった形。ワールド1の六角形のしきつめ広場と同じ形。</p>'},
+ k2:{u:"u4",type:"cdraw",scene:"hex",q:"<b>マウスで作図</b>　円周を6つに区切って、正六角形の頂点を6つ作ろう。",ex:"円の半径と同じ長さで区切ると、ちょうど6回でひとまわり。正三角形が6つ並ぶから。"},
+ k3:{u:"u4",type:"choice",q:"円周の一部分を何という？",opts:["弧","弦","半径"],c:0,ex:"弧。両はしが A、B の弧を弧 AB といい、⌒AB と書く。"},
+ k4:{u:"u4",type:"choice",q:"円周上の2点を結ぶ線分を何という？",opts:["弦","弧","直径"],c:0,ex:"弦。弦 AB のように書く。中心を通る弦が直径。"},
+ k5:{u:"u4",type:"choice",q:"円とは、どんな点の集まり？",opts:["1つの点から距離が等しい点の集まり","2つの点から距離が等しい点の集まり","直線から距離が等しい点の集まり"],c:0,ex:"中心 O からの距離が一定の点の集まり。中心が O の円を円 O という。"},
+ k6:{u:"u4",type:"choice",q:"半径の等しい2つの円が交わる。2つの中心 A、B と2つの交点 P、Q を結んだ四角形は？",opts:["ひし形","正方形","台形"],c:0,ex:"4つの辺が全部半径と同じ長さなので、ひし形。（教科書 p.171）"},
+ k7:{u:"u4",type:"sym",q:"半径の等しい2つの円（中心 A、B）の交点を P、Q とする。AB と PQ の関係を記号で表そう。",tok:["AB","PQ","⊥","//","="],ans:[["AB","⊥","PQ"],["PQ","⊥","AB"]],ex:"AB ⊥ PQ。ひし形の対角線は垂直に交わる。この性質が、垂線・垂直二等分線・角の二等分線の作図のもとになっている。"},
+ k8:{u:"u4",type:"choice",q:"交わる2つの円は、どんな直線について線対称？",opts:["2つの円の中心を通る直線","円の弦","円の接線"],c:0,ex:"中心を通る直線について線対称。半径が等しいときは、2つの交点を通る直線についても線対称。（教科書 p.171）"},
+ k9:{u:"u4",type:"card",html:'<b>垂線の作図は2通り（教科書 p.172〜173）</b><div class="cmp" style="grid-template-columns:1fr"><div><b>作図①</b>　直線 ℓ 上に2点 A、B をとる → A を中心に半径 AP の円 → B を中心に半径 BP の円 → 2つの円の交点を通る直線をひく</div><div><b>作図②</b>　P を中心に ℓ と交わる円をかき、交点を A、B とする → A、B を中心に等しい半径の円 → その交点の1つ Q と P を結ぶ</div></div><p>どちらも「交わる2つの円」の性質（AB ⊥ PQ）を使っている。</p>'},
+ k10:{u:"u4",type:"cdraw",scene:"perp1",q:"<b>マウスで作図：垂線の作図①</b>　点 P を通り、直線 ℓ に垂直な直線をかこう。",ex:"A、B を中心に P を通る円をかくと、2つの交点を結ぶ直線は AB（ℓ）に垂直になる。"},
+ k11:{u:"u4",type:"cdraw",scene:"perp2",q:"<b>マウスで作図：垂線の作図②</b>　点 P を通り、直線 ℓ に垂直な直線をかこう。",ex:"P を中心に円 → ℓ との2つの交点から同じ半径の円 → 交点と P を結ぶ。"},
+ k12:{u:"u4",type:"choice",q:"平行な2直線 ℓ、m がある。ℓ 上のどこに点をとっても、m との距離は？",opts:["一定（同じ）","場所によってちがう","0"],c:0,ex:"この一定の距離を、平行な2直線 ℓ、m の距離という。（教科書 p.174）"},
+ k13:{u:"u4",type:"cdraw",scene:"pb",q:"<b>マウスで作図</b>　線分 AB の垂直二等分線をかこう。",ex:"A と B を中心に同じ半径の円 → 2つの交点を結ぶ。交点は A と B から等しい距離にある。"},
+ k14:{u:"u4",type:"sym",q:"線分 AB の垂直二等分線上に点 P をとる。PA と PB の関係を記号で表そう。",tok:["PA","PB","AB","=","⊥","//"],ans:[["PA","=","PB"],["PB","=","PA"]],ex:"PA = PB。また、2点 A、B から等しい距離にある点は、AB の垂直二等分線上にある。"},
+ k15:{u:"u4",type:"choice",q:"線分 AB の中点 M を作図するには？",opts:["AB の垂直二等分線をひき、AB との交点を M とする","A を中心に半径 AB の円をかく","∠A の二等分線をひく"],c:0,ex:"垂直二等分線は線分をちょうど2等分する。（教科書 p.177）"},
+ k16:{u:"u4",type:"cdraw",scene:"ab",q:"<b>マウスで作図</b>　∠XOY の二等分線をかこう。",ex:"O を中心に円 → 2辺との交点から同じ半径の円 → 交点と O を結ぶ。角の二等分線は、その角の対称の軸。"},
+ k17:{u:"u4",type:"cdraw",scene:"perpOn",q:"<b>マウスで作図</b>　直線 AB 上の点 O を通り、AB に垂直な直線をかこう。",ex:"180° の角 ∠AOB の二等分線をかくと、90° になる。（教科書 p.178）"},
+ k18:{u:"u4",type:"choice",q:"角の二等分線上の点から、角の2辺までの距離は？",opts:["等しい","辺によってちがう","いつも 0"],c:0,ex:"等しい。また、角の内部で2辺までの距離が等しい点は、その角の二等分線上にある。"},
+ k19:{u:"u5",type:"cdraw",scene:"tan",q:"<b>マウスで作図</b>　円 O の周上の点 A を通る接線をかこう。",ex:"接線は、接点を通る半径に垂直。直線 OA をひいて、A を通る OA の垂線をかく。"},
+ k20:{u:"u5",type:"sym",q:"直線 ℓ は点 A を接点とする円 O の接線。ℓ と半径 OA の関係を記号で表そう。",tok:["ℓ","OA","⊥","//","="],ans:[["ℓ","⊥","OA"],["OA","⊥","ℓ"]],ex:"ℓ ⊥ OA。円の接線は、接点を通る半径に垂直。（教科書 p.179）"},
+ k21:{u:"u5",type:"cdraw",scene:"center",q:"<b>マウスで作図</b>　円の一部（弧）から、もとの円の中心を見つけよう。",ex:"弦 AB、BC の垂直二等分線は、どちらも中心を通る。2本の交点が中心。"},
+ k22:{u:"u5",type:"choice",q:"75° の角を作図するには？",opts:["45° と 30° を合わせる","60° と 25° を合わせる","90° を2等分する"],c:0,ex:"45°（垂線の 90° を二等分）と 30°（正三角形の 60° を二等分）を合わせる。60° + 15° でもできる。（教科書 p.181〜182）"},
+ k23:{u:"u5",type:"choice",q:"作図できる角は？",opts:["15°（60° を二等分し、さらに二等分）","40°","70°"],c:0,ex:"作図できるのは、60°・90° を二等分したり、足したりひいたりしてできる角。"},
+ k24:{u:"u5",type:"cdraw",scene:"square",q:"<b>マウスで作図</b>　線分 AB を1辺とする正方形の、残りの2つの頂点を作ろう（AB の上側）。",ex:"A、B で AB に垂直な線を作図し、コンパスで AB の長さを写す。（教科書 章の問題A 4）"},
+ k25:{u:"u5",type:"choice",q:"作図の方法は、どんな図形の性質をもとに考えた？",opts:["線対称な図形の性質","平行四辺形の性質","おうぎ形の性質"],c:0,ex:"垂線・垂直二等分線・角の二等分線は、どれも線対称な図形の性質をもとにしている。（教科書 p.180）"},
+ p6:{u:"u4",type:"draw",q:"<b>紙ミッション：ワーク p.104 準備・大問1〜3</b><br>ワークで作図してから、ボタンを押す。",model:constructFull('perp'),checks:["コンパスで長さを写した（定規の目もりを使っていない）","2つの円の交点を使った","作図の線を消していない"]},
+ p7:{u:"u4",type:"draw",q:"<b>紙ミッション：ワーク p.105 大問4〜7、p.106 大問1〜3</b><br>ワークで作図してから、ボタンを押す。",model:constructFull('pb'),checks:["半径を、線分の半分より大きくした","角の二等分線は、頂点を中心に円をかいてから始めた","作図の線を消していない"]},
+ p8:{u:"u5",type:"draw",q:"<b>紙ミッション：ワーク p.106 大問4・C、p.107〜108</b><br>ワークで作図してから、ボタンを押す。",model:constructFull('ab'),checks:["条件に下線と番号をつけた","「何から等しい？」で使う作図を決めた","条件が2つのときは、2本の線の交点を答えにした","作図の線を消していない"]}
+};
+Object.keys(K2).forEach(function(k){ ITEMS[k]=K2[k]; });
+ITEMS.d5.q="<b>垂線の作図②</b>（点 P を中心に円をかく方法）。「次の手順」で1つずつ進む。";
+
+/* ---------- 方眼に移動した図形をかく ---------- */
+function gv2(a,b){ return [b[0]-a[0],b[1]-a[1]]; }
+function gFar(a,b,col,w){ var d=gv2(a,b), L=Math.hypot(d[0],d[1])||1, u=[d[0]/L,d[1]/L]; return ln(a[0]-u[0]*2000,a[1]-u[1]*2000,a[0]+u[0]*2000,a[1]+u[1]*2000,col,w); }
+function gTarget(it){ var P=it.poly, Tf=it.tf;
+  return P.map(function(p){ if(Tf.k==='t') return [p[0]+Tf.v[0],p[1]+Tf.v[1]];
+    if(Tf.k==='r'){ var dx=p[0]-Tf.o[0], dy=p[1]-Tf.o[1]; return Tf.deg===180 ? [Tf.o[0]-dx,Tf.o[1]-dy] : [Tf.o[0]+dy, Tf.o[1]-dx]; }
+    var a=Tf.ax[0], b=Tf.ax[1], d=gv2(a,b), L2=d[0]*d[0]+d[1]*d[1], t=((p[0]-a[0])*d[0]+(p[1]-a[1])*d[1])/L2, f=[a[0]+t*d[0],a[1]+t*d[1]]; return [Math.round(2*f[0]-p[0]),Math.round(2*f[1]-p[1])]; }); }
+function gSVG(it,c,showT){
+  var s=20, W=it.w||16, H=it.h||12, g=grid(W*s,H*s,s), P=it.poly, lab=it.lab, X=function(p){return p[0]*s;}, Y=function(p){return p[1]*s;};
+  g+='<polygon points="'+P.map(function(p){return X(p)+','+Y(p);}).join(' ')+'" fill="var(--grass2)" stroke="var(--line)" stroke-width="2.5"/>';
+  P.forEach(function(p,i){ g+=dot(X(p),Y(p))+T(X(p)-10,Y(p)-6,lab[i],{size:15,w:1}); });
+  var T0=it.tf;
+  if(T0.k==='t'){ var a=it.arrow; g+=ln(a[0][0]*s,a[0][1]*s,a[1][0]*s,a[1][1]*s,'var(--red)',3)+arrowHead(a[1][0]*s,a[1][1]*s,Math.atan2(a[1][1]-a[0][1],a[1][0]-a[0][0])*180/Math.PI,'var(--red)'); }
+  if(T0.k==='r') g+=dot(T0.o[0]*s,T0.o[1]*s,'var(--red)',6)+T(T0.o[0]*s+12,T0.o[1]*s+18,'O',{c:'var(--red)',w:1,size:16});
+  if(T0.k==='s') g+=gFar([T0.ax[0][0]*s,T0.ax[0][1]*s],[T0.ax[1][0]*s,T0.ax[1][1]*s],'var(--comp)',3)+(T0.name===''?'':T(T0.ax[1][0]*s+8,T0.ax[1][1]*s,T0.name||'ℓ',{a:'start',c:'var(--comp)',size:16,w:1}));
+  if(showT){ var tg=gTarget(it); g+='<polygon points="'+tg.map(function(p){return X(p)+','+Y(p);}).join(' ')+'" fill="none" stroke="var(--good)" stroke-width="3.5" stroke-dasharray="8 5"/>'; }
+  if(c.gp.length>1) g+='<polyline points="'+c.gp.map(function(p){return X(p)+','+Y(p);}).join(' ')+(c.gp.length===P.length?' '+X(c.gp[0])+','+Y(c.gp[0]):'')+'" fill="'+(c.gp.length===P.length?'var(--gold2)':'none')+'" fill-opacity=".55" stroke="var(--gold)" stroke-width="3"/>';
+  c.gp.forEach(function(p,i){ g+='<circle cx="'+X(p)+'" cy="'+Y(p)+'" r="6" fill="var(--gold)" stroke="var(--line)" stroke-width="2"/>'+T(X(p)+12,Y(p)-6,lab[i]+'′',{size:15,w:1,c:'#9A7300'}); });
+  return g;
+}
+
+function rad(d){ return d*Math.PI/180; }
+function wedgePath2(){ var O=[150,50], r=120, a1=rad(60), a2=rad(120), A=[O[0]+r*Math.cos(a2),O[1]+r*Math.sin(a2)], B=[O[0]+r*Math.cos(a1),O[1]+r*Math.sin(a1)]; return '<path d="M'+O[0]+' '+O[1]+' L'+A[0].toFixed(1)+' '+A[1].toFixed(1)+' A'+r+' '+r+' 0 0 0 '+B[0].toFixed(1)+' '+B[1].toFixed(1)+' Z" fill="var(--gold2)" stroke="var(--line)" stroke-width="2.5"/>'+T(A[0]-8,A[1]+12,'A')+T(B[0]+8,B[1]+12,'B'); }
+var W3={
+ mg1:{u:"u2",type:"gdraw",q:"△ABC を、矢印の向きに矢印の長さだけ<b>平行移動</b>した △A′B′C′ をかこう。方眼の点を A′→B′→C′ の順にクリック。",poly:[[3,3],[2,8],[6,7]],lab:["A","B","C"],tf:{k:'t',v:[7,-1]},arrow:[[3,3],[10,2]],ex:"3つの頂点を、同じ向き・同じマス数（右に7、上に1）だけずらす。"},
+ mg2:{u:"u2",type:"gdraw",q:"△ABC を、点 O を中心に<b>反時計回りに 90°</b> 回転移動した △A′B′C′ をかこう。A′→B′→C′ の順にクリック。",poly:[[5,3],[3,7],[7,7]],lab:["A","B","C"],tf:{k:'r',o:[9,6],deg:90},ex:"O から各頂点への「横に○、たてに○」を、90° 回した向きに写す。O からの距離は変わらない。"},
+ mg3:{u:"u2",type:"gdraw",q:"△ABC を、点 O を中心に <b>180°</b> 回転移動（点対称移動）した △A′B′C′ をかこう。",poly:[[3,2],[2,6],[6,4]],lab:["A","B","C"],tf:{k:'r',o:[8,6],deg:180},ex:"各頂点から O を通って、反対側に同じ長さだけ進んだ点。"},
+ mg4:{u:"u2",type:"gdraw",q:"△ABC を、直線 ℓ を対称の軸として<b>対称移動</b>した △A′B′C′ をかこう。",poly:[[5,1],[9,1],[8,5]],lab:["A","B","C"],tf:{k:'s',ax:[[1,1],[11,11]]},ex:"各頂点から ℓ に垂直に進み、ℓ までと同じ長さだけ反対側へ。ななめの軸では、マスのななめに数える。"},
+ mg5:{u:"u2",type:"gdraw",q:"四角形 ABCD を、辺 BC を対称の軸として<b>対称移動</b>した四角形 A′B′C′D′ をかこう（B′、C′ は B、C と同じ点）。",poly:[[5,2],[3,6],[11,6],[9,3]],lab:["A","B","C","D"],tf:{k:'s',ax:[[3,6],[11,6]],name:''},ex:"軸の上の点（B、C）は動かない。A、D は軸 BC で折り返した位置。"},
+ b26:{u:"u2",type:"num",q:"ア（△OAB）を、点 O を中心に<b>時計回りに</b>回転して ウ（△OCD）に重ねる。何度回転させればよい？",fig:hexFig(),ans:240,unit:"°",ex:"反時計回りなら 120° だが、時計回りだと 360 − 120 = 240°。「時計回り」か「反時計回り」かを必ず確かめる。"},
+ os1:{u:"u6",type:"card",html:'<b>おうぎ形の言葉（教科書 p.184）</b>'+svg('0 0 300 200',grid(300,200)+wedgePath2()+T(150,40,'O',{w:1})+T(112,96,'半径',{size:13})+T(190,96,'半径',{size:13})+T(150,124,'中心角',{size:14,c:'var(--red)',w:1})+T(150,190,'弧 AB',{size:14,c:'#9A7300',w:1}),'おうぎ形')+'<p>弧の両はしを通る2つの半径と、その弧で囲まれた図形が<b>おうぎ形</b>。2つの半径のつくる角が<b>中心角</b>。∠AOB を「⌒AB に対する中心角」ともいう。</p><div class="ex good"><span class="tag">いい例</span>　1つの円で中心角が等しいおうぎ形は、回転させるとぴったり重なる → 弧の長さも面積も等しい（図形の移動とつながる）</div><div class="ex good"><span class="tag">いい例</span>　中心角を2倍、3倍にすると、弧の長さも面積も2倍、3倍 → <b>中心角に比例する</b>（比例とつながる）</div>'},
+ os2:{u:"u6",type:"choice",q:"半径 6cm、中心角 120° のおうぎ形の弧の長さは、半径が等しい円の周の長さの何倍？",opts:["1/3 倍","1/2 倍","3 倍"],c:0,ex:"120/360 = 1/3。面積も、円の 1/3 倍。"},
+ os3:{u:"u6",type:"num",q:"中心角を 1/2 倍にすると、弧の長さは何倍？（分数で入れてよい）",ans:0.5,unit:"倍",ex:"中心角に比例するので 1/2 倍。"},
+ os4:{u:"u6",type:"num",q:"半径 8cm、中心角 45° のおうぎ形の弧の長さは？",ans:2,unit:"π cm",ex:"2π × 8 × 45/360 = 16π × 1/8 = 2π cm"},
+ os5:{u:"u6",type:"num",q:"半径 8cm、中心角 45° のおうぎ形の面積は？",ans:8,unit:"π cm²",ex:"π × 8² × 45/360 = 64π × 1/8 = 8π cm²"},
+ os6:{u:"u6",type:"num",q:"半径 6cm、中心角 300° のおうぎ形の面積は？",ans:30,unit:"π cm²",ex:"π × 6² × 300/360 = 36π × 5/6 = 30π cm²"}
+};
+Object.keys(W3).forEach(function(k){ ITEMS[k]=W3[k]; });
+
+/* ---------- 寄り道（教科書の活用の問題・読み物） ---------- */
+function asanohaFig(){ var g='', R=44; function hexAt(cx,cy){ var s='', P=[]; for(var i=0;i<6;i++){ var a=(60*i-30)*Math.PI/180; P.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]); }
+  s+='<polygon points="'+P.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="#F3E3C3" stroke="#8A5A33" stroke-width="1.5"/>';
+  for(var j=0;j<6;j++){ var p=P[j], q=P[(j+1)%6], m=[(p[0]+q[0])/2,(p[1]+q[1])/2], k=[(cx*1+p[0]+q[0])/3,(cy+p[1]+q[1])/3]; s+=ln(cx,cy,p[0],p[1],'#8A5A33',1.2)+ln(p[0],p[1],k[0],k[1],'#8A5A33',1.2)+ln(q[0],q[1],k[0],k[1],'#8A5A33',1.2)+ln(cx,cy,k[0],k[1],'#8A5A33',1.2); }
+  return s; }
+  var dx=R*Math.sqrt(3), cs=[[70,60],[70+dx,60],[70+2*dx,60],[70+dx/2,60+R*1.5],[70+dx*1.5,60+R*1.5],[70+dx*2.5,60+R*1.5]];
+  cs.forEach(function(c){ g+=hexAt(c[0],c[1]); });
+  return svg('0 0 340 190',g,'麻の葉の模様'); }
+function honeyFig(){ var g=grid(300,170), R=30, dx=R*Math.sqrt(3); for(var r=0;r<3;r++) for(var c=0;c<5;c++){ var cx=40+c*dx+(r%2?dx/2:0), cy=40+r*R*1.5, P=[]; for(var i=0;i<6;i++){ var a=(60*i-30)*Math.PI/180; P.push((cx+R*Math.cos(a)).toFixed(1)+','+(cy+R*Math.sin(a)).toFixed(1)); } g+='<polygon points="'+P.join(' ')+'" fill="var(--gold2)" stroke="var(--line)" stroke-width="1.8"/>'; }
+  return svg('0 0 300 170',g,'はちの巣のような正六角形のしきつめ'); }
+function aedFig(){ var S=[[70,60],[250,50],[160,160]], col=['#F6C9C9','#C9DDF6','#CDEFD2'], g='', s=10;
+  for(var x=0;x<320;x+=s) for(var y=0;y<200;y+=s){ var best=0,bd=1e9; S.forEach(function(p,i){ var d=Math.hypot(x+s/2-p[0],y+s/2-p[1]); if(d<bd){bd=d;best=i;} }); g+='<rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="'+col[best]+'"/>'; }
+  ['P','Q','R'].forEach(function(n,i){ g+=dot(S[i][0],S[i][1],'var(--red)',6)+T(S[i][0]+10,S[i][1]-8,n+'（AED）',{a:'start',size:12,w:1}); });
+  return svg('0 0 320 200',g,'3つのAEDのどれがいちばん近いかで色分けした地図'); }
+function wheelFig(){ var g=grid(300,200), P=[150,110]; g+='<circle cx="150" cy="110" r="78" fill="var(--gold2)" fill-opacity=".45" stroke="var(--red)" stroke-width="2.5" stroke-dasharray="7 4"/>';
+  g+='<rect x="105" y="75" width="90" height="70" rx="8" fill="#9DB6CF" stroke="var(--line)" stroke-width="2"/><rect x="92" y="78" width="12" height="64" fill="var(--line)"/><rect x="196" y="78" width="12" height="64" fill="var(--line)"/>'+ln(98,110,202,110,'var(--comp)',2.5)+dot(150,110,'var(--red)',5)+T(150,128,'P',{w:1,c:'var(--red)'})+dot(205,165,'var(--ink)',4)+T(214,176,'Q',{a:'start',w:1})+ln(150,110,205,165,'var(--red)',2);
+  return svg('0 0 300 200',g,'車いすを上から見た図と、方向転換に必要な円'); }
+function polyInCircle(n){ var g=grid(220,200), cx=110, cy=100, r=80, P=[]; for(var i=0;i<n;i++){ var a=2*Math.PI*i/n-Math.PI/2; P.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1)); }
+  g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--comp)" stroke-width="2.5"/><polygon points="'+P.join(' ')+'" fill="var(--gold2)" fill-opacity=".5" stroke="var(--red)" stroke-width="2"/>'+dot(cx,cy)+ln(cx-r,cy,cx+r,cy,'var(--line)',1.5,'4 3');
+  return svg('0 0 220 200',g,'円の内側の正'+n+'角形'); }
+var WY={
+ y1:{u:"u8",type:"card",html:'<b>寄り道：日本の伝統模様「麻の葉」</b>'+asanohaFig()+'<p>麻の葉の模様は、<b>合同な二等辺三角形</b>をすき間なく並べてできている。どの三角形も、平行移動・回転移動・対称移動のどれかで、となりの三角形に重ねられる。</p><p>着物や小物によく使われてきた模様。図形の移動を使うと、きれいな模様が「同じ形のくり返し」だとわかる。</p>'},
+ y2:{u:"u8",type:"choice",q:"麻の葉の模様の中の、合同な三角形どうしを重ねるのに使える移動は？",fig:asanohaFig(),opts:["平行移動・回転移動・対称移動のどれも使える","平行移動だけ","どの移動でも重ならない"],c:0,ex:"向きが同じ三角形は平行移動、向きがちがう三角形は回転移動や対称移動で重なる。"},
+ y3:{u:"u8",type:"num",q:"正六角形の1つの角は何度？（正六角形だけで、すき間なくしきつめられるわけ）",fig:honeyFig(),ans:120,unit:"°",ex:"正六角形は正三角形6つ分。1つの角は 60° × 2 = 120°。1つの点に3つ集まると 120 × 3 = 360° でちょうど一回り。"},
+ y4:{u:"u8",type:"card",html:'<b>寄り道：はちの巣はなぜ正六角形？</b>'+honeyFig()+'<p>平面をすき間なくしきつめられる正多角形は、<b>正三角形・正方形・正六角形</b>の3つだけ。そのうち、まわりの長さ（材料）が同じなら、<b>正六角形がいちばん広い</b>。</p><p>だから、はちの巣のような正六角形のしきつめ（ハニカム構造）は、少ない材料で広い部屋ができ、じょうぶでもある。飛行機のつばさの中などにも使われている。</p>'},
+ y5:{u:"u8",type:"choice",q:"1種類の正多角形だけで、平面をすき間なくしきつめられるのは？",opts:["正三角形・正方形・正六角形","正三角形・正五角形・正六角形","正方形と正八角形だけ"],c:0,ex:"1つの角が 60°、90°、120° のとき、360° をちょうど分けられる。正五角形は 108° なので、すき間ができる。"},
+ y6:{u:"u8",type:"card",html:'<b>寄り道：円周率 π の歴史</b>'+polyInCircle(6)+'<p>円周は直径の何倍か。昔の人は、円の<b>内側と外側に正多角形</b>をかいて、そのまわりの長さで円周をはさみうちにした。</p><div class="ex good"><span class="tag">アルキメデス</span>　紀元前3世紀、正96角形を使って、π は 3.1408… より大きく 3.1428… より小さいことを示した。</div><div class="ex good"><span class="tag">関孝和</span>　江戸時代の日本の数学者。正多角形の角の数をどんどん増やして、π を小数点以下10けた以上正しく求めた。</div><div class="ex good"><span class="tag">グレゴリー</span>　π/4 = 1 − 1/3 + 1/5 − 1/7 + … という式を見つけた。正多角形を使わずに計算できる。</div><p>今ではコンピューターで、何兆けたも計算されている。それでも終わりはない。</p>'},
+ y7:{u:"u8",type:"choice",q:"半径 r の円の内側に、ぴったり正六角形をかいた。正六角形のまわりの長さは 6r（直径の3倍）。円周は直径の何倍より大きい？",fig:polyInCircle(6),opts:["3倍より大きい","3倍より小さい","ちょうど3倍"],c:0,ex:"円周は、内側の正六角形のまわりより長い。だから π は 3 より大きい。"},
+ y8:{u:"u8",type:"choice",q:"円の内側の正六角形を、正十二角形にかえた。まわりの長さは、円周に近づく？",fig:polyInCircle(12),opts:["近づく","遠ざかる","変わらない"],c:0,ex:"角の数を増やすほど、正多角形は円に近づく。アルキメデスは正96角形まで計算した。"},
+ y9:{u:"u8",type:"card",html:'<b>寄り道：車いすの方向転換（教科書の活用の問題）</b>'+wheelFig()+'<p>車いすに乗った人が方向転換できるように、歩道の幅を決めている町がある。左の車輪を固定して回したり、2つの車輪の<b>まん中の点 P を中心に 180° 回転</b>したりして向きを変える。</p><p>P を中心に回すとき、車いすがはみ出さない範囲は、<b>P を中心として、P からもっとも遠い点 Q までを半径とする円</b>。中点 P は垂直二等分線で作図できる。</p>'},
+ y10:{u:"u8",type:"choice",q:"P を中心に車いすを 180° 回転させるとき、必要な範囲は？",fig:wheelFig(),opts:["P を中心とし、P からもっとも遠い点 Q までを半径とする円","P を中心とし、車輪までを半径とする円","車いすと同じ大きさの長方形"],c:0,ex:"回転移動では、中心からの距離は変わらない。いちばん遠い点 Q が通る円の中は、全部通る。"},
+ y11:{u:"u8",type:"num",q:"P から車いすのもっとも遠い点 Q までが 70cm のとき、方向転換に必要な円の直径は？",ans:140,unit:"cm",ex:"半径 PQ = 70cm の円なので、直径は 70 × 2 = 140cm。"},
+ y12:{u:"u8",type:"card",html:'<b>寄り道：いちばん近い AED がわかる地図（教科書の活用の問題）</b>'+aedFig()+'<p>3つの地点 P、Q、R に AED がある。どこにいるときに、どの AED がいちばん近いかを地図に色分けしたい。</p><p>2つの地点 P、Q だけなら、<b>線分 PQ の垂直二等分線</b>が境目になる。線上の点は P と Q から等しい距離で、P 側の点は P の方が近い。</p><p>PQ、QR、RP の垂直二等分線を作図すると、地図は3つの地域に分かれる。</p>'},
+ y13:{u:"u8",type:"choice",q:"P と Q のどちらの AED に近いかを分ける境目の線は？",opts:["線分 PQ の垂直二等分線","線分 PQ","P を中心とする円"],c:0,ex:"垂直二等分線上の点は、P と Q から等しい距離。そこが境目。"},
+ y14:{u:"u8",type:"choice",q:"△PQR の3つの辺の垂直二等分線を作図すると、どうなる？",fig:aedFig(),opts:["3本とも1点で交わる","3本とも平行になる","交わる点が3つできる"],c:0,ex:"3本は1点で交わる。その点は P、Q、R から等しい距離にあり、3つの AED がどれも同じくらい近い場所。"}
+};
+Object.keys(WY).forEach(function(k){ ITEMS[k]=WY[k]; });
+
+/* ---------- 文字だけの設問に付ける図（見てわかる補助） ---------- */
+var FX=(function(){
+  function P(pts,fill,stroke,w,dash){ return '<polygon points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="'+(fill||'var(--gold2)')+'" stroke="'+(stroke||'var(--line)')+'" stroke-width="'+(w||2)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'; }
+  function tick(a,b,n,c){ var mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,s=''; for(var i=0;i<(n||1);i++){ var o=(i-((n||1)-1)/2)*6, cx=mx+ux*o, cy=my+uy*o; s+=ln(cx-uy*7,cy+ux*7,cx+uy*7,cy-ux*7,c||'var(--red)',2); } return s; }
+  function par(a,b,c){ var mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,an=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI; return arrowHead(mx+6*Math.cos(an*Math.PI/180),my+6*Math.sin(an*Math.PI/180),an,c||'var(--red)'); }
+  function sec(cx,cy,r,a1,a2,fill,stroke){ var p1=[cx+r*Math.cos(rad(a1)),cy+r*Math.sin(rad(a1))],p2=[cx+r*Math.cos(rad(a2)),cy+r*Math.sin(rad(a2))],big=((a2-a1+360)%360)>180?1:0; if(Math.abs(a2-a1)>=360) return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+fill+'" stroke="'+(stroke||'var(--line)')+'" stroke-width="2"/>'; return '<path d="M'+cx+' '+cy+' L'+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+' A'+r+' '+r+' 0 '+big+' 1 '+p2[0].toFixed(1)+' '+p2[1].toFixed(1)+' Z" fill="'+(fill||'var(--gold2)')+'" stroke="'+(stroke||'var(--line)')+'" stroke-width="2"/>'; }
+  function circ(cx,cy,r,c,w,dash,fill){ return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+(fill||'none')+'" stroke="'+(c||'var(--ink)')+'" stroke-width="'+(w||2)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'; }
+  function lab(p,t,dx,dy,c){ return T(p[0]+(dx||0),p[1]+(dy||0),t,{w:1,c:c}); }
+  function rot(p,o,deg){ var a=rad(deg),x=p[0]-o[0],y=p[1]-o[1]; return [o[0]+x*Math.cos(a)-y*Math.sin(a),o[1]+x*Math.sin(a)+y*Math.cos(a)]; }
+  function hint(t){ return T(10,18,'ヒントの図　'+t,{a:'start',size:12,c:'var(--muted,#5b6b7a)'}); }
+  var V='0 0 340 200';
+  function perpFig(){ var g=grid(340,200); g+=ln(40,120,300,120,'var(--ink)',2.5)+ln(170,20,170,190,'var(--comp)',2.5)+rightMark(170,120,1,1,'var(--red)')+lab([40,120],'A',-4,20)+lab([300,120],'B',4,20)+lab([170,20],'C',14,10)+lab([170,190],'D',14,0)+hint('2本の直線が 90° で交わる'); return svg(V,g,'垂直に交わる2直線'); }
+  function parFig(){ var g=grid(340,200); g+=ln(40,70,300,70,'var(--ink)',2.5)+ln(40,140,300,140,'var(--comp)',2.5)+par([40,70],[300,70])+par([40,140],[300,140])+dot(40,70)+dot(300,70)+dot(40,140)+dot(300,140)+lab([40,70],'A',0,-10)+lab([300,70],'B',0,-10)+lab([40,140],'C',0,24)+lab([300,140],'D',0,24)+hint('どこまでのばしても交わらない（＞は平行の印）'); return svg(V,g,'平行な2直線'); }
+  function eqFig(){ var g=grid(340,200), A=[40,80],B=[180,80],C=[120,150],D=[260,150]; g+=ln(A[0],A[1],B[0],B[1],'var(--ink)',2.5)+ln(C[0],C[1],D[0],D[1],'var(--comp)',2.5)+tick(A,B,2)+tick(C,D,2)+dot(A[0],A[1])+dot(B[0],B[1])+dot(C[0],C[1])+dot(D[0],D[1])+lab(A,'A',0,-10)+lab(B,'B',0,-10)+lab(C,'C',0,24)+lab(D,'D',0,24)+hint('同じ印＝同じ長さ'); return svg(V,g,'長さの等しい2つの線分'); }
+  function distAB(){ var g=grid(340,200),A=[60,140],B=[280,70]; g+='<path d="M60 140 C 110 20, 200 200, 280 70" fill="none" stroke="#9AA6B2" stroke-width="2" stroke-dasharray="5 4"/><path d="M60 140 C 140 190, 250 160, 280 70" fill="none" stroke="#9AA6B2" stroke-width="2" stroke-dasharray="5 4"/>'+ln(A[0],A[1],B[0],B[1],'var(--red)',3)+dot(A[0],A[1])+dot(B[0],B[1])+lab(A,'A',-12,4)+lab(B,'B',12,0)+hint('A から B への線。赤がいちばん短い'); return svg(V,g,'2点を結ぶいろいろな線'); }
+  function twoPts(){ var g=grid(340,200),A=[100,130],B=[240,70]; g+=gFar(A,B,'var(--comp)',2.5)+dot(A[0],A[1],'var(--red)',5)+dot(B[0],B[1],'var(--red)',5)+lab(A,'A',-4,22)+lab(B,'B',4,-12)+hint('A と B の両方を通る直線'); return svg(V,g,'2点を通る直線'); }
+  function triFig(){ var g=grid(340,200),A=[170,30],B=[70,170],C=[280,170]; g+=P([A,B,C])+lab(A,'A',0,-8)+lab(B,'B',-12,8)+lab(C,'C',12,8)+hint('3つの頂点 A、B、C の三角形'); return svg(V,g,'三角形ABC'); }
+  function linesFig(){ var g=grid(340,200),O=[100,110]; for(var i=0;i<6;i++){ var a=i*30; g+=ln(O[0]-90*Math.cos(rad(a)),O[1]-90*Math.sin(rad(a)),O[0]+90*Math.cos(rad(a)),O[1]+90*Math.sin(rad(a)),'var(--comp)',1.8); } g+=dot(O[0],O[1],'var(--red)',5)+lab(O,'P',12,-6)+'<path d="M220 150 C 250 60, 300 200, 320 90" fill="none" stroke="#9AA6B2" stroke-width="2" stroke-dasharray="5 4"/>'+ln(220,150,320,90,'var(--red)',2.5)+dot(220,150)+dot(320,90)+T(270,190,'2点を結ぶ線',{size:12})+T(100,195,'1点を通る直線',{size:12})+hint('左：何本ひける？　右：いちばん短いのは？'); return svg(V,g,'1点を通る直線と2点を結ぶ線'); }
+  var TRI0=[[60,150],[140,150],[80,90]];
+  function rotPair(deg,O){ O=O||[200,150]; var t2=TRI0.map(function(p){return rot(p,O,deg);}); return {a:TRI0,b:t2,O:O}; }
+  function rotFig7(){ var r=rotPair(90,[190,150]), g=grid(340,200); g+=P(r.a)+P(r.b,'#CFE3F5')+dot(r.O[0],r.O[1],'var(--red)',5)+lab(r.O,'O',12,14)+arcPath(r.O[0],r.O[1],60,180,270,'var(--red)',2,'5 4')+hint('回転する前（黄）と後（青）をくらべよう'); return svg(V,g,'回転移動の前と後'); }
+  function reflFig(m){ var g=grid(340,200),A=[100,70],A2=[240,70],B=[60,150],C=[130,140],B2=[280,150],C2=[210,140]; g+=ln(170,10,170,195,'var(--comp)',2.5,'8 5')+T(180,190,'ℓ',{w:1})+P([A,B,C])+P([A2,B2,C2],'#CFE3F5')+ln(A[0],A[1],A2[0],A2[1],'var(--red)',2,'4 3')+lab(A,'A',-4,-10)+lab(A2,"A′",4,-10);
+    if(m) g+=dot(170,70,'var(--ink)',4)+lab([170,70],'M',12,-8); g+=hint(m?'AA′ と軸 ℓ の交わり方を見よう':'前（黄）と後（青）。A と A′ を結んだ'); return svg(V,g,'対称移動の前と後'); }
+  function transFig(){ var g=grid(340,200),d=[150,-50],a=[[50,170],[120,170],[70,120]],b=a.map(function(p){return [p[0]+d[0],p[1]+d[1]];}); g+=P(a)+P(b,'#CFE3F5'); ['A','B','C'].forEach(function(n,i){ g+=ln(a[i][0],a[i][1],b[i][0],b[i][1],'var(--red)',2,'4 3')+arrowHead(b[i][0],b[i][1],Math.atan2(d[1],d[0])*180/Math.PI,'var(--red)')+lab(a[i],n,-10,14)+lab(b[i],n+'′',10,-6); }); g+=hint('A→A′、B→B′ の線をくらべよう'); return svg(V,g,'平行移動の前と後'); }
+  function rotOA(){ var g=grid(340,200),O=[170,160],A=[270,160],A2=rot(A,O,-70); g+=ln(O[0],O[1],A[0],A[1],'var(--ink)',2.5)+ln(O[0],O[1],A2[0],A2[1],'var(--comp)',2.5)+arcPath(O[0],O[1],100,-70,0,'var(--red)',2,'5 4')+dot(O[0],O[1],'var(--red)',5)+lab(O,'O',-4,22)+lab(A,'A',10,6)+lab(A2,"A′",10,-6)+hint('O を中心に回すと、A は円の上を動く'); return svg(V,g,'回転移動で A が A′ に移る'); }
+  function rot60(){ var g=grid(340,200),O=[170,170],B=[290,170],B2=rot(B,O,-60),A=[230,110],A2=rot(A,O,-60); g+=P([O,A,B],'var(--gold2)')+P([O,A2,B2],'#CFE3F5')+ln(O[0],O[1],B[0],B[1],'var(--red)',2.5)+ln(O[0],O[1],B2[0],B2[1],'var(--red)',2.5)+arcPath(O[0],O[1],40,-60,0,'var(--red)',3)+T(222,158,'?',{w:1,c:'var(--red)'})+dot(O[0],O[1])+lab(O,'O',-14,6)+lab(B,'B',12,6)+lab(B2,"B′",8,-8)+hint('△ABC を O のまわりに 60° 回した'); return svg(V,g,'60°の回転移動'); }
+  function midFig(q){ var g=grid(340,200),A=[50,120],B=[290,120],M=[170,120]; g+=ln(A[0],A[1],B[0],B[1],'var(--ink)',2.5)+tick(A,M,1)+tick(M,B,1)+dot(A[0],A[1])+dot(B[0],B[1])+dot(M[0],M[1],'var(--red)',6)+lab(A,'A',0,24)+lab(B,'B',0,24)+lab(M,q||'?',0,-14,'var(--red)')+hint('赤い点で、ちょうど半分に分かれる'); return svg(V,g,'線分のまん中の点'); }
+  function congFig(){ var g=grid(340,200),a=[[40,170],[130,170],[70,100]],b=[[300,60],[210,60],[270,130]].map(function(p){return p;}); g+=P(a)+P([[220,170],[310,170],[250,100]].map(function(p){return rot(p,[265,140],150);}),'#CFE3F5')+T(170,110,'→ 動かすと ぴったり重なる',{size:12})+hint('形も大きさも同じ2つの三角形'); return svg(V,g,'ぴったり重なる2つの図形'); }
+  function twoRefl(){ var g=grid(340,200),O=[170,110],a=[[200,90],[250,90],[210,50]],b=a.map(function(p){return [2*O[0]-p[0],p[1]];}),c=b.map(function(p){return [p[0],2*O[1]-p[1]];}); g+=ln(170,10,170,195,'var(--comp)',2,'8 5')+T(182,22,'ℓ',{w:1})+ln(20,110,330,110,'var(--comp)',2,'8 5')+T(320,100,'m',{w:1})+P(a)+P(b,'#CFE3F5',null,1.5,'4 3')+P(c,'#F6C9C9')+T(262,60,'①',{w:1})+T(90,44,'② ℓ で折る',{size:12})+T(90,196,'③ m で折る',{size:12})+dot(O[0],O[1],'var(--red)',5)+hint('① から ③ へ1回で行くには？'); return svg(V,g,'2回の対称移動'); }
+  function moveArrow(){ var g=grid(340,200),a=[[40,160],[110,160],[60,100]],d=[180,-30]; g+=P(a)+P(a.map(function(p){return [p[0]+d[0],p[1]+d[1]];}),'#CFE3F5')+ln(130,120,280,95,'var(--red)',3)+arrowHead(280,95,Math.atan2(-25,150)*180/Math.PI,'var(--red)')+hint('向きを変えずに、同じ方向へずらす'); return svg(V,g,'図形をずらす移動'); }
+  function eqAB(){ var g=grid(340,200),A=[100,150],B=[240,150]; g+=dot(A[0],A[1],'var(--red)',5)+dot(B[0],B[1],'var(--red)',5)+lab(A,'A',0,24)+lab(B,'B',0,24); [[170,40],[170,90],[170,130],[170,175]].forEach(function(p){ g+=ln(A[0],A[1],p[0],p[1],'#9AA6B2',1.5,'4 3')+ln(B[0],B[1],p[0],p[1],'#9AA6B2',1.5,'4 3')+dot(p[0],p[1],'var(--comp)',5); }); g+=hint('A、B から同じ距離の点。どう並ぶ？'); return svg(V,g,'2点から等しい距離の点'); }
+  function eqAng(){ var g=grid(340,200),O=[40,180],an=-40; g+=ln(O[0],O[1],330,180,'var(--ink)',2.5)+ln(O[0],O[1],O[0]+300*Math.cos(rad(an)),O[1]+300*Math.sin(rad(an)),'var(--ink)',2.5); [100,170,240].forEach(function(t){ var p=[O[0]+t*Math.cos(rad(an/2)),O[1]+t*Math.sin(rad(an/2))], f1=[p[0],180], u=[Math.cos(rad(an)),Math.sin(rad(an))], k=(p[0]-O[0])*u[0]+(p[1]-O[1])*u[1], f2=[O[0]+k*u[0],O[1]+k*u[1]]; g+=ln(p[0],p[1],f1[0],f1[1],'#9AA6B2',1.5,'4 3')+ln(p[0],p[1],f2[0],f2[1],'#9AA6B2',1.5,'4 3')+dot(p[0],p[1],'var(--comp)',5); }); g+=hint('2辺から同じ距離の点。どう並ぶ？'); return svg(V,g,'角の2辺から等しい距離の点'); }
+  function eqO(){ var g=grid(340,200),O=[170,105]; for(var i=0;i<12;i++){ var a=i*30, p=[O[0]+75*Math.cos(rad(a)),O[1]+75*Math.sin(rad(a))]; if(i%3===0) g+=ln(O[0],O[1],p[0],p[1],'#9AA6B2',1.5,'4 3'); g+=dot(p[0],p[1],'var(--comp)',5); } g+=dot(O[0],O[1],'var(--red)',5)+lab(O,'O',12,-6)+T(210,100,'3cm',{size:12})+hint('O から 3cm の点。どんな形？'); return svg(V,g,'1点から等しい距離の点'); }
+  function arcsNo(){ var g=grid(340,200),A=[70,130],B=[270,130]; g+=ln(A[0],A[1],B[0],B[1],'var(--ink)',2.5)+arcPath(A[0],A[1],70,-60,60,'var(--comp)',2.5)+arcPath(B[0],B[1],70,120,240,'var(--comp)',2.5)+dot(A[0],A[1])+dot(B[0],B[1])+lab(A,'A',-12,6)+lab(B,'B',12,6)+T(170,70,'交わらない…',{w:1,c:'var(--red)'})+T(170,185,'半径が AB の半分より小さい',{size:12})+hint('コンパスの開きが小さすぎた'); return svg(V,g,'交わらなかった2つの弧'); }
+  function ansFig(){ var g=grid(340,200),O=[90,110]; g+=sec(O[0],O[1],70,-90,150,'var(--gold2)')+dot(O[0],O[1])+T(250,80,'面積 ＝ 6 × π',{w:1})+T(250,120,'答えの書き方は？',{size:13})+hint('π は「3.14159…」と終わらない数'); return svg(V,g,'おうぎ形の面積の答え方'); }
+  function circParts(hl){ var g=grid(340,200),O=[170,105],r=80,a1=200,a2=300,p1=[O[0]+r*Math.cos(rad(a1)),O[1]+r*Math.sin(rad(a1))],p2=[O[0]+r*Math.cos(rad(a2)),O[1]+r*Math.sin(rad(a2))]; g+=circ(O[0],O[1],r,'var(--ink)',2.5)+dot(O[0],O[1])+lab(O,'O',12,-4)+dot(p1[0],p1[1])+dot(p2[0],p2[1])+lab(p1,'A',-12,0)+lab(p2,'B',10,-6);
+    if(hl==='arc') g+=arcPath(O[0],O[1],r,a1,a2,'var(--red)',5)+hint('赤い部分＝円周の一部分'); else g+=ln(p1[0],p1[1],p2[0],p2[1],'var(--red)',4)+hint('赤い線＝円周上の2点 A、B を結んだ線分'); return svg(V,g,'円の部分'); }
+  function twoCircles(k){ var g=grid(340,200),A=[130,105],B=[210,105],r=70,h=Math.sqrt(r*r-40*40),Pp=[170,105-h],Q=[170,105+h]; g+=circ(A[0],A[1],r,'var(--comp)',2)+circ(B[0],B[1],r,'var(--comp)',2)+dot(A[0],A[1])+dot(B[0],B[1])+dot(Pp[0],Pp[1],'var(--red)',5)+dot(Q[0],Q[1],'var(--red)',5)+lab(A,'A',-12,4)+lab(B,'B',12,4)+lab(Pp,'P',0,-8)+lab(Q,'Q',0,20);
+    if(k==='quad') g+=P([A,Pp,B,Q],'rgba(242,183,5,.35)','var(--red)',2.5)+tick(A,Pp)+tick(Pp,B)+tick(B,Q)+tick(Q,A)+hint('4つの辺はどれも円の半径');
+    if(k==='lines') g+=ln(A[0],A[1],B[0],B[1],'var(--ink)',2.5)+ln(Pp[0],Pp[1],Q[0],Q[1],'var(--red)',2.5)+hint('AB と PQ の交わり方を見よう');
+    if(k==='sym') g+=ln(20,105,320,105,'var(--red)',2,'8 5')+ln(170,10,170,195,'var(--red)',2,'8 5')+hint('赤い線で折ると重なるかな？');
+    return svg(V,g,'半径の等しい2つの円'); }
+  function parDist(){ var g=grid(340,200); g+=ln(20,60,320,60,'var(--ink)',2.5)+ln(20,150,320,150,'var(--comp)',2.5)+T(330,64,'ℓ',{w:1,a:'end'})+T(330,170,'m',{w:1,a:'end'}); [70,170,270].forEach(function(x){ g+=dot(x,60,'var(--red)',5)+ln(x,60,x,150,'var(--red)',2,'4 3')+rightMark(x,150,1,1,'var(--red)'); }); g+=hint('ℓ のどこから m へ垂線をひいても'); return svg(V,g,'平行な2直線の距離'); }
+  function pbP(){ var g=grid(340,200),A=[90,150],B=[250,150],Pp=[170,50]; g+=ln(A[0],A[1],B[0],B[1],'var(--ink)',2.5)+ln(170,10,170,195,'var(--red)',2.5)+rightMark(170,150,1,1,'var(--red)')+tick(A,[170,150])+tick([170,150],B)+ln(A[0],A[1],Pp[0],Pp[1],'var(--comp)',2,'4 3')+ln(B[0],B[1],Pp[0],Pp[1],'var(--comp)',2,'4 3')+dot(Pp[0],Pp[1],'var(--comp)',5)+lab(Pp,'P',14,0)+lab(A,'A',0,24)+lab(B,'B',0,24)+hint('赤い線で折ると A は B に重なる'); return svg(V,g,'垂直二等分線上の点P'); }
+  function angBis(){ var g=grid(340,200),O=[40,180],an=-50,b=an/2,p=[O[0]+200*Math.cos(rad(b)),O[1]+200*Math.sin(rad(b))],u=[Math.cos(rad(an)),Math.sin(rad(an))],k=(p[0]-O[0])*u[0]+(p[1]-O[1])*u[1],f2=[O[0]+k*u[0],O[1]+k*u[1]]; g+=ln(O[0],O[1],330,180,'var(--ink)',2.5)+ln(O[0],O[1],O[0]+300*u[0],O[1]+300*u[1],'var(--ink)',2.5)+ln(O[0],O[1],O[0]+300*Math.cos(rad(b)),O[1]+300*Math.sin(rad(b)),'var(--red)',2,'8 5')+ln(p[0],p[1],p[0],180,'var(--comp)',2.5)+ln(p[0],p[1],f2[0],f2[1],'var(--comp)',2.5)+dot(p[0],p[1],'var(--red)',5)+lab(p,'P',14,0)+hint('二等分線上の P から2辺へ垂線'); return svg(V,g,'角の二等分線上の点から2辺への距離'); }
+  function tanFig(){ var g=grid(340,200),O=[130,105],r=70,A=[O[0]+r,105]; g+=circ(O[0],O[1],r,'var(--ink)',2.5)+ln(O[0],O[1],A[0],A[1],'var(--comp)',2.5)+ln(A[0],10,A[0],195,'var(--red)',2.5)+dot(O[0],O[1])+dot(A[0],A[1],'var(--red)',5)+lab(O,'O',-12,4)+lab(A,'A',14,18)+T(A[0]+12,24,'ℓ',{w:1})+hint('接線 ℓ と半径 OA の交わり方を見よう'); return svg(V,g,'円の接線と半径'); }
+  function wedge(cx,cy,r,a1,a2,fill,t){ return sec(cx,cy,r,-a2,-a1,fill)+(t?T(cx+(r+16)*Math.cos(rad(-(a1+a2)/2)),cy+(r+16)*Math.sin(rad(-(a1+a2)/2))+4,t,{size:12,w:1}):''); }
+  function ang75(){ var g=grid(340,200),O=[60,180]; g+=wedge(O[0],O[1],130,0,45,'#CFE3F5','45°')+wedge(O[0],O[1],130,45,75,'var(--gold2)','30°')+dot(O[0],O[1])+T(250,60,'45° ＋ 30°',{w:1})+T(250,85,'＝ 75°',{w:1,c:'var(--red)'})+hint('作図でつくれる角を組み合わせる'); return svg(V,g,'75°の角の組み合わせ'); }
+  function angs(){ var g=grid(340,200),O=[60,180]; g+=wedge(O[0],O[1],150,0,60,'#CFE3F5','60°')+ln(O[0],O[1],O[0]+150*Math.cos(rad(-30)),O[1]+150*Math.sin(rad(-30)),'var(--red)',2,'6 4')+ln(O[0],O[1],O[0]+150*Math.cos(rad(-15)),O[1]+150*Math.sin(rad(-15)),'var(--red)',2,'6 4')+T(222,120,'30°',{size:12,w:1})+T(228,155,'15°',{size:12,w:1})+dot(O[0],O[1])+T(270,40,'正三角形の 60°',{size:12})+T(270,58,'→ 二等分 → 二等分',{size:12})+hint('60°・90° を二等分してできる角'); return svg(V,g,'作図でつくれる角'); }
+  function kite(){ var g=grid(340,200),A=[110,100],B=[230,100],Pp=[170,30],Q=[170,170]; g+=P([A,Pp,B,Q],'var(--gold2)')+ln(170,10,170,195,'var(--red)',2.5,'8 5')+ln(A[0],A[1],B[0],B[1],'var(--comp)',2)+T(182,22,'軸',{size:12,w:1,c:'var(--red)'})+hint('どの線で折ると重なる？'); return svg(V,g,'作図にかくれている形'); }
+  function pie(deg,r,t){ var g=grid(340,200),O=[110,110],R=r||80; g+=circ(O[0],O[1],R,'#9AA6B2',2,'5 4')+sec(O[0],O[1],R,-90,-90+deg,'var(--gold2)')+dot(O[0],O[1])+T(O[0]+16,O[1]+20,deg+'°',{size:13,w:1,c:'var(--red)'})+T(260,90,t||'',{size:13})+T(260,115,deg+' / 360 ＝ ?',{size:13,w:1}); return svg(V,g,'中心角'+deg+'°のおうぎ形'); }
+  function pieHalf(){ var g=grid(340,200); g+=sec(90,120,75,-90,30,'var(--gold2)')+T(90,190,'中心角 a°',{size:12})+sec(250,120,75,-90,-30,'#CFE3F5')+T(250,190,'中心角を 1/2',{size:12})+hint('中心角が半分になると弧は？'); return svg(V,g,'中心角を半分にしたおうぎ形'); }
+  function tiles(){ var g=grid(340,200),s=34; for(var i=0;i<3;i++) for(var j=0;j<2;j++) g+='<rect x="'+(14+i*s)+'" y="'+(70+j*s)+'" width="'+s+'" height="'+s+'" fill="#CFE3F5" stroke="var(--line)"/>';
+    var R=20; for(var c=0;c<3;c++) for(var r2=0;r2<2;r2++){ var cx=150+c*R*Math.sqrt(3)+(r2%2?R*Math.sqrt(3)/2:0), cy=85+r2*R*1.5, pts=[]; for(var k=0;k<6;k++){ var a=rad(60*k-30); pts.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]); } g+=P(pts,'var(--gold2)','var(--line)',1.5); }
+    var c5=[290,100],pp=[]; for(var k2=0;k2<5;k2++){ var a2=rad(72*k2-90); pp.push([c5[0]+26*Math.cos(a2),c5[1]+26*Math.sin(a2)]); } g+=P(pp,'#F6C9C9')+P(pp.map(function(p){return rot(p,pp[1],144);}),'#F6C9C9')+T(300,165,'すき間？',{size:12,c:'var(--red)',w:1})+T(65,160,'正方形',{size:12})+T(185,160,'正六角形',{size:12})+T(290,185,'正五角形',{size:12})+hint('1点に集まる角の合計は 360°？'); return svg(V,g,'正多角形のしきつめ'); }
+  function aed2(){ var S2=[[90,100],[250,100]],g='',s=10; for(var x=0;x<340;x+=s) for(var y=0;y<200;y+=s){ var d1=Math.hypot(x+5-S2[0][0],y+5-S2[0][1]),d2=Math.hypot(x+5-S2[1][0],y+5-S2[1][1]); g+='<rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="'+(d1<d2?'#F6C9C9':'#C9DDF6')+'"/>'; } g+=dot(S2[0][0],S2[0][1],'var(--red)',6)+dot(S2[1][0],S2[1][1],'var(--red)',6)+T(90,90,'P',{w:1})+T(250,90,'Q',{w:1})+T(90,180,'P が近い',{size:12})+T(250,180,'Q が近い',{size:12})+ln(S2[0][0],S2[0][1],S2[1][0],S2[1][1],'var(--ink)',1.5,'4 3'); return svg(V,g,'P と Q のどちらが近いかで色分け'); }
+  function wheel70(){ return wheelFig().replace('</svg>','<text x="214" y="156" font-size="13" font-weight="700" fill="var(--red)">70cm</text></svg>'); }
+  return {a5:perpFig(),a6:parFig(),a9:eqFig(),a10:parFig(),a11:distAB(),a12:twoPts(),a13:triFig(),a14:linesFig(),
+    b7:rotFig7(),b8:reflFig(),b10:transFig(),b11:rotOA(),b12:rot60(),b14:midFig(),b15:reflFig(),b16:reflFig(true),b22:congFig(),b23:twoRefl(),b25:moveArrow(),
+    c4:eqAB(),c5:eqAng(),c6:eqO(),d3:pbFig(),d6:arcsNo(),f9:ansFig(),
+    k3:circParts('arc'),k4:circParts('chord'),k5:eqO(),k6:twoCircles('quad'),k7:twoCircles('lines'),k8:twoCircles('sym'),k12:parDist(),k14:pbP(),k15:midFig('M'),k18:angBis(),k20:tanFig(),k22:ang75(),k23:angs(),k25:kite(),
+    os2:pie(120,80,'円の何倍？'),os3:pieHalf(),os4:pie(45,85,'半径 8cm'),os5:pie(45,85,'半径 8cm'),os6:pie(300,80,'半径 6cm'),
+    y5:tiles(),y11:wheel70(),y13:aed2()};
+})();
+Object.keys(FX).forEach(function(k){ if(ITEMS[k] && !ITEMS[k].fig) ITEMS[k].fig=FX[k]; });
+
+/* ---------- ワーク版（パソコンの中だけに置くファイル） ---------- */
+var WORK=null; try{ WORK=JSON.parse(localStorage.getItem("heimen-work-v1")||"null"); }catch(e){ WORK=null; }
+if(WORK && WORK.items){ Object.keys(WORK.items).forEach(function(k){ var it=WORK.items[k]; it.work=true; if(!it.u) it.u="u7"; ITEMS[k]=it; }); }
+
+/* ---------- 状態 ---------- */
+function freshUnits(){ var o={}; UNITS.forEach(function(u){ o[u.key]={q:Object.keys(ITEMS).filter(function(k){return ITEMS[k].u===u.key;}).map(function(id){return {id:id};}),pos:0,cur:null,done:false,again:[]}; }); return o; }
+var S; try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(e){ S=null; }
+if(!S||!S.units){ S={unit:"u1",units:freshUnits(),mute:false}; }
+if(EMB){ var mute0=S.mute; S={unit:"emb",units:freshUnits(),mute:!!mute0}; S.units.emb={q:EMB.split(",").filter(function(id){return ITEMS[id];}).map(function(id){return {id:id};}),pos:0,cur:null,done:false,again:[],first:{}}; }
+(function(){ var f=freshUnits(); UNITS.forEach(function(u){ var cur=S.units[u.key]; var want=f[u.key].q.map(function(e){return e.id;}).join(","); var have=cur?cur.q.filter(function(e){return !e.again;}).map(function(e){return e.id;}).join(","):""; if(want!==have) S.units[u.key]=f[u.key]; }); })();
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+var app=document.getElementById("app"), nav=document.getElementById("nav");
+
+function newCur(it){ var c={res:null,vals:[],sel:[],pick:null};
+  if(it.type==="choice"||(it.type==="move"&&it.opts)) c.ord = it.fixed ? null : shuffle(it.opts.length);
+  if(it.type==="order"){ c.ord=shuffle(it.opts.length); c.seq=[]; }
+  if(it.type==="dragorder"){ var o=shuffle(it.opts.length); if(o.every(function(v,i){return v===i;})) o.reverse(); c.seq=o; }
+  if(it.type==="sort") c.cat=[];
+  if(it.type==="slots"){ c.sl=[]; c.cord=shuffle(it.chips.length); }
+  if(it.type==="draw"){ c.drawn=false; c.chk=[]; }
+  if(it.type==="construct"){ c.step=0; c.bad=false; }
+  if(it.type==="locus"){ c.pts=[]; c.reveal=false; c.p= it.mode==='ab' ? [230,170] : (it.mode==='xy' ? [200,120] : [170,50]); }
+  if(it.type==="sector"){ c.ang=90; }
+  if(it.type==="sym"){ c.seq=[]; c.tord=shuffle(it.tok.length); }
+  if(it.type==="gdraw"){ c.gp=[]; }
+  if(it.type==="cdraw"){ c.objs=[]; c.tool="compass"; c.rp=null; c.model=false; }
+  if(it.type==="multi"){ c.sel=[]; c.ord=shuffle(it.opts.length); }
+  if(it.type==="circlearea"){ c.step=0; c.N=16; c.lay="explode"; }
+  if(it.type==="roll"){ c.d=4; c.open=false; c.seen=[]; }
+  if(it.type==="squares"){ c.r=3; c.gap=false; }
+  return c;
+}
+
+
+
+/* ---------- 円周：円をころがして、直径の何本分かを見る ---------- */
+function rollSVG(r){
+  var R=r*7, x0=24+R, y=128, cy=y-R, D=2*R, C=Math.PI*D, g='';
+  g+=ln(10,y,334,y,'var(--ink)',2);
+  for(var i=0;i<3;i++) g+='<g class="rod" opacity="0"><rect x="'+(24+i*D)+'" y="'+(y+8)+'" width="'+D+'" height="12" fill="'+(i%2?'var(--comp)':'#7FB2EE')+'" stroke="var(--line)" stroke-width="1"/>'+T(24+i*D+D/2,y+36,'直径'+(i+1),{size:11,c:'var(--comp)',w:1})+'</g>';
+  g+='<g class="rod" opacity="0"><rect x="'+(24+3*D)+'" y="'+(y+8)+'" width="'+(C-3*D)+'" height="12" fill="var(--red)"/>'+T(24+3*D+12,y+36,'0.14',{size:11,c:'var(--red)',w:1})+'</g>';
+  g+='<line id="rtrace" x1="24" y1="'+y+'" x2="24" y2="'+y+'" stroke="var(--gold)" stroke-width="6" stroke-linecap="round"/>';
+  g+='<g id="rwheel" transform="translate('+x0+' '+cy+')"><circle r="'+R+'" fill="var(--card)" stroke="var(--gold)" stroke-width="4"/>'+ln(-R,0,R,0,'var(--comp)',2.5)+T(0,-6,'直径',{size:11,c:'var(--comp)'})+'<circle id="rmark" cx="0" cy="'+R+'" r="5" fill="var(--red)"/></g>';
+  return svg('0 0 340 176',g,'円を1回転ころがして円周の長さを見る',' id="rollsvg"');
+}
+function rollTo(r,t){
+  var R=r*7, x0=24+R, y=128, cy=y-R, C=2*Math.PI*R, d=C*t, ang=d/R;
+  var w=document.getElementById('rwheel'); if(!w) return;
+  w.setAttribute('transform','translate('+(x0+d).toFixed(2)+' '+cy+') rotate('+(ang*180/Math.PI).toFixed(1)+')');
+  document.getElementById('rtrace').setAttribute('x2',(24+d).toFixed(2));
+  var rods=document.querySelectorAll('#rollsvg .rod'); for(var i=0;i<rods.length;i++) rods[i].setAttribute('opacity', t>=1?1:0);
+}
+/* ---------- 円の面積：半径×半径の正方形の何こ分か ---------- */
+function squaresSVG(r,showGap){
+  var R=r*12, cx=170, cy=88, g='';
+  g+='<rect x="'+(cx-R)+'" y="'+(cy-R)+'" width="'+(2*R)+'" height="'+(2*R)+'" fill="'+(showGap?'var(--rasp2)':'var(--card)')+'" stroke="var(--line)" stroke-width="1.5"/>';
+  g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="var(--gold2)" stroke="var(--gold)" stroke-width="3"/>';
+  g+=ln(cx-R,cy,cx+R,cy,'var(--line)',1.5)+ln(cx,cy-R,cx,cy+R,'var(--line)',1.5);
+  g+='<rect x="'+cx+'" y="'+(cy-R)+'" width="'+R+'" height="'+R+'" fill="none" stroke="var(--comp)" stroke-width="4"/>';
+  g+=T(cx+R/2,cy-R/2+5,'r × r',{size:14,c:'var(--comp)',w:1})+ln(cx,cy+4,cx+R,cy+4,'var(--red)',3)+T(cx+R/2,cy+20,'r',{size:14,c:'var(--red)',w:1});
+  g+=T(40,40,'正方形',{size:12,c:'var(--sub)'})+T(40,60,'4こ分',{size:16,w:1});
+  g+=T(300,40,'円',{size:12,c:'#9A7300'})+T(300,60,'約3.14こ分',{size:16,w:1,c:'#9A7300'});
+  return svg('0 0 340 176',g,'半径×半径の正方形と円の面積');
+}
+/* ---------- おうぎ形：円周の線・円の面積の線のうち、何分のいくつ ---------- */
+function fracBars(a){
+  var f=a/360, W=230, x0=96, g='';
+  [['円周',12,'弧'],['円の面積',36,'面積']].forEach(function(row,i){
+    var y=10+i*54, k=row[1]*f;
+    g+=T(x0-8,y+18,row[0],{a:'end',size:13});
+    g+='<rect x="'+x0+'" y="'+y+'" width="'+W+'" height="26" fill="var(--card)" stroke="var(--line)" stroke-width="1.4"/>';
+    for(var j=1;j<12;j++) g+=ln(x0+W*j/12,y,x0+W*j/12,y+26,'var(--grid5)',1);
+    g+='<rect x="'+x0+'" y="'+y+'" width="'+(W*f)+'" height="26" fill="var(--gold)" stroke="var(--line)" stroke-width="1.4"/>';
+    g+=T(x0+W,y+42,'全体 '+row[1]+'π',{a:'end',size:12,c:'var(--sub)'})+T(x0+4,y+42,row[2]+' '+piTxt(k),{a:'start',size:13,c:'#9A7300',w:1});
+  });
+  return svg('0 0 340 112',g,'円周と円の面積のうちの何分のいくつ');
+}
+
+
+/* ---------- 円周は直径に比例（a ＝ π） ---------- */
+function unrollSVG(d,t,seen){
+  var sc=8.6, R=d*sc/2, C=Math.PI*d*sc, cx=10+R, base=96, cy=base-R, g='';
+  g+=ln(8,base,334,base,'var(--grid5)',1.5);
+  g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="var(--grid5)" stroke-width="2" stroke-dasharray="4 3"/>'+ln(cx-R,cy,cx+R,cy,'var(--comp)',3)+T(cx,cy-5,'直径 '+d,{size:11,c:'var(--comp)',w:1});
+  var L=C*t, remain=1-t;
+  if(remain>0.001){ var a1=Math.PI/2, a2=Math.PI/2+remain*2*Math.PI, p1=[cx+R*Math.cos(a1),cy+R*Math.sin(a1)], p2=[cx+R*Math.cos(a2),cy+R*Math.sin(a2)];
+    g+= remain>0.999 ? '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="var(--gold)" stroke-width="5"/>' : '<path d="M'+p2[0].toFixed(1)+' '+p2[1].toFixed(1)+' A'+R+' '+R+' 0 '+(remain>0.5?1:0)+' 0 '+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+'" fill="none" stroke="var(--gold)" stroke-width="5"/>'; }
+  if(L>0) g+=ln(cx,base,cx+L,base,'var(--gold)',5);
+  if(t>=1) g+=T(cx+L/2,base+20,'円周 約 '+(Math.PI*d).toFixed(1)+'cm',{size:13,c:'#9A7300',w:1});
+  return svg('0 0 340 124',g,'直径 '+d+'cm の円の円周をのばす');
+}
+function propGraph(seen){
+  var X=function(x){return 30+x*28;}, Y=function(y){return 150-y*4.2;}, g='';
+  for(var i=0;i<=10;i+=2) g+=ln(X(i),Y(0),X(i),Y(32),'var(--grid)',1)+T(X(i),Y(0)+14,i,{size:10,c:'var(--sub)'});
+  for(var j=0;j<=30;j+=10) g+=ln(X(0),Y(j),X(10),Y(j),'var(--grid)',1)+T(X(0)-4,Y(j)+4,j,{a:'end',size:10,c:'var(--sub)'});
+  g+=ln(X(0),Y(0),X(10.3),Y(0),'var(--ink)',1.5)+ln(X(0),Y(0),X(0),Y(33),'var(--ink)',1.5)+T(X(10.3),Y(0)-6,'直径',{a:'end',size:11})+T(X(0)+4,Y(33)+2,'円周',{a:'start',size:11});
+  if(seen.length>=3) g+=ln(X(0),Y(0),X(10),Y(Math.PI*10),'var(--good)',2,'5 4');
+  seen.forEach(function(d){ g+='<circle cx="'+X(d)+'" cy="'+Y(Math.PI*d)+'" r="5" fill="var(--gold)" stroke="var(--line)" stroke-width="1.5"/>'; });
+  return svg('0 0 340 170',g,'直径と円周のグラフ');
+}
+
+/* ---------- 数を入れると図が動く ---------- */
+function liveFig(it,k,show){
+  var L=it.live, g='', ok=(k!==null&&isFinite(k)), cap='';
+  if(L.kind==='circ'){
+    var sc=12, R=L.r*sc, cx=80, cy=72, kk=ok?Math.max(0,Math.min(k,22)):0;
+    g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+(show?'var(--gold)':'var(--grid5)')+'" stroke-width="'+(show?5:2)+'"/>'+ln(cx-R,cy,cx+R,cy,'var(--comp)',3)+T(cx,cy-6,'直径 '+(2*L.r)+'cm',{size:12,c:'var(--comp)',w:1});
+    if(ok) g+=T(180,30,'あなたの数の棒（'+fmt(k)+'cm）',{a:'start',size:12,c:'#9A7300'})+'<rect x="180" y="38" width="'+(kk*sc*0.75)+'" height="12" fill="var(--gold)" stroke="var(--line)" stroke-width="1"/>'+T(180,72,'直径の棒（'+(2*L.r)+'cm）',{a:'start',size:12,c:'var(--comp)'})+'<rect x="180" y="80" width="'+(2*L.r*sc*0.75)+'" height="12" fill="var(--comp)"/>';
+    cap = ok ? 'π の前の数（'+fmt(k)+'）を棒にして、円の直径とくらべてみよう。円周 ＝ 直径 × π' : '数を入れると、その長さの棒が出る';
+    if(show) cap+='<br>円周（金色の円）＝ 直径 '+(2*L.r)+' × π ＝ '+(2*L.r)+'π cm';
+    return {svg:svg('0 0 340 160',g,'円の直径とあなたの数の棒'),cap:cap};
+  }
+  if(L.kind==='tiles'){
+    var rr=34, cx=48, cy=66, N=16, hw=Math.PI/N, g2='';
+    for(var i=0;i<N;i++){ var an=(i+0.5)*2*Math.PI/N-Math.PI/2; g2+='<path d="'+wedgePath(cx,cy,rr,an-hw,an+hw)+'" fill="'+(i%2?'var(--gold2)':'var(--grass2)')+'" stroke="var(--line)" stroke-width="0.6"/>'; }
+    g+=g2+ln(cx,cy,cx+rr,cy,'var(--red)',2.5)+T(cx+rr/2,cy+14,'r='+L.r,{size:11,c:'var(--red)',w:1})+T(cx,cy+rr+18,'円',{size:13,w:1});
+    g+=T(108,74,'→',{size:22,c:'var(--sub)'})+T(108,40,'切って',{size:10,c:'var(--sub)'})+T(108,52,'並べかえ',{size:10,c:'var(--sub)'});
+    var w=2*Math.PI*rr/N, xa=140, top=40;
+    for(var j=0;j<N;j++){ var jj=Math.floor(j/2), odd=j%2===1, px= odd? xa+w/2+jj*w : xa+w+jj*w, py= odd? top+rr: top, ang= odd? -Math.PI/2 : Math.PI/2;
+      g+='<path d="'+wedgePath(px,py,rr,ang-hw,ang+hw)+'" fill="'+(odd?'var(--gold2)':'var(--grass2)')+'" stroke="var(--line)" stroke-width="0.6"/>'; }
+    var Wp=Math.PI*rr;
+    g+=ln(xa,top+rr+8,xa+Wp,top+rr+8,'var(--red)',2.5)+T(xa+Wp/2,top+rr+24,'底辺 ＝ 円周の半分 ＝ '+L.r+'π',{size:12,c:'var(--red)',w:1});
+    g+=ln(xa-6,top,xa-6,top+rr,'var(--comp)',2.5)+T(xa-10,top-10,'高さ ＝ 半径 '+L.r,{a:'start',size:12,c:'var(--comp)',w:1});
+    g+=T(170,146,'円の面積 ＝ 並べかえた形の面積',{size:13,c:'var(--good)',w:1})+T(170,164,'（同じ切れを並べかえただけなので、広さは同じ）',{size:11,c:'var(--good)'});
+    g+=T(310,58,'あなた',{size:12,c:'#9A7300'})+T(310,80,ok?fmt(k)+'π':'？',{size:17,w:1,c:'#9A7300'});
+    cap = ok ? 'あなたの答え：円の面積 ＝ '+fmt(k)+'π cm²' : '円を切って並べかえた形で、円の面積を考えよう';
+    if(show) cap+='<br>並べかえた形 ＝ 底辺 '+L.r+'π × 高さ '+L.r+' ＝ '+(L.r*L.r)+'π。これが<b>円の面積</b>（半径 × 半径 × π）';
+    return {svg:svg('0 0 340 176',g,'円と、切って並べかえた形'),cap:cap};
+  }
+  var cx3=110, cy3=96, R3=80, frac=0, lab='';
+  if(ok){ frac = L.kind==='angle' ? k/360 : k/L.total; }
+  frac=Math.max(0,Math.min(frac,1));
+  g+='<circle cx="'+cx3+'" cy="'+cy3+'" r="'+R3+'" fill="var(--card)" stroke="var(--grid5)" stroke-width="2" stroke-dasharray="5 4"/>';
+  if(frac>0){
+    var a2=-Math.PI/2+frac*2*Math.PI;
+    if(L.kind==='arc'){ g+= frac>=1 ? '<circle cx="'+cx3+'" cy="'+cy3+'" r="'+R3+'" fill="none" stroke="var(--gold)" stroke-width="8"/>' : '<path d="M'+cx3+' '+(cy3-R3)+' A'+R3+' '+R3+' 0 '+(frac>0.5?1:0)+' 1 '+(cx3+R3*Math.cos(a2)).toFixed(1)+' '+(cy3+R3*Math.sin(a2)).toFixed(1)+'" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round"/>'; }
+    else { g+= frac>=1 ? '<circle cx="'+cx3+'" cy="'+cy3+'" r="'+R3+'" fill="var(--gold2)" stroke="var(--line)" stroke-width="2"/>' : '<path d="'+wedgePath(cx3,cy3,R3,-Math.PI/2,a2)+'" fill="var(--gold2)" stroke="var(--line)" stroke-width="2"/>'; }
+  }
+  if(show){ var b2=-Math.PI/2+L.deg/360*2*Math.PI; g+='<path d="'+wedgePath(cx3,cy3,R3,-Math.PI/2,b2)+'" fill="none" stroke="var(--good)" stroke-width="3.5" stroke-dasharray="6 4"/>'; }
+  g+=dot(cx3,cy3);
+  var tot = L.kind==='angle' ? '360°' : (fmt(L.total)+'π');
+  g+=T(250,60,'円全体',{size:13,c:'var(--sub)'})+T(250,82,tot,{size:18,w:1});
+  if(ok) g+=T(250,122,'あなた',{size:13,c:'#9A7300'})+T(250,144,(L.kind==='angle'?fmt(k)+'°':fmt(k)+'π'),{size:18,w:1,c:'#9A7300'});
+  var names={arc:'弧',area:'面積',angle:'中心角'};
+  cap = ok ? 'あなたの'+names[L.kind]+'は、円全体の <b>'+fmt(frac)+'</b>（金色）' : '数を入れると、円に金色で表示される';
+  if(show) cap+='<br>正しいおうぎ形（緑の点線）は、円全体の '+fmt(L.deg/360);
+  return {svg:svg('0 0 340 190',g,'円の上に自分の答えを表示'),cap:cap};
+}
+
+/* ---------- 描画 ---------- */
+function renderNav(){ nav.innerHTML=UNITS.map(function(u,i){ var D=S.units[u.key]; return '<button type="button" data-unit="'+u.key+'"'+(S.unit===u.key?' aria-current="step"':'')+'>'+(i+1)+' '+u.label+(D.done?' ✓':'')+'</button>'; }).join(""); }
+function sndLabel(){ var b=document.getElementById("snd"); if(b){ b.textContent=S.mute?"音なし":"音あり"; b.setAttribute("aria-pressed",String(!S.mute)); } }
+function moveSVG(it,c,animate){
+  var W=340,H=220,g=grid(W,H), O=[170,110];
+  if(it.kind==="t"){
+    var s=it.start,go=it.goal;
+    g+='<polygon points="'+polyPts(TRI,go[0]*20,H-go[1]*20)+'" fill="none" stroke="var(--good)" stroke-width="2.5" stroke-dasharray="6 4"/>'+T(go[0]*20+30,H-go[1]*20+18,'ゴール',{size:12,c:'var(--good)'});
+    var dx=0,dy=0; if(animate){ dx=(+c.vals[0]||0)*20; dy=-(+c.vals[1]||0)*20; }
+    g+='<g id="mvshape" style="transition:transform 1s ease;transform:translate('+dx+'px,'+dy+'px)"><polygon points="'+polyPts(TRI,s[0]*20,H-s[1]*20)+'" fill="var(--grass2)" stroke="var(--line)" stroke-width="2"/>'+dot(s[0]*20,H-s[1]*20,'var(--rasp)',4)+'</g>';
+  }
+  if(it.kind==="r"){
+    var pts=[[30,0],[90,0],[30,-40]];
+    var deg = (it.deg===-90)? -90 : 180;
+    var rot=function(p,d){ var a=d*Math.PI/180; return [p[0]*Math.cos(a)-p[1]*Math.sin(a), p[0]*Math.sin(a)+p[1]*Math.cos(a)]; };
+    var gp=pts.map(function(p){ var q=rot(p,deg); return (O[0]+q[0])+','+(O[1]+q[1]); }).join(' ');
+    g+='<polygon points="'+gp+'" fill="none" stroke="var(--good)" stroke-width="2.5" stroke-dasharray="6 4"/>';
+    var ang=0; if(animate && c.pick!=null){ ang = c.pick===0?90:(c.pick===1?-90:180); }
+    g+='<g id="mvshape" style="transform-box:view-box;transform-origin:'+O[0]+'px '+O[1]+'px;transition:transform 1s ease;transform:rotate('+ang+'deg)"><polygon points="'+pts.map(function(p){return (O[0]+p[0])+','+(O[1]+p[1]);}).join(' ')+'" fill="var(--grass2)" stroke="var(--line)" stroke-width="2"/></g>';
+    g+=dot(O[0],O[1],'var(--red)',5)+T(O[0]-12,O[1]+20,'O',{w:1});
+  }
+  if(it.kind==="s"){
+    var X=170,Y=110, pts2=[[100,40],[150,40],[100,90]];
+    g+=ln(X,5,X,215,'var(--comp)',2.5)+T(X+10,18,'ℓ',{c:'var(--comp)'})+ln(5,Y+40,335,Y+40,'var(--comp)',2.5)+T(325,Y+32,'m',{c:'var(--comp)'});
+    g+='<polygon points="'+pts2.map(function(p){return (2*X-p[0])+','+p[1];}).join(' ')+'" fill="none" stroke="var(--good)" stroke-width="2.5" stroke-dasharray="6 4"/>';
+    var tf='none'; if(animate && c.pick!=null){ tf = c.pick===0 ? 'scale(-1,1)' : 'scale(1,-1)'; }
+    var org = (animate && c.pick===1) ? '0px '+(Y+40)+'px' : X+'px 0px';
+    g+='<g id="mvshape" style="transform-box:view-box;transform-origin:'+org+';transition:transform 1s ease;transform:'+tf+'"><polygon points="'+pts2.map(function(p){return p[0]+','+p[1];}).join(' ')+'" fill="var(--grass2)" stroke="var(--line)" stroke-width="2"/></g>';
+  }
+  return svg('0 0 '+W+' '+H,g,'移動のパズル');
+}
+function locusSVG(it,c){
+  var g=locusBase(it.mode);
+  if(c.reveal){ if(it.mode==='pb') g+=ln(170,0,170,240,'var(--red)',3); else if(it.mode==='xy') g+=ln(40,200,240,0,'var(--red)',3)+T(250,40,'y = x',{size:16,c:'var(--red)',w:1}); else { var a=-25*Math.PI/180; g+=ln(60,200,60+330*Math.cos(a),200+330*Math.sin(a),'var(--red)',3); } }
+  c.pts.forEach(function(p){ g+=dot(p[0],p[1],'var(--red)',5); });
+  var d=locDist(it.mode,c.p);
+  if(it.mode==='pb'){ g+=ln(c.p[0],c.p[1],110,130,'var(--comp)',1.8)+ln(c.p[0],c.p[1],230,130,'var(--good)',1.8); }
+  else { g+=ln(c.p[0],c.p[1],d.f1[0],d.f1[1],'var(--comp)',1.8,'4 3')+ln(c.p[0],c.p[1],d.f2[0],d.f2[1],'var(--good)',1.8,'4 3'); }
+  g+='<circle id="lp" cx="'+c.p[0]+'" cy="'+c.p[1]+'" r="11" fill="var(--gold)" stroke="var(--line)" stroke-width="2"/>'+T(c.p[0]+16,c.p[1]-10,'P',{w:1});
+  return svg('0 0 340 240',g,'点Pを動かして等しい点をさがす',' id="locsvg" style="touch-action:none;cursor:pointer"');
+}
+function locDist(mode,p){
+  if(mode==='xy'){ var px=Math.max(p[0],40), py=Math.min(p[1],200); return {a:(200-py)/20, b:(px-40)/20, f1:[px,200], f2:[40,py]}; }
+  if(mode==='pb') return {a:Math.hypot(p[0]-110,p[1]-130)/20, b:Math.hypot(p[0]-230,p[1]-130)/20};
+  var O=[60,200], u1=[1,0], a2=-50*Math.PI/180, u2=[Math.cos(a2),Math.sin(a2)];
+  function foot(u){ var t=(p[0]-O[0])*u[0]+(p[1]-O[1])*u[1]; t=Math.max(0,t); return [O[0]+u[0]*t,O[1]+u[1]*t]; }
+  var f1=foot(u1),f2=foot(u2);
+  return {a:Math.hypot(p[0]-f1[0],p[1]-f1[1])/20, b:Math.hypot(p[0]-f2[0],p[1]-f2[1])/20, f1:f1, f2:f2};
+}
+function wedgePath(cx,cy,r,a1,a2){ var p1=[cx+r*Math.cos(a1),cy+r*Math.sin(a1)],p2=[cx+r*Math.cos(a2),cy+r*Math.sin(a2)]; return 'M'+cx+' '+cy+' L'+p1[0].toFixed(2)+' '+p1[1].toFixed(2)+' A'+r+' '+r+' 0 '+((a2-a1)>Math.PI?1:0)+' 1 '+p2[0].toFixed(2)+' '+p2[1].toFixed(2)+' Z'; }
+/* 30°ずつ12切れのピザ。選んだ切れ数だけ色がつき、番号が入る */
+function sectorSVG(a,opt){
+  opt=opt||{}; var r=96,cx=110,cy=110,k=Math.round(a/30),g='';
+  g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="var(--card)" stroke="var(--grid5)" stroke-width="2"/>';
+  for(var i=0;i<12;i++){
+    var a1=(-90+i*30)*Math.PI/180, a2=(-90+(i+1)*30)*Math.PI/180, on=i<k;
+    g+='<path d="'+wedgePath(cx,cy,r,a1,a2)+'" fill="'+(on?(i%2?'var(--gold)':'var(--gold2)'):'none')+'" stroke="'+(on?'var(--line)':'var(--grid)')+'" stroke-width="'+(on?1.6:1)+'"'+(on&&opt.pop&&i===k-1?' class="pop" style="transform-origin:'+cx+'px '+cy+'px;transform-box:view-box"':'')+'/>';
+    if(on){ var am=(-90+i*30+15)*Math.PI/180; g+=T(cx+r*0.68*Math.cos(am),cy+r*0.68*Math.sin(am)+5,String(i+1),{size:14,c:'#1D2B3A',w:1}); }
+  }
+  if(k>0) g+= k>=12 ? '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--gold)" stroke-width="7"/>' : arcPath(cx,cy,r,-90,-90+k*30,'var(--gold)',7);
+  if(k>0&&k<12){ var ae=(-90+k*30)*Math.PI/180; g+=arcPath(cx,cy,26,-90,-90+k*30,'var(--red)',3); g+=T(cx+40*Math.cos(((-90+k*15))*Math.PI/180),cy+40*Math.sin(((-90+k*15))*Math.PI/180)+5,a+'°',{size:13,c:'var(--red)',w:1}); }
+  g+=dot(cx,cy);
+  return svg('0 0 220 220',g,'30度ずつ12に分けた円。'+k+'切れに色','');
+}
+/* 弧と面積を「ブロック」で数えるテープ（1切れ＝弧 π、面積 3π） */
+function sliceTapes(a){
+  var k=Math.round(a/30), cw=24, x0=52, g='';
+  [['弧','π'],['面積','3π']].forEach(function(row,ri){
+    var y=8+ri*46;
+    g+=T(x0-6,y+20,row[0],{a:'end',size:14});
+    for(var i=0;i<12;i++){ var on=i<k; g+='<rect x="'+(x0+i*cw)+'" y="'+y+'" width="'+cw+'" height="28" fill="'+(on?(i%2?'var(--gold)':'var(--gold2)'):'var(--card)')+'" stroke="'+(on?'var(--line)':'var(--grid5)')+'" stroke-width="1.4"/>'; if(on) g+=T(x0+i*cw+cw/2,y+19,row[1],{size:row[1].length>1?10:12,c:'#1D2B3A'}); }
+  });
+  return svg('0 0 350 100',g,'弧と面積を1切れずつ数えるテープ');
+}
+/* 円を切って並べかえると長方形に近づく（面積の公式） */
+var CA_R=48, CA_TOP=36;
+function circleAreaSVG(N){
+  var g='<g id="cawrap">', r=CA_R, h=Math.PI/N;
+  for(var i=0;i<N;i++){
+    var odd=i%2===1, p1=[r*Math.cos(-h),r*Math.sin(-h)], p2=[r*Math.cos(h),r*Math.sin(h)];
+    g+='<g class="wedge"><path d="M0 0 L'+p1[0].toFixed(2)+' '+p1[1].toFixed(2)+' A'+r+' '+r+' 0 0 1 '+p2[0].toFixed(2)+' '+p2[1].toFixed(2)+' Z" fill="'+(odd?'var(--gold2)':'var(--grass2)')+'" stroke="var(--line)" stroke-width="0.8"/>';
+    g+='<path d="M'+p1[0].toFixed(2)+' '+p1[1].toFixed(2)+' A'+r+' '+r+' 0 0 1 '+p2[0].toFixed(2)+' '+p2[1].toFixed(2)+'" fill="none" stroke="'+(odd?'#C99500':'#2F7D2B')+'" stroke-width="3.5"/></g>';
+  }
+  g+='</g>';
+  var C=2*Math.PI*r, xr=(340-C)/2, yb=CA_TOP+r, W=Math.PI*r, xa=(340-W)/2;
+  g+='<g id="labRow" opacity="0">'+ln(xr,yb+12,xr+C,yb+12,'var(--red)',3)+T(170,yb+30,'底辺を全部たすと ＝ 円周 ＝ 2πr',{c:'var(--red)',w:1,size:13})+ln(xr-6,CA_TOP,xr-6,yb,'var(--comp)',3)+T(xr,CA_TOP-8,'高さ r',{a:'start',c:'var(--comp)',w:1,size:13})+'</g>';
+  g+='<g id="labAlt" opacity="0">'+ln(xa,yb+12,xa+W,yb+12,'var(--red)',3)+T(xa+W/2,yb+30,'底辺 ＝ 円周の半分 ＝ πr',{c:'var(--red)',w:1,size:13})+ln(xa-14,CA_TOP,xa-14,yb,'var(--comp)',3)+T(xa-24,CA_TOP+r/2+5,'r',{c:'var(--comp)',w:1,size:16})+'</g>';
+  return svg('0 0 340 132',g,'円を細い三角形に切って並べる',' id="casvg"');
+}
+function layoutPose(i,N,lay){
+  var r=CA_R, w=2*Math.PI*r/N;
+  if(lay==='circle'||lay==='explode'){ var ang=(i+0.5)*360/N-90, ca=ang*Math.PI/180, ex=lay==='explode'?7:0; return [170+ex*Math.cos(ca), 62+ex*Math.sin(ca), ang]; }
+  if(lay==='row'){ var x0=(340-2*Math.PI*r)/2; return [x0+w/2+i*w, CA_TOP, 90]; }
+  var j=Math.floor(i/2), odd=i%2===1, xa=(340-Math.PI*r)/2;
+  return odd ? [xa+w/2+j*w, CA_TOP+r, -90] : [xa+w+j*w, CA_TOP, 90];
+}
+function poseWedges(t,c,from,to){
+  var N=c.N||16, ws=document.querySelectorAll('#casvg .wedge');
+  from=from||c.lay; to=to||c.lay;
+  var e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  for(var i=0;i<ws.length;i++){
+    var A=layoutPose(i,N,from), B=layoutPose(i,N,to);
+    var d=((B[2]-A[2])%360+540)%360-180;
+    ws[i].setAttribute('transform','translate('+(A[0]+(B[0]-A[0])*e).toFixed(2)+' '+(A[1]+(B[1]-A[1])*e).toFixed(2)+') rotate('+(A[2]+d*e).toFixed(2)+')');
+  }
+  var lr=document.getElementById('labRow'), la=document.getElementById('labAlt');
+  if(lr) lr.setAttribute('opacity',(t>0.97&&to==='row')?1:0);
+  if(la) la.setAttribute('opacity',(t>0.97&&to==='alt'&&c.step>=4)?1:0);
+}
+var CA_LAY=['explode','row','row','alt','alt','alt'];
+var CA_NN=[16,16,16,16,16,32];
+var CA_TEXT=[
+ '円を、細い切れに16こに切る。1つ1つは、ほとんど<b>三角形</b>。どの三角形も、<b>高さは半径 r</b>。',
+ '三角形を、とがった方を上にして横一列に並べる。<b>底辺を全部たすと、円周（2πr）</b>になる。',
+ '三角形の面積 ＝ 底辺 × 高さ ÷ 2。全部まとめると<br>（底辺の合計）× 高さ ÷ 2 ＝ 2πr × r ÷ 2 ＝ <b>πr²</b>',
+ '同じ三角形を、今度は上と下から交互にかみ合わせる。',
+ 'できた形は<b>平行四辺形</b>。底辺は円周の半分（金色の弧だけ）で <b>πr</b>、高さは <b>r</b>。',
+ '32こに細かくすると、ほとんど長方形。<br>平行四辺形の面積 ＝ 底辺 × 高さ ＝ πr × r ＝ <b>πr²</b>。<br>どちらの並べ方でも、円の面積 ＝ <b>半径 × 半径 × π</b>。例：半径5cm なら 5 × 5 × π ＝ 25π cm²'
+];
+function fracCap(a){ var k=a/30; return 'おうぎ形は、円を12こに分けたうちの <b>'+k+'こ分</b>（'+fmt(a/360)+'）。だから弧は<b>円周の'+fmt(a/360)+'</b>、面積は<b>円の面積の'+fmt(a/360)+'</b>。金色の弧をのばすと、上の線の金色の部分になる。'; }
+function piTxt(v){ var s=fmt(v); return (s==="1"?"":s)+"π"; }
+
+function stageHTML(){
+  var D=S.units[S.unit], h='';
+  var uinfo=UNITS.filter(function(u){return u.key===S.unit;})[0]||{label:EMB_TITLE};
+  h+='<h2>'+uinfo.label+'</h2>';
+  if(D.done && EMB){
+    var ng=Object.keys(D.first).filter(function(k){return D.first[k]===false;});
+    h+='<div class="msg ok">クリア！'+(ng.length?'　1回目でまちがえた問題：'+ng.length+' 問（ハートが '+ng.length+' へる）':'　1回目で全部正解！')+'</div><button type="button" class="btn main" data-fx="zback">ステージにもどる</button>';
+    return h;
+  }
+  if(D.done){
+    h+='<div class="msg ok">このまとまりは終わり。<br><b>紙でやること：</b>ワークの同じところを解いて、丸つけしよう。</div><button type="button" class="btn" data-fx="redo">もう一度やる</button>';
+    return h;
+  }
+  var e=D.q[D.pos], it=ITEMS[e.id];
+  if(!D.cur) D.cur=newCur(it);
+  var c=D.cur, lock=c.res!==null;
+  h+='<p class="prog">'+(D.pos+1)+' 問目 ／ のこり '+(D.q.length-D.pos)+' 問'+(e.again?'　<b>（もう一度）</b>':'')+'</p>';
+  if(it.prev) h+='<div class="ex bad"><span class="tag">前に書いた答え</span>　'+it.prev+'</div>';
+  if(it.ctx) h+='<div class="sit" style="border-left-color:var(--dirt)">'+it.ctx+'</div>';
+  if(it.slotFig){ var labs=it.slots.map(function(x,i){ return c.sl[i]!=null ? it.chips[c.sl[i]] : '（'+'アイウエ'.charAt(i)+'）'; }); var sf=it.slotFig(labs); h+='<div class="board">'+sf.svg+'</div>'+(sf.note?'<div class="msg '+(sf.warn?'miss':'hint')+'" style="margin-top:0">'+sf.note+'</div>':''); }
+  else if(it.fig) h+='<div class="board">'+it.fig+'</div>';
+  if(it.type==="card"){ h+='<div class="howto">'+it.html+'</div><button type="button" class="btn main" data-fx="card">わかった、次へ</button>'; }
+  if(it.type==="choice"){
+    h+='<div class="sit">'+it.q+'</div><p class="once">答えは1回だけ。</p><div class="opts">';
+    (c.ord||it.opts.map(function(x,i){return i;})).forEach(function(i){ var cls="btn"; if(lock){ if(i===it.c) cls+=" right"; else if(i===c.pick) cls+=" picked-wrong"; } h+='<button type="button" class="'+cls+'" data-fxc="'+i+'"'+(lock?' disabled':'')+'>'+it.opts[i]+'</button>'; });
+    h+='</div>';
+  }
+  if(it.type==="sym"){
+    h+='<div class="sit">'+it.q+'</div><div class="symline'+(lock?(c.res?' good':' bad'):'')+'">'+(c.seq.length?c.seq.join(' '):'<span style="color:var(--sub);font-size:15px">下の記号を押して並べる</span>')+'</div>';
+    if(!lock){ h+='<div class="opts">'+c.tord.map(function(i){ return '<button type="button" class="btn tok" data-fxt="'+i+'">'+it.tok[i]+'</button>'; }).join('')+'</div><div class="row"><button type="button" class="btn" data-fx="tback">1つ消す</button><button type="button" class="btn main" data-fx="ok">決定</button></div><p class="once">答えは1回だけ。</p>'; }
+  }
+  if(it.type==="cdraw"){
+    var sc0=cdScene(it.scene);
+    h+='<div class="sit">'+it.q+'</div>';
+    if(!lock) h+='<div class="row cdtools"><button type="button" class="btn'+(c.tool==="compass"?' on':'')+'" data-fx="tcomp">コンパス</button><button type="button" class="btn'+(c.tool==="ruler"?' on':'')+'" data-fx="truler">定規</button><button type="button" class="btn" data-fx="cundo">1つもどす</button><button type="button" class="btn" data-fx="creset">やりなおす</button><span class="prog" id="cdmsg">'+(c.tool==="compass"?'コンパス：中心の点（●）を押したまま動かし、はなすと円。点の上ではなすと、その点までの長さ。点を<b>クリックだけ</b>すると、<b>開きを変えずに</b>前と同じ半径の円':(c.rp?'定規：もう1つの点をクリック':'定規：点を2つクリックすると、その2点を通る直線がひける'))+'</span></div>';
+    h+='<div class="board cdboard">'+cdSVG(it,c)+'</div>';
+    if(!lock) h+='<details class="hint"><summary>ヒント</summary><p>'+sc0.tip+'</p></details><button type="button" class="btn" data-fx="cmodel">お手本を見る（まちがい1つ）</button>';
+  }
+  if(it.type==="gdraw"){
+    h+='<div class="sit">'+it.q+'</div><div class="board"><svg id="gsvg" viewBox="0 0 '+((it.w||16)*20)+' '+((it.h||12)*20)+'" style="cursor:crosshair;display:block;width:100%;max-height:440px" role="img" aria-label="方眼">'+gSVG(it,c,lock)+'</svg></div>';
+    if(!lock) h+='<div class="row"><button type="button" class="btn" data-fx="gundo">1つもどす</button><button type="button" class="btn main" data-fx="ok"'+(c.gp.length<it.poly.length?' disabled':'')+'>答え合わせ</button><span class="once">'+it.lab.map(function(l){return l+'′';}).join(' → ')+' の順に、方眼の点をクリック。</span></div>';
+  }
+  if(it.type==="multi"){
+    h+='<div class="sit">'+it.q+'</div><p class="once">あてはまるものを全部押してから決定。答えは1回だけ。</p><div class="opts">';
+    c.ord.forEach(function(i){ var on=c.sel.indexOf(i)>=0, cls="btn"; if(lock){ if(it.c.indexOf(i)>=0) cls+=" right"; else if(on) cls+=" picked-wrong"; } else if(on) cls+=" on"; h+='<button type="button" class="'+cls+'" data-fxm="'+i+'" aria-pressed="'+on+'"'+(lock?' disabled':'')+'>'+it.opts[i]+'</button>'; });
+    h+='</div>'+(lock?'':'<button type="button" class="btn main" data-fx="ok">決定</button>');
+  }
+  if(it.type==="num"){
+    h+='<div class="sit">'+it.q+'</div><div class="row"><input id="fxin" class="num" inputmode="text" autocomplete="off" value="'+(c.vals[0]||"")+'"'+(lock?' disabled':'')+'><span style="font-size:20px">'+(it.unit||"")+'</span>'+(lock?'':'<button type="button" class="btn main" data-fx="ok">決定</button>')+'</div>';
+    if(!lock) h+='<p class="once">答えは1回だけ。'+(/π/.test(it.unit||"")?' π の前の数だけ入れる。':'')+'</p>';
+    if(it.live){ var lf=liveFig(it,parseNum(c.vals[0]||val("fxin")),lock); h+='<div class="board" id="livefig" style="background:var(--card)">'+lf.svg+'</div><p class="prog" id="livecap">'+lf.cap+'</p>'; }
+  }
+  if(it.type==="move"){
+    h+='<div class="sit">'+it.q+'</div><div class="board">'+moveSVG(it,c,lock)+'</div>';
+    if(it.kind==="t"){
+      h+='<div class="row">右に <input id="mx" class="num s" inputmode="text" value="'+(c.vals[0]||"")+'"'+(lock?' disabled':'')+'> マス　上に <input id="my" class="num s" inputmode="text" value="'+(c.vals[1]||"")+'"'+(lock?' disabled':'')+'> マス'+(lock?'':' <button type="button" class="btn main" data-fx="ok">動かす</button>')+'</div>';
+    }else{
+      h+='<p class="once">答えは1回だけ。押すと動く。</p><div class="opts">';
+      it.opts.forEach(function(o,i){ var cls="btn"; if(lock){ if(i===it.c) cls+=" right"; else if(i===c.pick) cls+=" picked-wrong"; } h+='<button type="button" class="'+cls+'" data-fxv="'+i+'"'+(lock?' disabled':'')+'>'+o+'</button>'; });
+      h+='</div>';
+    }
+  }
+  if(it.type==="locus"){
+    h+='<div class="sit">'+it.q+'</div><div class="board">'+locusSVG(it,c)+'</div>';
+    var d=locDist(it.mode,c.p);
+    h+='<div class="row" style="font-size:17px"><span style="color:var(--comp)">'+(it.mode==='pb'?'PA':(it.mode==='xy'?'x軸まで':'辺OXまで'))+' <b id="la">'+d.a.toFixed(1)+'</b></span><span style="color:var(--good)">'+(it.mode==='pb'?'PB':(it.mode==='xy'?'y軸まで':'辺OYまで'))+' <b id="lb">'+d.b.toFixed(1)+'</b></span><span id="leq" class="pix" style="color:var(--red)"></span></div>';
+    h+='<p class="prog">見つけた点：<b id="lcnt">'+c.pts.length+'</b> / '+it.need+'　（同じになると印が残る）</p>';
+    if(c.pts.length>=it.need && !c.reveal) h+='<button type="button" class="btn gold" data-fx="reveal">点の並び方を見る</button>';
+    if(c.reveal){ if(it.mode==='xy') h+='<div class="tscroll"><table><tr><th>x</th>'+c.pts.map(function(p){return '<td>'+((p[0]-40)/20).toFixed(1)+'</td>';}).join('')+'</tr><tr><th>y</th>'+c.pts.map(function(p){return '<td>'+((200-p[1])/20).toFixed(1)+'</td>';}).join('')+'</tr></table></div>';
+      h+='<div class="msg ok">'+(it.mode==='xy'?'見つけた点は、x と y がいつも同じ。<b>y = x</b> の比例のグラフ（a ＝ 1）に並ぶ。x 軸と y 軸がつくる直角の、<b>角の二等分線</b>でもある。':'')+(it.mode==='xy'?'':(it.mode==='pb'?'等しい点は、AB のまん中を垂直に通る1本の線に並ぶ。<b>垂直二等分線</b>。':'等しい点は、角のまん中を通る1本の線に並ぶ。<b>角の二等分線</b>。'))+'</div><button type="button" class="btn main" data-fx="card">次へ</button>'; }
+  }
+  if(it.type==="construct"){
+    var cs=constructSVG(it.kind), shown=cs.steps.slice(0,c.step).join('');
+    h+='<div class="sit">'+it.q+'</div><div class="board">'+svg('0 0 340 220',cs.base+shown+(c.bad?cs.bad:''),'作図の手順')+'</div>';
+    var txt=CSTEPS[it.kind];
+    h+='<ol class="steps-list">'+txt.map(function(t,i){ return '<li class="'+(i<c.step?'done':'')+(i===c.step?' now':'')+'">'+t+'</li>'; }).join('')+'</ol>';
+    h+='<div class="row">'+(c.step<4?'<button type="button" class="btn main" data-fx="cnext">次の手順</button>':'')+'<button type="button" class="btn" data-fx="cbad">'+(c.bad?'悪い例をけす':'悪い例を見る')+'</button></div>';
+    if(c.step>=4) h+='<div class="msg ok">完成。ノートでも同じ順番でかいてみよう。作図の線は消さない。</div><button type="button" class="btn main" data-fx="card">次へ</button>';
+  }
+  if(it.type==="sector"){
+    var a=c.ang;
+    h+='<div class="sit">'+it.q+'</div><div class="row" style="flex-wrap:nowrap;align-items:center"><div id="pz" style="flex:0 0 50%">'+sectorSVG(a)+'</div><div style="font-size:18px;line-height:1.9">中心角 <b class="big" id="sa">'+a+'</b>°<br><span class="prog" style="font-size:15px">12こに分けた <b id="sk">'+(a/30)+'</b> こ分</span><br>弧 <b id="sarc">'+piTxt(12*a/360)+'</b> cm<br>面積 <b id="sarea">'+piTxt(36*a/360)+'</b> cm²</div></div>';
+    h+='<div class="row"><button type="button" class="btn sq" data-fx="sminus" aria-label="1切れへらす">−</button><input type="range" id="sl" min="30" max="360" step="30" value="'+a+'" aria-label="中心角" style="flex:1"><button type="button" class="btn sq" data-fx="splus" aria-label="1切れふやす">+</button></div>';
+    h+='<div class="board" id="tp" style="padding:6px;background:var(--card)">'+fracBars(a)+'</div>';
+    h+='<p class="prog" id="fcap">'+fracCap(a)+'</p><button type="button" class="btn main" data-fx="card">わかった、次へ</button>';
+  }
+  if(it.type==="roll"){
+    var dd=c.d, sn=c.seen.slice().sort(function(x,y){return x-y;});
+    h+='<div class="sit">'+it.q+'</div><div class="board" id="unroll" style="background:var(--card)">'+unrollSVG(dd,c.open?1:0)+'</div>';
+    h+='<div class="row"><span>直径</span><button type="button" class="btn sq" data-fx="dminus" aria-label="直径をへらす">−</button><span class="big">'+dd+'</span><span>cm</span><button type="button" class="btn sq" data-fx="dplus" aria-label="直径をふやす">+</button><button type="button" class="btn gold" data-fx="unroll">円周をのばす</button></div>';
+    if(sn.length) h+='<div class="tscroll"><table><tr><th>直径</th>'+sn.map(function(d){return '<td>'+d+'</td>';}).join('')+'</tr><tr><th>円周（約）</th>'+sn.map(function(d){return '<td>'+(Math.PI*d).toFixed(1)+'</td>';}).join('')+'</tr><tr><th>円周 ÷ 直径</th>'+sn.map(function(d){return '<td class="prod">3.1415…</td>';}).join('')+'</tr></table></div>';
+    h+='<div class="board" style="background:var(--card)">'+propGraph(sn)+'</div>';
+    if(sn.length<3) h+='<p class="prog">直径を変えて、3回以上のばしてみよう（今 '+sn.length+' 回）。</p>';
+    else h+='<div class="msg ok">円周 ÷ 直径 は、どの円でも同じ数。グラフは原点を通る直線。<br>円周は直径に<b>比例</b>していて、変わらないもの（a）がこの数。<br>だから <b>円周 ＝ π × 直径</b>（＝ 2πr）。直径 10cm なら 10π cm。</div>'+
+      '<div class="howto"><b>π はぴったり 3.14 ではない</b><p style="margin:4px 0">π ＝ 3.14159265358979…と、どこまでも続いて終わらない数。小数でぴったり書けないので、<b>π という記号</b>で表す。3.14 は「およその値」。</p>'+
+      '<div class="ex bad"><span class="tag">悪い例</span>　直径 10cm の円周 ＝ 31.4cm（3.14 は少しずれた値）</div><div class="ex good"><span class="tag">いい例</span>　直径 10cm の円周 ＝ 10π cm（ぴったりの値）</div><p class="prog" style="margin:4px 0">中学では、答えは π のまま書く。</p></div>';
+    h+='<button type="button" class="btn main" data-fx="card"'+(sn.length>=3?'':' disabled')+'>わかった、次へ</button>';
+  }
+  if(it.type==="squares"){
+    var r2=c.r;
+    h+='<div class="sit">'+it.q+'</div><div class="board" style="background:var(--card)">'+squaresSVG(r2,c.gap)+'</div>';
+    h+='<div class="row"><span>半径</span><button type="button" class="btn sq" data-fx="qminus" aria-label="半径をへらす">−</button><span class="big">'+r2+'</span><span>cm</span><button type="button" class="btn sq" data-fx="qplus" aria-label="半径をふやす">+</button><button type="button" class="btn" data-fx="gap">'+(c.gap?'はみ出しをけす':'はみ出しを見る')+'</button></div>';
+    h+='<div class="msg hint">青い正方形は <b>半径 × 半径</b>。大きい正方形はその4こ分。円は4こ分より少し小さく、ちょうど <b>3.14…こ分 ＝ π こ分</b>'+(c.gap?'（ピンクのはみ出しが 0.86こ分）':'')+'。<br>円の面積 ＝ <b>半径 × 半径 × π</b><br>半径 '+r2+'cm なら '+r2+' × '+r2+' ＝ '+(r2*r2)+' → 面積 ＝ <b>'+(r2*r2)+'π cm²</b>（約 '+(r2*r2*3.14).toFixed(1)+'cm²）</div>';
+    h+='<button type="button" class="btn main" data-fx="card">わかった、次へ</button>';
+  }
+  if(it.type==="circlearea"){
+    var stp=c.step;
+    h+='<div class="sit">'+it.q+'</div>';
+    h+='<div class="row" style="gap:4px">'+CA_TEXT.map(function(x,i){ return '<span class="stepchip'+(i===stp?' on':(i<stp?' done':''))+'">'+(i+1)+'</span>'; }).join('')+'</div>';
+    h+='<div class="board" style="background:var(--card)">'+circleAreaSVG(c.N||16)+'</div>';
+    h+='<div class="msg hint" id="camsg">'+CA_TEXT[stp]+'</div>';
+    h+='<div class="row">'+(stp>0?'<button type="button" class="btn" data-fx="caback">もどる</button>':'')+(stp<5?'<button type="button" class="btn gold" data-fx="canext">次へ（'+(stp+2)+'）</button>':'<button type="button" class="btn main" data-fx="card">わかった、次の問題へ</button>')+'</div>';
+  }
+  if(it.type==="sort"){
+    h+='<div class="sit">'+it.q+'</div>';
+    it.chips.forEach(function(ch,i){ var pick=c.cat[i]; h+='<div class="chiprow"><div style="font-weight:700">'+ch+'</div><div class="opts tog">'; [["k","わかっている（○）"],["u","わからない（？）"]].forEach(function(o){ var cls="btn sm", on=pick===o[0]; if(lock){ if(o[0]===it.cats[i]) cls+=" right"; else if(on) cls+=" picked-wrong"; } h+='<button type="button" class="'+cls+'" data-fxs="'+i+':'+o[0]+'" aria-pressed="'+on+'"'+(lock?' disabled':'')+'>'+o[1]+'</button>'; }); h+='</div></div>'; });
+    if(!lock) h+='<button type="button" class="btn main" data-fx="ok">決定</button>';
+  }
+  if(it.type==="slots"){
+    h+='<div class="sit">'+it.q+'</div>';
+    it.slots.forEach(function(sl,si){ var pick=c.sl[si]; h+='<div style="margin:6px 0"><b style="color:var(--rasp)">'+sl+'</b><div class="opts tog">'; c.cord.forEach(function(ci){ var cls="btn sm", on=pick===ci; if(lock){ if(ci===it.ans[si]) cls+=" right"; else if(on) cls+=" picked-wrong"; } h+='<button type="button" class="'+cls+'" data-fxp="'+si+':'+ci+'" aria-pressed="'+on+'"'+(lock?' disabled':'')+'>'+it.chips[ci]+'</button>'; }); h+='</div></div>'; });
+    if(!lock) h+='<button type="button" class="btn main" data-fx="ok">決定</button>';
+  }
+  if(it.type==="dragorder"){
+    h+='<div class="sit">'+it.q+'</div><div id="dlist" class="dlist">';
+    c.seq.forEach(function(oi,pos){ var bad=lock && oi!==pos; h+='<div class="dcard'+(lock?(bad?' bad':' good'):'')+'" data-pos="'+pos+'"><span class="grip" aria-hidden="true">≡</span><span class="dnum">'+(pos+1)+'</span><span>'+it.opts[oi]+'</span></div>'; });
+    h+='</div>';
+    if(!lock) h+='<p class="once">カードを上下に動かして並べる。決定は1回だけ。</p><button type="button" class="btn main" data-fx="ok">決定</button>';
+    else if(!c.res) h+='<div class="msg ok"><b>正しい順番</b><ol style="margin:4px 0 0;padding-left:1.4em">'+it.opts.map(function(o){return '<li>'+o+'</li>';}).join('')+'</ol></div>';
+  }
+  if(it.type==="conceptanim"){
+    h+='<div class="howto">'+it.html+'<b>「何が等しい？」と使う作図</b><div class="cgrid">'+CONCEPTS.map(function(cc){ return '<div class="ccell">'+cAnim(cc[0])+'<div style="font-size:14px;line-height:1.4">'+cc[1]+'<br>→ <b style="color:var(--red)">'+cc[2]+'</b></div></div>'; }).join('')+'</div></div>';
+    h+='<div class="row"><button type="button" class="btn" data-fx="replay">▶ もう一度動かす</button><button type="button" class="btn main" data-fx="card">わかった、次へ</button></div>';
+  }
+  if(it.type==="order"){
+    h+='<div class="sit">'+it.q+'</div><ol style="padding-left:1.6em">'+c.seq.map(function(i,n){ return '<li'+(lock&&i!==n?' style="color:var(--rasp);text-decoration:line-through"':'')+'>'+it.opts[i]+'</li>'; }).join('')+'</ol>';
+    if(!lock){ h+='<div class="opts" style="flex-direction:column;align-items:stretch">'; c.ord.forEach(function(i){ if(c.seq.indexOf(i)<0) h+='<button type="button" class="btn" style="text-align:left;font-weight:400" data-fxo="'+i+'">'+it.opts[i]+'</button>'; }); h+='</div><div class="row" style="margin-top:8px">'+(c.seq.length?'<button type="button" class="btn" data-fx="oclear">並べ直す</button>':'')+'<button type="button" class="btn main" data-fx="ok">決定</button></div>'; }
+    else if(!c.res) h+='<div class="msg ok"><b>正しい順番</b><ol style="margin:4px 0 0;padding-left:1.4em">'+it.opts.map(function(o){return '<li>'+o+'</li>';}).join('')+'</ol></div>';
+  }
+  if(it.type==="draw"){
+    h+='<div class="sit">'+it.q+'</div>';
+    if(!c.drawn) h+='<button type="button" class="btn main" data-fx="drawn">描けた</button><p class="once">描くのはノートかワーク。描いてから押そう。</p>';
+    else { h+='<b>お手本と見くらべよう</b><div class="board">'+it.model+'</div><p>自分の絵に入っていたものを押そう。</p><div class="opts tog" style="flex-direction:column;align-items:stretch">'; it.checks.forEach(function(ck,i){ var on=c.chk.indexOf(i)>=0; h+='<button type="button" class="btn" style="text-align:left;font-weight:400" data-fxk="'+i+'" aria-pressed="'+on+'">'+(on?'✓ ':'□ ')+ck+'</button>'; }); h+='</div><p class="prog">入っていなかったものは、描き足そう。</p>'; }
+  }
+  if(c.res!==null && ["card","locus","construct","sector","circlearea","roll","conceptanim"].indexOf(it.type)<0){
+    if(it.type!=="draw"){
+      var ans='';
+      if(it.type==="num" && !c.res) ans='入れた答え：'+c.vals[0]+'　正しくは '+fmt(it.ans)+(it.unit||'')+'。'+numHint(it,parseNum(c.vals[0]));
+      if(it.type==="move" && it.kind==="t" && !c.res) ans='入れた答え：右に '+c.vals[0]+'、上に '+c.vals[1]+'。';
+      if(it.type==="sym" && !c.res) ans='正しくは「'+it.ans[0].join(' ')+'」。';
+      if(it.type==="cdraw" && !c.res) ans='お手本の線（緑の点線）を見て、どの円とどの点を使えばよいか確かめよう。';
+      if(it.type==="cdraw" && c.res) ans='作図できた！ ';
+      if(it.type==="gdraw" && !c.res) ans='緑の点線が正しい位置。<br>';
+      if(it.type==="multi" && !c.res) ans='正しくは「'+it.c.map(function(i){return it.opts[i];}).join('、')+'」。';
+      h+='<div class="msg '+(c.res?'ok':'miss')+'">'+(c.res?'正しい。':'')+ans+it.ex+'</div>';
+      if(it.exfig) h+='<div class="board">'+it.exfig+'</div>';
+      if(it.code) h+='<div class="msg ok">ゲームのコードで書くと：<br><code style="font-size:16px">'+it.code+'</code></div>';
+      if(!c.res) h+='<p class="prog">この問題は、あとでもう一度出る。</p>';
+    }
+    h+='<button type="button" class="btn main" data-fx="next">'+(D.pos+1<D.q.length||!c.res?'次へ':'このまとまりを終わる')+'</button>';
+  }
+  return h;
+}
+function numHint(it,v){
+  if(v===null) return '';
+  if(/π/.test(it.unit||"") && same(v,it.ans*3.14)) return 'π を 3.14 にしないで、π のまま残す。';
+  return '';
+}
+function render(){ renderNav(); sndLabel(); app.innerHTML='<section class="stage">'+stageHTML()+'</section>'; bindLive(); save(); }
+
+/* ---------- ドラッグとスライダー（再描画しない操作） ---------- */
+function setAng(c,a){
+  a=Math.max(30,Math.min(360,a)); var up=a>c.ang; if(a!==c.ang) sfx(a===360?"ok":"dot"); c.ang=a; save();
+  var e; if((e=document.getElementById("sa"))) e.textContent=a; if((e=document.getElementById("sk"))) e.textContent=a/30;
+  if((e=document.getElementById("sarc"))) e.textContent=piTxt(12*a/360); if((e=document.getElementById("sarea"))) e.textContent=piTxt(36*a/360);
+  if((e=document.getElementById("pz"))) e.innerHTML=sectorSVG(a,{pop:up}); if((e=document.getElementById("tp"))) e.innerHTML=fracBars(a); if((e=document.getElementById("fcap"))) e.innerHTML=fracCap(a);
+  if((e=document.getElementById("sl"))) e.value=a;
+}
+function bindLive(){
+  var D=S.units[S.unit]; if(D.done||!D.cur) return; var it=ITEMS[D.q[D.pos].id], c=D.cur;
+  if(it.type==="locus"){
+    var sv=document.getElementById("locsvg"); if(!sv) return; var drag=false, last=c.pts.length?c.pts[c.pts.length-1]:null;
+    function pt(ev){ var p=sv.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(sv.getScreenCTM().inverse()); }
+    function upd(x,y){
+      c.p=[Math.max(6,Math.min(334,x)),Math.max(6,Math.min(234,y))];
+      var d=locDist(it.mode,c.p), eq=Math.abs(d.a-d.b)<0.12 && d.a>0.3;
+      var node=sv.querySelector("#lp"); node.setAttribute("cx",c.p[0]); node.setAttribute("cy",c.p[1]);
+      document.getElementById("la").textContent=d.a.toFixed(1); document.getElementById("lb").textContent=d.b.toFixed(1);
+      document.getElementById("leq").textContent=eq?"同じ！":"";
+      if(eq && c.pts.length<20 && (!last || Math.hypot(c.p[0]-last[0],c.p[1]-last[1])>22)){ c.pts.push(c.p.slice()); last=c.p.slice(); sfx("dot"); save(); render(); return true; }
+      return false;
+    }
+    sv.addEventListener("pointerdown",function(ev){ drag=true; try{ sv.setPointerCapture(ev.pointerId); }catch(e){} var q=pt(ev); upd(q.x,q.y); });
+    sv.addEventListener("pointermove",function(ev){ if(!drag) return; var q=pt(ev); if(upd(q.x,q.y)) drag=false; });
+    sv.addEventListener("pointerup",function(){ drag=false; save(); render(); });
+  }
+  if(it.type==="num" && it.live && c.res===null){ var inp=document.getElementById("fxin"); if(inp) inp.addEventListener("input",function(){ var v=parseNum(inp.value); var lf=liveFig(it,v,false); document.getElementById("livefig").innerHTML=lf.svg; document.getElementById("livecap").innerHTML=lf.cap; if(v!==null) sfx("dot"); }); }
+  if(it.type==="circlearea"){ poseWedges(1,c); }
+  if(it.type==="gdraw" && c.res===null){
+    var gs=document.getElementById("gsvg"); if(gs) gs.addEventListener("pointerdown",function(ev){ var p=gs.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; var q=p.matrixTransform(gs.getScreenCTM().inverse()); var gx=Math.round(q.x/20), gy=Math.round(q.y/20); if(c.gp.length<it.poly.length){ c.gp.push([gx,gy]); sfx("dot"); render(); } });
+  }
+  if(it.type==="cdraw" && c.res===null){
+    var csv=document.getElementById("cdsvg"), sc=cdScene(it.scene), drag=null;
+    function cp(ev){ var q=csv.createSVGPoint(); q.x=ev.clientX; q.y=ev.clientY; q=q.matrixTransform(csv.getScreenCTM().inverse()); return [q.x,q.y]; }
+    function done(){ save(); if(cdGoal(sc,c)){ c.res=true; sfx("ok"); } else sfx("dot"); render(); }
+    csv.addEventListener("pointerdown",function(ev){ var p=cp(ev), s=cdNear(sc,c,p);
+      if(c.tool==="ruler"){ if(!s){ flash("点（●）をクリックしよう"); return; } if(!c.rp){ c.rp=s; render(); return; } if(Math.hypot(s[0]-c.rp[0],s[1]-c.rp[1])<3) return; c.objs.push({t:"l",a:c.rp,b:s}); c.rp=null; done(); return; }
+      if(!s){ flash("コンパスの針は、点（●）の上に立てよう"); return; } drag={c:s}; try{ csv.setPointerCapture(ev.pointerId); }catch(e){} });
+    csv.addEventListener("pointermove",function(ev){ if(!drag) return; var p=cp(ev), s=cdNear(sc,c,p,10), r=Math.hypot((s||p)[0]-drag.c[0],(s||p)[1]-drag.c[1]); drag.r=r; drag.snap=!!s;
+      document.getElementById("cdprev").innerHTML='<circle cx="'+drag.c[0]+'" cy="'+drag.c[1]+'" r="'+r.toFixed(1)+'" fill="none" stroke="var(--comp)" stroke-width="2" stroke-dasharray="6 4"/>'+ln(drag.c[0],drag.c[1],(s||p)[0],(s||p)[1],'var(--comp)',1.5)+(s?'<circle cx="'+s[0]+'" cy="'+s[1]+'" r="9" fill="none" stroke="var(--comp)" stroke-width="2.5"/>':''); });
+    csv.addEventListener("pointerup",function(){ if(!drag) return; var d=drag; drag=null; if(d.r>8){ c.lastR=d.r; c.objs.push({t:"c",c:d.c,r:d.r}); done(); } else if(c.lastR){ c.objs.push({t:"c",c:d.c,r:c.lastR}); done(); } else render(); });
+  }
+  if(it.type==="dragorder" && c.res===null){
+    var list=document.getElementById("dlist"); if(list){
+      var active=false, startY=0, idx=0;
+      function cards(){ return list.querySelectorAll('.dcard'); }
+      function paint(dy){ var cs=cards(); cs.forEach(function(cd,pos){ cd.querySelector('.dnum').textContent=pos+1; cd.lastChild.textContent=it.opts[c.seq[pos]]; cd.classList.toggle('drag',active&&pos===idx); cd.style.transform=(active&&pos===idx)?'translateY('+dy+'px)':''; }); }
+      list.addEventListener('pointerdown',function(ev){ var cd=ev.target.closest('.dcard'); if(!cd) return; active=true; idx=+cd.dataset.pos; startY=ev.clientY; try{ list.setPointerCapture(ev.pointerId); }catch(e){} ev.preventDefault(); paint(0); });
+      list.addEventListener('pointermove',function(ev){ if(!active) return; var dy=ev.clientY-startY, h2=cards()[idx].offsetHeight+8;
+        if(dy>h2*0.6 && idx<c.seq.length-1){ var t=c.seq[idx]; c.seq[idx]=c.seq[idx+1]; c.seq[idx+1]=t; idx++; startY+=h2; dy-=h2; sfx("dot"); }
+        else if(dy<-h2*0.6 && idx>0){ var t2=c.seq[idx]; c.seq[idx]=c.seq[idx-1]; c.seq[idx-1]=t2; idx--; startY-=h2; dy+=h2; sfx("dot"); }
+        paint(dy); });
+      function end(){ if(!active) return; active=false; save(); render(); }
+      list.addEventListener('pointerup',end); list.addEventListener('pointercancel',end);
+    }
+  }
+  if(it.type==="sector"){
+    var sl=document.getElementById("sl"); if(sl) sl.addEventListener("input",function(){ setAng(c,+sl.value); });
+  }
+}
+
+/* ---------- 操作 ---------- */
+function next(D,c,it,e){
+  if(D.first && !e.again) D.first[e.id]=!!c.res;
+  if(!c.res && D.again.indexOf(D.pos)<0 && ["card","draw","locus","construct","sector","circlearea","roll","conceptanim"].indexOf(it.type)<0){ D.again.push(D.q.length); D.q.push({id:e.id,again:true}); }
+  D.pos++; D.cur=null; if(D.pos>=D.q.length){ D.done=true; sfx("done"); }
+}
+document.addEventListener("click",function(ev){
+  var t=ev.target.closest("button"); if(!t||t.disabled) return;
+  if(t.id==="snd"){ S.mute=!S.mute; save(); sndLabel(); if(!S.mute) sfx("ok"); return; }
+  if(t.dataset.unit){ S.unit=t.dataset.unit; render(); window.scrollTo(0,0); return; }
+  var D=S.units[S.unit];
+  if(t.dataset.fx==="redo"){ var f=freshUnits(); S.units[S.unit]=f[S.unit]; render(); return; }
+  if(D.done){ if(t.dataset.fx==="zback"){ var miss=Object.keys(D.first).filter(function(k){return D.first[k]===false;}).map(function(k){ var x=ITEMS[k]; return {id:k,q:String(x.q||x.ctx||"").replace(/<[^>]+>/g,"").slice(0,40)}; }); parent.postMessage({type:"zdone",first:D.first,miss:miss},"*"); } return; }
+  var e=D.q[D.pos], it=ITEMS[e.id], c=D.cur; if(!c) return;
+  if(t.dataset.fxt!=null && c.res===null){ c.seq.push(it.tok[+t.dataset.fxt]); sfx("dot"); render(); return; }
+  if(t.dataset.fxm!=null && c.res===null){ var mi=+t.dataset.fxm, mk=c.sel.indexOf(mi); if(mk>=0) c.sel.splice(mk,1); else c.sel.push(mi); render(); return; }
+  if(t.dataset.fxc!=null && c.res===null){ c.pick=+t.dataset.fxc; c.res=c.pick===it.c; fb(c.res); render(); return; }
+  if(t.dataset.fxv!=null && c.res===null){ c.pick=+t.dataset.fxv; c.res=c.pick===it.c; sfx("move"); render(); setTimeout(function(){ fb(c.res); },1000); return; }
+  if(t.dataset.fxs!=null && c.res===null){ var ps=t.dataset.fxs.split(":"); c.cat[+ps[0]]=ps[1]; render(); return; }
+  if(t.dataset.fxp!=null && c.res===null){ var pp=t.dataset.fxp.split(":"); c.sl[+pp[0]]=+pp[1]; render(); return; }
+  if(t.dataset.fxo!=null && c.res===null){ c.seq.push(+t.dataset.fxo); render(); return; }
+  if(t.dataset.fxk!=null){ var ki=+t.dataset.fxk, kk=c.chk.indexOf(ki); if(kk>=0) c.chk.splice(kk,1); else c.chk.push(ki); render(); return; }
+  switch(t.dataset.fx){
+    case "card": c.res=true; next(D,c,it,e); render(); window.scrollTo(0,0); return;
+    case "tback": c.seq.pop(); render(); return;
+    case "gundo": c.gp.pop(); render(); return;
+    case "tcomp": c.tool="compass"; c.rp=null; render(); return;
+    case "truler": c.tool="ruler"; c.rp=null; render(); return;
+    case "cundo": c.objs.pop(); c.rp=null; render(); return;
+    case "creset": c.objs=[]; c.rp=null; render(); return;
+    case "cmodel": c.model=true; c.res=false; sfx("soft"); render(); return;
+    case "oclear": c.seq=[]; render(); return;
+    case "replay": render(); return;
+    case "drawn": c.drawn=true; c.res=true; sfx("ok"); render(); return;
+    case "cnext": if(c.step<4){ c.step++; sfx(c.step===4?"ok":"dot"); } render(); return;
+    case "cbad": c.bad=!c.bad; render(); return;
+    case "splus": setAng(c,c.ang+30); return;
+    case "sminus": setAng(c,c.ang-30); return;
+    case "dplus": case "dminus": c.d=Math.max(2,Math.min(10,c.d+(t.dataset.fx==="dplus"?2:-2))); c.open=false; sfx("dot"); render(); return;
+    case "qplus": case "qminus": c.r=Math.max(1,Math.min(6,c.r+(t.dataset.fx==="qplus"?1:-1))); sfx("dot"); render(); return;
+    case "gap": c.gap=!c.gap; render(); return;
+    case "unroll":
+      var box=document.getElementById("unroll"); sfx("move"); var t2=null;
+      (function ur(ts){ if(t2===null) t2=ts; var k=Math.min(1,(ts-t2)/1600); if(box) box.innerHTML=unrollSVG(c.d,k); if(k<1) requestAnimationFrame(ur); else { c.open=true; if(c.seen.indexOf(c.d)<0) c.seen.push(c.d); save(); render(); sfx("ok"); } })(performance.now());
+      return;
+    case "canext": case "caback":
+      var old=c.step, oldLay=CA_LAY[old]; c.step=Math.max(0,Math.min(5,c.step+(t.dataset.fx==="canext"?1:-1)));
+      var newLay=CA_LAY[c.step], newN=CA_NN[c.step], nChange=newN!==c.N; c.N=newN; c.lay=newLay; save(); render();
+      if(oldLay!==newLay || nChange){ var fromL = nChange ? 'row' : oldLay; poseWedges(0,c,fromL,newLay); sfx("move"); var t0=null; (function stepA(ts){ if(t0===null) t0=ts; var k=Math.min(1,(ts-t0)/1500); poseWedges(k,c,fromL,newLay); if(k<1) requestAnimationFrame(stepA); else sfx("ok"); })(performance.now()); }
+      else sfx("dot");
+      return;
+    case "reveal": c.reveal=true; sfx("ok"); render(); return;
+    case "next": next(D,c,it,e); render(); window.scrollTo(0,0); return;
+    case "ok":
+      if(it.type==="num"){ c.vals=[val("fxin")]; if(parseNum(c.vals[0])===null){ flash("数を入れよう"); return; } c.res=same(parseNum(c.vals[0]),it.ans); }
+      else if(it.type==="move"){ c.vals=[val("mx"),val("my")]; var vx=parseNum(c.vals[0]), vy=parseNum(c.vals[1]); if(vx===null||vy===null){ flash("2つとも予想を入れよう"); return; } c.res = vx===it.goal[0]-it.start[0] && vy===it.goal[1]-it.start[1]; sfx("move"); render(); requestAnimationFrame(function(){ var g=document.getElementById("mvshape"); if(g){ g.style.transform='translate(0px,0px)'; requestAnimationFrame(function(){ g.style.transform='translate('+vx*20+'px,'+(-vy*20)+'px)'; }); } }); setTimeout(function(){ fb(c.res); },1000); return; }
+      else if(it.type==="sort"){ if(!it.chips.every(function(x,i){return !!c.cat[i];})){ flash("全部えらんでから決定"); return; } c.res=it.cats.every(function(v,i){return c.cat[i]===v;}); }
+      else if(it.type==="slots"){ if(!it.slots.every(function(x,i){return c.sl[i]!=null;})){ flash("全部えらんでから決定"); return; } c.res=it.ans.every(function(v,i){return c.sl[i]===v;}); }
+      else if(it.type==="dragorder"){ c.res=c.seq.every(function(v,i){return v===i;}); }
+      else if(it.type==="sym"){ if(!c.seq.length){ flash("記号を並べてから決定"); return; } var gs=c.seq.join(" "); c.res=it.ans.some(function(a){ return a.join(" ")===gs; }); }
+      else if(it.type==="gdraw"){ var tg=gTarget(it); c.res=tg.every(function(p,i){ return c.gp[i]&&c.gp[i][0]===p[0]&&c.gp[i][1]===p[1]; }); }
+      else if(it.type==="multi"){ if(!c.sel.length){ flash("選んでから決定"); return; } c.res=c.sel.slice().sort().join(",")===it.c.slice().sort().join(","); }
+      else if(it.type==="order"){ if(c.seq.length<it.opts.length){ flash("全部ならべてから決定"); return; } c.res=c.seq.every(function(v,i){return v===i;}); }
+      fb(c.res); render(); return;
+  }
+});
+function flash(msg){ var s=app.querySelector(".stage"); var d=document.createElement("div"); d.className="msg hint"; d.textContent=msg; s.appendChild(d); setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },2200); }
+document.addEventListener("keydown",function(ev){ if(ev.key!=="Enter"||!ev.target.matches||!ev.target.matches("input")) return; var b=document.querySelector('[data-fx=ok]'); if(b) b.click(); });
+/* 回転・対称のパズル：押した直後に動かす */
+var _render=render;
+render=function(){ _render(); var D=S.units[S.unit]; if(D.done||!D.cur) return; var it=ITEMS[D.q[D.pos].id], c=D.cur; if(it.type==="move" && it.kind!=="t" && c.res!==null && !c.animated){ c.animated=true; var g=document.getElementById("mvshape"); if(g){ var final=g.style.transform; g.style.transform= it.kind==="r"?'rotate(0deg)':'none'; requestAnimationFrame(function(){ requestAnimationFrame(function(){ g.style.transform=final; }); }); } } };
+render();
+})();
+
+
+</script>
+</body>
+</html>
