@@ -191,7 +191,8 @@ var KEY= EMB ? "heimen-zukei-embed" : "heimen-zukei-v1";
 if(EMB) document.documentElement.classList.add("embed");
 /* ===== 記録をGoogleスプレッドシートへ送る（おうちの人が送り先を設定したときだけ） ===== */
 var ML={cfg:"math-log-cfg",q:"math-log-queue",snap:"math-log-snap",weak:"math-log-weak"};
-function mlCfg(){ try{ return JSON.parse(localStorage.getItem(ML.cfg))||{}; }catch(e){ return {}; } }
+var ML_DEFAULT={url:"https://script.google.com/macros/s/AKfycbxFiVLtta4SReMGX4mZqS0o8NBUdXCtk4QLEb04SaAjFrRY4hphDe-MyTtrpdcwL0wq/exec",key:"nT9KazeaiK3fD4x0"};
+function mlCfg(){ var c; try{ c=JSON.parse(localStorage.getItem(ML.cfg))||{}; }catch(e){ c={}; } if(!c.url){ c.url=ML_DEFAULT.url; c.key=ML_DEFAULT.key; } return c; }
 function mlSetCfg(c){ try{ localStorage.setItem(ML.cfg,JSON.stringify(c)); }catch(e){} }
 function mlQ(){ try{ return JSON.parse(localStorage.getItem(ML.q))||[]; }catch(e){ return []; } }
 function mlStrip(h){ return String(h==null?"":h).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim(); }
