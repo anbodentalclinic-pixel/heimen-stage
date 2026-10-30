@@ -776,6 +776,154 @@ var WY={
  y14:{u:"u8",type:"choice",q:"△PQR の3つの辺の垂直二等分線を作図すると、どうなる？",fig:aedFig(),opts:["3本とも1点で交わる","3本とも平行になる","交わる点が3つできる"],c:0,ex:"3本は1点で交わる。その点は P、Q、R から等しい距離にあり、3つの AED がどれも同じくらい近い場所。"}
 };
 Object.keys(WY).forEach(function(k){ ITEMS[k]=WY[k]; });
+/* ---------- 寄り道（地下世界）：体験ラボと、見て答える問題 ---------- */
+(function(){
+  function poly(pts,fill,stroke,w,extra){ return '<polygon points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="'+fill+'" stroke="'+(stroke||'#8A5A33')+'" stroke-width="'+(w||1.3)+'"'+(extra||'')+'/>'; }
+  function txt(x,y,s,o){ o=o||{}; return '<text x="'+x+'" y="'+y+'" text-anchor="'+(o.a||'middle')+'" font-size="'+(o.size||13)+'" font-weight="'+(o.w?700:400)+'" fill="'+(o.c||'var(--ink)')+'">'+s+'</text>'; }
+  function btnRow(list){ return '<div class="row" style="flex-wrap:wrap;gap:6px">'+list.map(function(b){ return '<button type="button" class="btn" data-lab="'+b[0]+'">'+b[1]+'</button>'; }).join('')+'</div>'; }
+  function labBox(id,inner,w,h){ return '<div class="board"><svg id="'+id+'" viewBox="0 0 '+(w||340)+' '+(h||240)+'" role="img" aria-label="体験の図">'+inner+'</svg></div>'; }
+  function on(root,sel,fn){ root.querySelectorAll(sel).forEach(function(b){ b.addEventListener('click',function(){ fn(b.getAttribute('data-lab'),b); }); }); }
+  var LT='<div class="msg hint" id="labmsg" style="margin-top:6px">ボタンを押して、やってみよう。</div>';
+
+  /* ===== 麻の葉：二等辺三角形を移動で組み立てる ===== */
+  var AR=62;
+  function hexV(c){ var v=[]; for(var j=0;j<6;j++){ var a=(60*j-90)*Math.PI/180; v.push([c[0]+AR*Math.cos(a),c[1]+AR*Math.sin(a)]); } return v; }
+  function asaT(c,j,k){ var v=hexV(c), P=v[j], Q=v[(j+1)%6], K=[(c[0]+P[0]+Q[0])/3,(c[1]+P[1]+Q[1])/3]; return k===0?[c,P,K]:(k===1?[c,K,Q]:[P,Q,K]); }
+  function asaAll(cs,hl,base){ var g=''; cs.forEach(function(c,ci){ for(var j=0;j<6;j++) for(var k=0;k<3;k++){ var key=ci+'-'+j+'-'+k; g+=poly(asaT(c,j,k),hl&&hl[key]?hl[key]:(base||'#F7EBD3')); } }); return g; }
+  var C1=[110,120], C2=[110+AR*Math.sqrt(3),120];
+  function asaFig(hl,extra){ return svg('0 0 340 240',asaAll([C1,C2],hl)+(extra||''),'麻の葉の模様'); }
+
+  ITEMS.y1={u:"u8",type:"card",labNeed:true,html:'<b>体験：麻の葉の模様を、移動で組み立てよう</b><p>もとになるのは、黄色の<b>二等辺三角形1つ</b>だけ。ボタンを順番に押すと、移動で模様が広がる。</p>'+labBox('asabuild','')+btnRow([['next','次の移動 ▶'],['reset','はじめから']])+LT,
+    bind:function(root,c,ok){ var st=0, sv=root.querySelector('#asabuild'), msg=root.querySelector('#labmsg');
+      var cap=['これがもとの形。二等辺三角形（黄色）','<b>対称移動</b>：点線を軸にして裏返すと、青い三角形','<b>回転移動</b>：点 K を中心に 120° 回すと、緑の三角形。3つで正三角形になった','<b>回転移動</b>：中心 O のまわりに 60° ずつ回すと、正六角形の模様','<b>平行移動</b>：正六角形をそのまま右へずらすと、模様がどこまでも続く。これが麻の葉'];
+      function draw(){ var g='', c1=C1, cs=st>=4?[C1,C2]:[C1];
+        if(st>=3){ g+=asaAll(cs,null,'#F3E3C3'); }
+        var T0=asaT(c1,0,0),T1=asaT(c1,0,1),T2=asaT(c1,0,2), K=T0[2];
+        if(st<3){ g+=poly(hexV(c1),'none','#C9B9A0',1,' stroke-dasharray="4 3"'); }
+        g+=poly(T0,'#F2B705','#8A5A33',2);
+        if(st>=1) g+=poly(T1,'#7FB2EE','#8A5A33',2);
+        if(st>=2) g+=poly(T2,'#8FD18F','#8A5A33',2);
+        if(st===1) g+=ln(c1[0],c1[1],c1[0]+(K[0]-c1[0])*2.2,c1[1]+(K[1]-c1[1])*2.2,'var(--red)',2,'6 4');
+        if(st===2) g+=dot(K[0],K[1],'var(--red)',4)+txt(K[0]+10,K[1]+4,'K',{w:1,c:'var(--red)'});
+        if(st===3) g+=dot(c1[0],c1[1],'var(--red)',4)+txt(c1[0]+12,c1[1]+16,'O',{w:1,c:'var(--red)'});
+        if(st===4) g+=ln(c1[0]+20,215,C2[0]-20,215,'var(--red)',2.5)+arrowHead(C2[0]-20,215,0,'var(--red)');
+        sv.innerHTML=g; msg.innerHTML=(st+1)+' / 5　'+cap[st]; if(st===4) ok(); }
+      on(root,'[data-lab]',function(k){ if(k==='next'&&st<4){ st++; sfx('dot'); } if(k==='reset') st=0; draw(); }); draw(); }};
+
+  var MOVES=["平行移動","回転移動","対称移動"];
+  ITEMS.y16={u:"u8",type:"choice",q:"黄色の三角形を<b>1回の移動</b>で青の三角形に重ねる。どの移動？",fig:asaFig({'0-0-0':'#F2B705','0-0-1':'#7FB2EE'}),opts:MOVES,c:2,ex:"青は黄色を<b>裏返した</b>形（鏡に映したよう）。2つの三角形の間の線を軸にした<b>対称移動</b>。",exfig:asaFig({'0-0-0':'#F2B705','0-0-1':'#7FB2EE'},ln(C1[0],C1[1],C1[0]+52,C1[1]-90,'var(--red)',2.5,'6 4'))};
+  ITEMS.y17={u:"u8",type:"choice",q:"黄色の三角形を<b>1回の移動</b>で青の三角形に重ねる。どの移動？",fig:asaFig({'0-0-0':'#F2B705','0-1-0':'#7FB2EE'}),opts:MOVES,c:1,ex:"六角形のまん中 O を中心に、60° <b>回した</b>形。<b>回転移動</b>。",exfig:asaFig({'0-0-0':'#F2B705','0-1-0':'#7FB2EE'},dot(C1[0],C1[1],'var(--red)',5)+arcPath(C1[0],C1[1],40,-80,-20,'var(--red)',2.5))};
+  ITEMS.y18={u:"u8",type:"choice",q:"黄色の三角形を<b>1回の移動</b>で青の三角形に重ねる。どの移動？",fig:asaFig({'0-2-0':'#F2B705','1-2-0':'#7FB2EE'}),opts:MOVES,c:0,ex:"向きは同じまま、右へ<b>ずらした</b>だけ。<b>平行移動</b>。",exfig:asaFig({'0-2-0':'#F2B705','1-2-0':'#7FB2EE'},ln(C1[0]+40,170,C2[0]+40,170,'var(--red)',2.5)+arrowHead(C2[0]+40,170,0,'var(--red)'))};
+  ITEMS.y2.ex+='<div class="ex good"><span class="tag">見分け方</span>　向きが同じ → 平行移動。裏返し（鏡）→ 対称移動。まん中のまわりに回した → 回転移動。</div>';
+
+  /* ===== しきつめ実験 ===== */
+  function regAt(n,s,t){ var C=[170,125], v=[C], d=t, a=180*(n-2)/n, e=360/n, p=C; for(var i=0;i<n-1;i++){ p=[p[0]+s*Math.cos(d*Math.PI/180), p[1]-s*Math.sin(d*Math.PI/180)]; v.push(p); d+=e; } return v; }
+  ITEMS.y4={u:"u8",type:"card",labNeed:true,html:'<b>体験：1つの点のまわりに、同じ正多角形を並べてみよう</b><p>すき間なく並ぶのは、集まった角の合計が<b>ちょうど 360°</b>のとき。3つ以上ためそう。</p>'+labBox('tilelab','')+btnRow([['3','正三角形'],['4','正方形'],['5','正五角形'],['6','正六角形'],['8','正八角形']])+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#tilelab'), msg=root.querySelector('#labmsg'), tried={};
+      function draw(n){ var a=180*(n-2)/n, m=Math.floor(360/a+1e-9), fit=Math.abs(m*a-360)<1e-6, s=n>=6?(n===8?42:55):70, g='', cols=['#F2B705','#7FB2EE','#8FD18F','#F4A6A6','#C9A7EB','#FFD27F'];
+        for(var k=0;k<m;k++) g+=poly(regAt(n,s,k*a),cols[k%6],'var(--ink)',2);
+        if(!fit){ var r=60, a1=m*a, p1=[170+r*Math.cos(a1*Math.PI/180),125-r*Math.sin(a1*Math.PI/180)], p2=[170+r,125];
+          g+='<path d="M170 125 L'+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+' A'+r+' '+r+' 0 '+((360-a1)>180?1:0)+' 0 '+p2[0]+' '+p2[1]+' Z" fill="var(--red)" fill-opacity=".35" stroke="var(--red)" stroke-width="2" stroke-dasharray="4 3"/>'; }
+        g+=dot(170,125,'var(--ink)',4);
+        sv.innerHTML=g;
+        msg.innerHTML='1つの角 <b>'+(+a.toFixed(1))+'°</b> × '+m+' こ ＝ '+(+(a*m).toFixed(1))+'°　'+(fit?'<b style="color:var(--good)">ぴったり 360°！ すき間なく並ぶ</b>':'<b style="color:var(--red)">あと '+(+(360-a*m).toFixed(1))+'° のすき間</b>（もう1つ入れると重なる）');
+        tried[n]=1; if(Object.keys(tried).length>=3) ok(); }
+      on(root,'[data-lab]',function(k){ sfx('dot'); draw(+k); }); }};
+  ITEMS.y3.fig=svg('0 0 340 240',(function(){ var g=''; for(var k=0;k<3;k++) g+=poly(regAt(6,55,k*120),['#F2B705','#7FB2EE','#8FD18F'][k],'var(--ink)',2); return g+dot(170,125,'var(--red)',5)+txt(196,120,'?°',{w:1,c:'var(--red)'}); })(),'1点に集まった3つの正六角形');
+
+  /* ===== 同じまわりの長さで、いちばん広いのは？ ===== */
+  ITEMS.y19={u:"u8",type:"choice",q:"まわりの長さが<b>どれも 24cm</b>の正三角形・正方形・正六角形。1マスは 1cm。<b>いちばん広い</b>のは？",
+    fig:svg('0 0 340 200',grid(340,200,10)+poly([[20,170],[100,170],[60,170-80*Math.sqrt(3)/2]],'#F4A6A6','var(--ink)',2)+txt(60,190,'1辺 8cm',{size:12})+'<rect x="125" y="110" width="60" height="60" fill="#7FB2EE" stroke="var(--ink)" stroke-width="2"/>'+txt(155,190,'1辺 6cm',{size:12})+poly((function(){ var v=[],cx=265,cy=135,r=40; for(var i=0;i<6;i++){ var a=60*i*Math.PI/180; v.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]); } return v; })(),'#F2B705','var(--ink)',2)+txt(265,190,'1辺 4cm',{size:12}),'まわり24cmの3つの正多角形'),
+    opts:["正三角形","正方形","正六角形"],c:2,ex:"中のマス目を数えると、正三角形 約 28 マス、正方形 36 マス、正六角形 約 42 マス。<b>まわりの長さ（材料）が同じなら、正六角形がいちばん広い</b>。だから、はちの巣は少ないろうで広い部屋をつくれる。"};
+
+  ITEMS.y20={u:"u8",type:"card",html:'<b>紙ミッション：麻の葉を自分でかく</b><ol style="margin:6px 0;padding-left:1.4em"><li>方眼ノートに、コンパスで正六角形をかく（半径で円周を6つに区切る）</li><li>まん中と6つの頂点を結んで、正三角形を6つに分ける</li><li>正三角形の中に、まん中の点（3つの頂点から等しい点）をとって、頂点と結ぶ</li><li>三角形を1つ黄色にぬり、となりの三角形への<b>移動の名前</b>を書く</li></ol><div class="ex good"><span class="tag">いい例</span>　「対称移動（軸は OK）」「回転移動（中心 O、60°）」のように、<b>軸・中心・角度</b>まで書く</div><div class="ex bad"><span class="tag">悪い例</span>　「回す」「ひっくり返す」だけ。どこを中心に何度かがない</div>'};
+
+  /* ===== AED の地図 ===== */
+  var AP=[[80,70],[262,58],[172,196]], AN=['P','Q','R'], ACOL=['#F6C9C9','#C9DDF6','#CDEFD2'];
+  function mapBase(){ var g='<rect x="0" y="0" width="340" height="240" fill="#F4F1E8"/>'; [[0,120,340,110],[150,0,140,240],[0,30,340,40],[40,0,60,240],[260,0,250,240]].forEach(function(l){ g+=ln(l[0],l[1],l[2],l[3],'#D8D2C2',9); }); return g; }
+  function aedMarks(){ var g=''; AP.forEach(function(p,i){ g+='<rect x="'+(p[0]-11)+'" y="'+(p[1]-11)+'" width="22" height="22" rx="4" fill="var(--red)"/>'+txt(p[0],p[1]+5,'♥',{c:'#fff',size:13})+txt(p[0]+20,p[1]-12,AN[i],{w:1,a:'start'}); }); return g; }
+  function voronoi(){ var g='',s=10; for(var x=0;x<340;x+=s) for(var y=0;y<240;y+=s){ var b=0,bd=1e9; AP.forEach(function(p,i){ var d=Math.hypot(x+5-p[0],y+5-p[1]); if(d<bd){bd=d;b=i;} }); g+='<rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="'+ACOL[b]+'" fill-opacity=".75"/>'; } return g; }
+  function circum(){ var A=AP[0],B=AP[1],C=AP[2], d=2*(A[0]*(B[1]-C[1])+B[0]*(C[1]-A[1])+C[0]*(A[1]-B[1])), ux=((A[0]*A[0]+A[1]*A[1])*(B[1]-C[1])+(B[0]*B[0]+B[1]*B[1])*(C[1]-A[1])+(C[0]*C[0]+C[1]*C[1])*(A[1]-B[1]))/d, uy=((A[0]*A[0]+A[1]*A[1])*(C[0]-B[0])+(B[0]*B[0]+B[1]*B[1])*(A[0]-C[0])+(C[0]*C[0]+C[1]*C[1])*(B[0]-A[0]))/d; return [ux,uy]; }
+  function bisLines(){ var O=circum(), g=''; [[0,1,2],[1,2,0],[2,0,1]].forEach(function(t){ var A=AP[t[0]],B=AP[t[1]],C=AP[t[2]], M=[(A[0]+B[0])/2,(A[1]+B[1])/2], d=[-(B[1]-A[1]),B[0]-A[0]], L=Math.hypot(d[0],d[1]); d=[d[0]/L,d[1]/L]; if(d[0]*(C[0]-M[0])+d[1]*(C[1]-M[1])>0) d=[-d[0],-d[1]]; g+=ln(O[0],O[1],O[0]+d[0]*400,O[1]+d[1]*400,'var(--ink)',2.5,'7 4'); }); return g+dot(O[0],O[1],'var(--ink)',4); }
+  function nearest(p){ var b=0,bd=1e9; AP.forEach(function(q,i){ var d=Math.hypot(p[0]-q[0],p[1]-q[1]); if(d<bd){bd=d;b=i;} }); return b; }
+  ITEMS.y12={u:"u8",type:"card",labNeed:true,html:'<b>体験：地図のどこにいたら、どの AED がいちばん近い？</b><p>地図の上を<b>クリック</b>すると、そこから3つの AED までの距離（だいたいの m）が出る。いろいろな場所で3回以上ためしたら、「境目を見る」を押そう。</p>'+labBox('aedlab',mapBase()+aedMarks())+btnRow([['show','境目を見る']])+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#aedlab'), msg=root.querySelector('#labmsg'), n=0, shown=false, last=null;
+      function draw(){ var g=mapBase()+(shown?voronoi()+bisLines():'')+aedMarks();
+        if(last){ var b=nearest(last); AP.forEach(function(q,i){ var d=Math.round(Math.hypot(last[0]-q[0],last[1]-q[1])*1.0); g+=ln(last[0],last[1],q[0],q[1],i===b?'var(--good)':'#8A93A0',i===b?3.5:1.8,i===b?'':'5 4')+txt((last[0]+q[0])/2,(last[1]+q[1])/2-4,d+'m',{size:12,w:i===b,c:i===b?'var(--good)':'#5B6B7A'}); }); g+='<circle cx="'+last[0]+'" cy="'+last[1]+'" r="7" fill="var(--gold)" stroke="var(--ink)" stroke-width="2"/>'; }
+        sv.innerHTML=g; }
+      sv.style.cursor='crosshair';
+      sv.addEventListener('click',function(ev){ var p=sv.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; var q=p.matrixTransform(sv.getScreenCTM().inverse()); last=[q.x,q.y]; n++; sfx('dot'); draw(); var b=nearest(last); msg.innerHTML='ここからいちばん近いのは <b>'+AN[b]+'</b>。'+(n<3?'あと '+(3-n)+' か所ためそう。':'「境目を見る」を押そう。'); });
+      on(root,'[data-lab]',function(){ if(n<3){ msg.innerHTML='先に、地図を3か所クリックしてみよう。'; return; } shown=true; draw(); sfx('ok'); msg.innerHTML='点線が、2つの AED を結んだ線分の<b>垂直二等分線</b>。線の上は、2つの AED から<b>等しい距離</b>。だから色の境目になる。3本は1点で交わる。'; ok(); }); }};
+  function aedQ(X){ return svg('0 0 340 240',mapBase()+bisLines()+aedMarks()+'<circle cx="'+X[0]+'" cy="'+X[1]+'" r="8" fill="var(--gold)" stroke="var(--ink)" stroke-width="2"/>'+txt(X[0]+14,X[1]+5,'X',{w:1,a:'start'}),'AEDの地図と点X'); }
+  var X1=[205,128], X2=[120,150];
+  ITEMS.y21={u:"u8",type:"choice",q:"点線は、AED どうしを結んだ線分の<b>垂直二等分線</b>。点 X からいちばん近い AED は？（定規で測らず、点線を見て決めよう）",fig:aedQ(X1),opts:["P","Q","R"],c:nearest(X1),ex:"X は、点線で区切られた3つの地域のうち、"+AN[nearest(X1)]+" がいる地域の中にある。垂直二等分線の、"+AN[nearest(X1)]+" の側。"};
+  ITEMS.y22={u:"u8",type:"choice",q:"点 X からいちばん近い AED は？",fig:aedQ(X2),opts:["P","Q","R"],c:nearest(X2),ex:"X は、"+AN[nearest(X2)]+" と同じ地域にある。見た目で迷うときほど、垂直二等分線（境目）が役に立つ。"};
+
+  /* ===== 車いすの方向転換 ===== */
+  var CH=[[-30,-18],[30,-18],[30,55],[-30,55]], WL=[-34,0], WR=[34,0];
+  function chairSVG(cx,cy,ang,sc){ var a=ang*Math.PI/180; function tr(p){ return [cx+(p[0]*Math.cos(a)-p[1]*Math.sin(a))*sc, cy+(p[0]*Math.sin(a)+p[1]*Math.cos(a))*sc]; }
+    var g=poly(CH.map(tr),'#9DB6CF','var(--ink)',2); [[WL,-1],[WR,1]].forEach(function(w){ var c0=w[0], r=[[c0[0]-5,c0[1]-26],[c0[0]+5,c0[1]-26],[c0[0]+5,c0[1]+26],[c0[0]-5,c0[1]+26]]; g+=poly(r.map(tr),'#1D2B3A','#1D2B3A',1); });
+    var f=tr([0,55]); g+=dot(f[0],f[1],'var(--ink)',3); return g; }
+  ITEMS.y9={u:"u8",type:"card",labNeed:true,html:'<b>体験：車いすを回して、向きを変えてみよう</b><p>上から見た車いす。2つの回し方をためして、<b>はみ出さないために必要な円</b>をくらべよう。</p>'+labBox('wclab','')+btnRow([['P','まん中の点 P を中心に 180°'],['L','左の車輪を中心に 180°']])+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#wclab'), msg=root.querySelector('#labmsg'), done={}, sc=1.15, O=[170,120], busy=false;
+      function far(cen){ var m=0; CH.forEach(function(p){ m=Math.max(m,Math.hypot(p[0]-cen[0],p[1]-cen[1])); }); return m; }
+      function frame(mode,ang,trail){ var cen=mode==='L'?WL:[0,0], base=[O[0]-cen[0]*sc*0+0,O[1]]; var g='';
+        var cx=O[0], cy=O[1];
+        if(mode){ var R=far(cen)*sc; g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R.toFixed(1)+'" fill="var(--gold2)" fill-opacity=".35" stroke="var(--red)" stroke-width="2" stroke-dasharray="6 4"/>'; }
+        var a=ang*Math.PI/180, off=[-cen[0],-cen[1]]; var pos=[cx+(off[0]*Math.cos(a)-off[1]*Math.sin(a))*sc, cy+(off[0]*Math.sin(a)+off[1]*Math.cos(a))*sc];
+        g+=chairSVG(pos[0],pos[1],ang,sc)+dot(cx,cy,'var(--red)',5)+txt(cx+10,cy-8,mode==='L'?'左の車輪':'P',{w:1,c:'var(--red)',a:'start'});
+        sv.innerHTML=g; }
+      function run(mode){ if(busy) return; busy=true; var t0=null; sfx('dot');
+        function step(ts){ if(!t0) t0=ts; var k=Math.min(1,(ts-t0)/1600); frame(mode,180*k); if(k<1) requestAnimationFrame(step); else { busy=false; done[mode]=1; var d=Math.round(far(mode==='L'?WL:[0,0])*2); msg.innerHTML=(mode==='L'?'左の車輪を中心':'まん中の P を中心')+'に回すと、必要な円の直径は<b>約 '+d+'cm</b>。'+(Object.keys(done).length<2?'もう1つの回し方もためそう。':'<b>P を中心に回す方が、せまい場所で向きを変えられる。</b>必要な円は「中心から<b>いちばん遠い点</b>まで」が半径。'); if(Object.keys(done).length>=2) ok(); } }
+        requestAnimationFrame(step); }
+      frame(null,0); on(root,'[data-lab]',function(k){ run(k); }); }};
+  function miniWC(kind){ var g='', O=[55,48], sc=0.42; g+=chairSVG(O[0],O[1],0,sc).replace(/stroke-width="2"/g,'stroke-width="1.2"'); var R;
+    if(kind===0){ R=Math.hypot(30,55)*sc; g+='<circle cx="'+O[0]+'" cy="'+O[1]+'" r="'+R+'" fill="none" stroke="var(--red)" stroke-width="2"/>'+dot(O[0],O[1],'var(--red)',2.5); }
+    if(kind===1){ R=36*sc; g+='<circle cx="'+O[0]+'" cy="'+O[1]+'" r="'+R+'" fill="none" stroke="var(--red)" stroke-width="2"/>'+dot(O[0],O[1],'var(--red)',2.5); }
+    if(kind===2){ var F=[O[0],O[1]+55*sc]; R=Math.hypot(30,73)*sc; g+='<circle cx="'+F[0]+'" cy="'+F[1]+'" r="'+R+'" fill="none" stroke="var(--red)" stroke-width="2"/>'+dot(F[0],F[1],'var(--red)',2.5); }
+    return '<svg viewBox="0 0 110 110" width="140" height="140" style="display:block;margin:0 auto">'+g+'</svg>'; }
+  ITEMS.y10={u:"u8",type:"choice",q:"まん中の点 P を中心に 180° 回すとき、車いすがはみ出さない<b>いちばん小さい円</b>はどれ？（赤い円）",opts:[miniWC(0)+'<span>P が中心、いちばん遠い点まで</span>',miniWC(1)+'<span>P が中心、車輪まで</span>',miniWC(2)+'<span>前の足のせが中心</span>'],c:0,ex:"回転移動では、中心からの距離は変わらない。<b>いちばん遠い点</b>が通る円の内側なら、全部おさまる。車輪までの円だと、前と後ろがはみ出す。"};
+  ITEMS.y23={u:"u8",type:"choice",q:"せまい場所で向きを変えたい。どちらの回し方が、必要な円が小さい？",opts:["まん中の点 P を中心に回す","左の車輪を中心に回す"],c:0,ex:"体験で見たとおり、P を中心にすると約 125cm、左の車輪を中心にすると約 169cm。中心から遠い点までの長さが短い方が、円は小さい。"};
+  ITEMS.y11.q="P から車いすのもっとも遠い点 Q までが 70cm。方向転換に必要な円の<b>直径</b>は？";
+  ITEMS.y11.fig=ITEMS.y11.fig||'';
+  ITEMS.y11.ex="PQ は半径。直径は 70 × 2 = <b>140cm</b>。<div class=\"ex bad\"><span class=\"tag\">悪い例</span>　70cm と答える（それは半径）。問題が聞いているのは「直径」</div><div class=\"ex good\"><span class=\"tag\">いい例</span>　答える前に、問題の「直径」に下線を引いてから計算する</div>";
+
+  /* ===== π を正多角形ではさむ ===== */
+  function piLab(n){ var cx=110,cy=118,r=88,g='',vi=[],vo=[],R=r/Math.cos(Math.PI/n);
+    for(var i=0;i<n;i++){ var a=2*Math.PI*i/n-Math.PI/2; vi.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]); vo.push([cx+R*Math.cos(a+Math.PI/n),cy+R*Math.sin(a+Math.PI/n)]); }
+    g+=poly(vo,'#CFE3F5','#2E6FB7',1.8)+'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#fff" stroke="var(--ink)" stroke-width="2.5"/>'+poly(vi,'#FDE6A8','var(--red)',1.8)+ln(cx-r,cy,cx+r,cy,'var(--ink)',1.5,'4 3')+txt(cx,cy-6,'直径',{size:11});
+    var inn=n*Math.sin(Math.PI/n), out=n*Math.tan(Math.PI/n), X=function(v){ return 225+(v-3)*110; };
+    g+=ln(225,90,335,90,'var(--ink)',2)+[3,3.5,4].map(function(v){ return ln(X(v),84,X(v),96,'var(--ink)',1.5)+txt(X(v),112,v,{size:11}); }).join('');
+    g+='<rect x="'+X(Math.min(inn,4))+'" y="80" width="'+Math.max(2,X(Math.min(out,4))-X(inn))+'" height="20" fill="var(--gold)" fill-opacity=".45"/>'+ln(X(Math.PI),70,X(Math.PI),104,'var(--good)',2.5)+txt(X(Math.PI),64,'π',{w:1,c:'var(--good)'});
+    g+=txt(228,150,'正'+n+'角形',{a:'start',w:1})+txt(228,172,'内側：'+inn.toFixed(4),{a:'start',c:'var(--red)',size:12})+txt(228,192,'外側：'+out.toFixed(4),{a:'start',c:'#2E6FB7',size:12})+txt(228,212,'（まわり ÷ 直径）',{a:'start',size:11});
+    return g; }
+  ITEMS.y6={u:"u8",type:"card",labNeed:true,html:'<b>体験：アルキメデスのやり方で π をはさみうち</b><p>円の<b>内側</b>（赤）と<b>外側</b>（青）に正多角形をかく。円周は、その間にある。角の数を増やして、π（3.14159…）をはさもう。</p>'+labBox('pilab','',340,236)+btnRow([['6','6'],['12','12'],['24','24'],['48','48'],['96','96 ★']])+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#pilab'), msg=root.querySelector('#labmsg');
+      function draw(n){ sv.innerHTML=piLab(n); var inn=n*Math.sin(Math.PI/n), out=n*Math.tan(Math.PI/n); msg.innerHTML='正'+n+'角形：π は <b>'+inn.toFixed(4)+'</b> と <b>'+out.toFixed(4)+'</b> の間。'+(n===96?'<b>アルキメデス（紀元前3世紀）は、正96角形まで手で計算して「3.14 くらい」まで突きとめた。</b>':'角を増やすと、はさむ幅がせまくなる。'); if(n===96) ok(); }
+      draw(6); on(root,'[data-lab]',function(k){ sfx('dot'); draw(+k); }); }};
+  ITEMS.y24={u:"u8",type:"choice",q:"円の内側の正六角形のまわりは、直径の 3 倍。外側の正方形のまわりは、直径の 4 倍。円周は直径の何倍？",fig:svg('0 0 340 220','<rect x="80" y="20" width="180" height="180" fill="#CFE3F5" stroke="#2E6FB7" stroke-width="2"/><circle cx="170" cy="110" r="90" fill="#fff" stroke="var(--ink)" stroke-width="2.5"/>'+poly((function(){ var v=[]; for(var i=0;i<6;i++){ var a=60*i*Math.PI/180; v.push([170+90*Math.cos(a),110+90*Math.sin(a)]); } return v; })(),'#FDE6A8','var(--red)',2)+txt(300,60,'外：4倍',{c:'#2E6FB7',w:1})+txt(40,110,'内：3倍',{c:'var(--red)',w:1}),'円の内側の正六角形と外側の正方形'),opts:["3倍と4倍の間","3倍より小さい","4倍より大きい"],c:0,ex:"円周は、内側の正六角形より長く、外側の正方形より短い。だから π は <b>3 と 4 の間</b>。角を増やすほど、はさむ幅がせまくなる。"};
+
+  /* ===== グレゴリーの式 ===== */
+  ITEMS.y25={u:"u8",type:"card",labNeed:true,html:'<b>体験：グレゴリーの式で π に近づく</b><p>π ÷ 4 ＝ 1 − 1/3 ＋ 1/5 − 1/7 ＋ …　ボタンを押すたびに1つ足して（引いて）、4 倍した数が π のまわりをどう動くか見よう。</p>'+labBox('greglab','',340,170)+btnRow([['add','次の項をたす ▶'],['ten','10こまとめて'],['reset','はじめから']])+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#greglab'), msg=root.querySelector('#labmsg'), k=0, S=0, hist=[];
+      function X(v){ return 20+(v-2.6)*(300/1.6); }
+      function draw(){ var g=ln(20,100,320,100,'var(--ink)',2)+[2.6,3,3.4,3.8,4.2].map(function(v){ return ln(X(v),94,X(v),106,'var(--ink)',1.5)+txt(X(v),124,v,{size:11}); }).join('')+ln(X(Math.PI),50,X(Math.PI),106,'var(--good)',2.5)+txt(X(Math.PI),44,'π＝3.14159…',{c:'var(--good)',w:1,size:12});
+        hist.forEach(function(v,i){ var last=i===hist.length-1; g+='<circle cx="'+X(Math.max(2.6,Math.min(4.2,v))).toFixed(1)+'" cy="'+(last?100:100-((i%2)?-12:12))+'" r="'+(last?7:3.5)+'" fill="'+(last?'var(--red)':'#F4A6A6')+'"/>'; });
+        sv.innerHTML=g; }
+      function add(){ S+=(k%2?-1:1)/(2*k+1); k++; hist.push(4*S); if(hist.length>40) hist.shift(); }
+      function show(){ draw(); msg.innerHTML=k?(k+' こ足した：4 × (…) ＝ <b>'+(4*S).toFixed(5)+'</b>　'+(k>=8?'π のまわりを、行ったり来たりしながら近づく。でも、とてもゆっくり。だから昔の人は正多角形も使った。':'')):'ボタンを押してみよう。'; if(k>=8) ok(); }
+      on(root,'[data-lab]',function(b){ if(b==='add') add(); if(b==='ten') for(var i=0;i<10;i++) add(); if(b==='reset'){ k=0;S=0;hist=[]; } sfx('dot'); show(); }); show(); }};
+
+  /* ===== 年表 ===== */
+  function timeline(){ var g=ln(20,70,320,70,'var(--ink)',3)+arrowHead(320,70,0,'var(--ink)'), ev=[[40,'紀元前3世紀','アルキメデス','正96角形で','3.14 くらい','#F2B705'],[165,'江戸時代','関孝和（日本）','正多角形で','10けた以上','#F4A6A6'],[285,'今','コンピューター','100兆けたを','こえて計算','#7FB2EE']];
+    ev.forEach(function(e){ g+='<circle cx="'+e[0]+'" cy="70" r="9" fill="'+e[5]+'" stroke="var(--ink)" stroke-width="2"/>'+txt(e[0],48,e[1],{size:12})+txt(e[0],100,e[2],{w:1,size:13})+txt(e[0],120,e[3],{size:12})+txt(e[0],138,e[4],{size:12}); });
+    return svg('0 0 340 160',g,'円周率の歴史の年表'); }
+  ITEMS.y26={u:"u8",type:"card",html:'<b>円周率 π を追いかけた人たち</b>'+timeline()+'<p>江戸時代の日本の数学者・<b>関孝和</b>は、ヨーロッパの研究とは別に、正多角形の角の数をどんどん増やす計算で π を小数点以下10けた以上正しく求めた。同じころイギリスの<b>グレゴリー</b>は、さっきの式を見つけた。</p><p>どれだけ計算しても π は終わらない。だから中学では、<b>π のまま書く</b>。</p>'};
+  ITEMS.y27={u:"u8",type:"dragorder",q:"π を求めた人や道具を、<b>古い順</b>に、指（マウス）で動かして並べよう。",opts:["アルキメデス（古代ギリシャ・正96角形）","関孝和（江戸時代の日本・正多角形）","コンピューター（今・100兆けた以上）"],ex:"アルキメデスは紀元前3世紀、関孝和は江戸時代、コンピューターは今。"};
+  ITEMS.y28={u:"u8",type:"card",html:'<b>体験ミッション：家の丸いもので π を測る</b><ol style="margin:6px 0;padding-left:1.4em"><li>缶・コップ・皿など、丸いものを3つ用意する</li><li>ひもを1周まいて、円周の長さを定規で測る</li><li>直径を測る（いちばん長いところ）</li><li>円周 ÷ 直径 を計算して、表に書く</li></ol><div class="ex good"><span class="tag">いい例</span>　どれも 3.1 くらいになった。大きさがちがっても、円周 ÷ 直径 は同じくらい → これが π</div><div class="ex bad"><span class="tag">悪い例</span>　ひもがななめになっている／直径をはしっこで測っている。数が 2.8 や 3.5 になったら、測り方を見直す</div>'};
+  ["y1","y16","y17","y18","y2","y4","y3","y5","y19","y20","y12","y13","y21","y22","y14","y9","y10","y23","y11","y6","y7","y24","y8","y25","y26","y27","y28"].forEach(function(k){ var v=ITEMS[k]; delete ITEMS[k]; ITEMS[k]=v; });
+})();
+
 
 /* ---------- 文字だけの設問に付ける図（見てわかる補助） ---------- */
 var FX=(function(){
@@ -1138,7 +1286,7 @@ function stageHTML(){
   if(it.ctx) h+='<div class="sit" style="border-left-color:var(--dirt)">'+it.ctx+'</div>';
   if(it.slotFig){ var labs=it.slots.map(function(x,i){ return c.sl[i]!=null ? it.chips[c.sl[i]] : '（'+'アイウエ'.charAt(i)+'）'; }); var sf=it.slotFig(labs); h+='<div class="board">'+sf.svg+'</div>'+(sf.note?'<div class="msg '+(sf.warn?'miss':'hint')+'" style="margin-top:0">'+sf.note+'</div>':''); }
   else if(it.fig) h+='<div class="board">'+it.fig+'</div>';
-  if(it.type==="card"){ h+='<div class="howto">'+it.html+'</div><button type="button" class="btn main" data-fx="card">わかった、次へ</button>'; }
+  if(it.type==="card"){ var lk=it.labNeed&&!c.labOK; h+='<div class="howto">'+it.html+'</div><button type="button" class="btn main" data-fx="card"'+(lk?' disabled':'')+'>'+(lk?'やってみると、次へ進める':'わかった、次へ')+'</button>'; }
   if(it.type==="choice"){
     h+='<div class="sit">'+it.q+'</div><p class="once">答えは1回だけ。</p><div class="opts">';
     (c.ord||it.opts.map(function(x,i){return i;})).forEach(function(i){ var cls="btn"; if(lock){ if(i===it.c) cls+=" right"; else if(i===c.pick) cls+=" picked-wrong"; } h+='<button type="button" class="'+cls+'" data-fxc="'+i+'"'+(lock?' disabled':'')+'>'+it.opts[i]+'</button>'; });
@@ -1297,6 +1445,7 @@ function setAng(c,a){
 }
 function bindLive(){
   var D=S.units[S.unit]; if(D.done||!D.cur) return; var it=ITEMS[D.q[D.pos].id], c=D.cur;
+  if(it.bind){ try{ it.bind(document.querySelector('.stage')||document.body, c, function(){ if(c.labOK) return; c.labOK=true; save(); var b=document.querySelector('[data-fx="card"]'); if(b){ b.disabled=false; b.textContent='わかった、次へ'; } }); }catch(err){ console.error(err); } }
   if(it.type==="locus"){
     var sv=document.getElementById("locsvg"); if(!sv) return; var drag=false, last=c.pts.length?c.pts[c.pts.length-1]:null;
     function pt(ev){ var p=sv.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; return p.matrixTransform(sv.getScreenCTM().inverse()); }

@@ -42,6 +42,19 @@ input.num{ font:inherit; font-size:22px; width:5em; padding:4px 8px; border:2px 
 @keyframes pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.04); } }
 @media (prefers-reduced-motion:reduce){ .btn.big{ animation:none; } }
 .trialbar{ border:3px solid #7A4FB7; background:#F1E9FB; border-radius:8px; padding:10px 12px; margin:8px 0 10px; font-size:15px; line-height:1.6; }
+.board{ margin:8px 0 4px; }
+.board svg{ width:100%; height:auto; display:block; }
+.board .sq.open{ cursor:pointer; }
+.board .sq.open:hover rect, .board .sq.open:focus rect{ stroke:#E5484D; }
+.board .sq:focus{ outline:none; }
+.board .sq.next > rect{ animation:glow 1.2s ease-in-out infinite; }
+@keyframes glow{ 50%{ stroke-width:8; } }
+@media (prefers-reduced-motion:reduce){ .board .sq.next > rect{ animation:none; } }
+.splash{ text-align:center; padding:10px 0 4px; }
+.sptitle{ font-family:"DotGothic16",monospace; font-size:34px; margin:6px 0; letter-spacing:.04em; }
+.blink{ animation:blink 1.2s steps(2,start) infinite; }
+@keyframes blink{ to{ visibility:hidden; } }
+@media (prefers-reduced-motion:reduce){ .blink{ animation:none; } }
 .trainbox{ margin-top:16px; padding:10px 12px; border:2px dashed #9AA6B2; border-radius:8px; color:#3B4A58; }
 .stagegrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:10px; }
 .world{ border:3px solid var(--ink); border-radius:8px; padding:10px; background:#F6FAFD; }
@@ -98,7 +111,11 @@ function sfx(n){ if(SAVE.mute) return;
   if(n==="move"){ for(var i=0;i<4;i++) tone(392+i*98,i*0.08,0.09,"square",0.05); }
   if(n==="clear"){ [523,659,784,1047,784,1047].forEach(function(f,i){ tone(f,i*0.13,0.22,"square",0.07); }); }
   if(n==="hurt"){ tone(330,0,0.1,"square",0.08); tone(220,0.1,0.2,"square",0.08); }
+  if(n==="start"){ [392,523,659,784,659,784,1047].forEach(function(f,i){ tone(f,i*0.09,i===6?0.4:0.12,"square",0.06); tone(f/2,i*0.09,0.1,"triangle",0.08); }); }
+  if(n==="select"){ tone(784,0,0.07,"square",0.06); tone(1047,0.07,0.07,"square",0.06); tone(1568,0.14,0.22,"square",0.05); }
+  if(n==="locked"){ tone(196,0,0.09,"square",0.07); tone(185,0.1,0.18,"square",0.07); }
 }
+function hoverSfx(i){ if(SAVE.mute||!AC||AC.state!=="running") return; var sc=[523,587,659,698,784,880,988,1047]; tone(sc[i%8]*(i>=8?2:1)/2,0,0.06,"square",0.035); }
 /* ================= BGM（8トラック：メロディ・ハモり・和音・ベース・アルペジオ・キック・スネア・ハイハット） ================= */
 var NOTE={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
 function nm(s){ var m=/^([A-G][#b]?)(\d)$/.exec(s); return m?12*(+m[2]+1)+NOTE[m[1]]:null; }
@@ -293,9 +310,9 @@ var WORLDS=[
 ];
 /* 地下世界（寄り道ステージ）：ドカン（土管）の上で ↓ を押すと入る */
 var UNDER={
- "U-pattern":{name:"地下：伝統模様とはちの巣",gates:[{k:"sign",items:["y1"]},{k:"z",items:["y2","y3"]},{k:"sign",items:["y4"]},{k:"z",items:["y5"]}]},
- "U-aed":{name:"地下：AED と車いす",gates:[{k:"sign",items:["y12"]},{k:"z",items:["y13","y14"]},{k:"sign",items:["y9"]},{k:"z",items:["y10","y11"]}]},
- "U-pi":{name:"地下：円周率の歴史",gates:[{k:"sign",items:["y6"]},{k:"z",items:["y7","y8"]}]}
+ "U-pattern":{name:"地下：伝統模様とはちの巣",gates:[{k:"sign",items:["y1"]},{k:"z",items:["y16","y17","y18"]},{k:"sign",items:["y4"]},{k:"z",items:["y3","y5","y19"]},{k:"sign",items:["y20"]}]},
+ "U-aed":{name:"地下：AED と車いす",gates:[{k:"sign",items:["y12"]},{k:"z",items:["y13","y21","y22","y14"]},{k:"z",items:["k13"]},{k:"sign",items:["y9"]},{k:"z",items:["y10","y23","y11"]}]},
+ "U-pi":{name:"地下：円周率の歴史",gates:[{k:"sign",items:["y6"]},{k:"z",items:["y7","y24","y8"]},{k:"sign",items:["y25"]},{k:"sign",items:["y26"]},{k:"z",items:["y27"]},{k:"sign",items:["y28"]}]}
 };
 var PIPE_IN={"1-5":"U-pattern","2-6":"U-aed","3-1":"U-pi"};
 var BOSSES={w1:{name:"ウツシゴースト",body:"#8E7CC3",eye:"#FFE07A"},w2:{name:"コンパスゴーレム",body:"#C77B3B",eye:"#FFFFFF"},w3:{name:"オウギバット",body:"#3E5C8A",eye:"#F26B6B"}};
@@ -443,7 +460,7 @@ function touchBarrier(s){ G.gates.forEach(function(g){ if(!g.solved && g.barrier
 function hurt(msg){ G.hearts--; sfx("hurt"); if(G.hearts<=0){ G.mode="over"; showOver(msg); } }
 function addPts(n,x,y){ SAVE.pts+=n; while(SAVE.pts>=SAVE.nextUp){ SAVE.lives++; SAVE.nextUp+=50; sfx("clear"); G.anims.push({t:0,d:1.6,txt:"1UP！ 機が1つ増えた",x:G.hero.x,y:G.hero.y-40}); } save(); if(x!=null) G.anims.push({t:0,d:0.8,txt:"+"+n,x:x,y:y}); }
 /* ---------- 地下世界 ---------- */
-function enterUnder(){ var main=G, to=G.pipe.to; sfx("move"); build(to); G.main=main; G.hearts=main.hearts; G.mode="play"; }
+function enterUnder(){ var main=G, to=G.pipe.to; SAVE.under=SAVE.under||{}; SAVE.under[to]=1; save(); sfx("move"); build(to); G.main=main; G.hearts=main.hearts; G.mode="play"; }
 function leaveUnder(){ var main=G.main; main.hearts=G.hearts; main.coin+=G.coin; main.missed+=G.missed; G=main; G.hero.x=G.pipe.x+G.pipe.w+20; G.hero.y=GY-40; G.hero.vy=0; G.mode="play"; sfx("move"); }
 /* ---------- ボス（敵キャラ） ---------- */
 function bossStep(g){
@@ -802,14 +819,67 @@ function bossAnswer(b){
 }
 
 /* ================= 画面 ================= */
+/* ================= ステージえらび：すごろくの道 ================= */
+function boardSVG(){
+  var W=840, rows=[{y:108,wi:0,dir:1,x0:150,step:112},{y:276,wi:1,dir:-1,x0:772,step:98},{y:444,wi:2,dir:1,x0:150,step:130}];
+  var UNDN={"U-pattern":"伝統模様とはちの巣","U-aed":"AED と車いす","U-pi":"円周率の歴史"};
+  var pts=[], sq=[];
+  rows.forEach(function(r){ var w=WORLDS[r.wi]; if(!w||w.soon) return; w.stages.forEach(function(s,si){ var x=r.x0+r.dir*si*r.step; sq.push({s:s,wi:r.wi,si:si,x:x,y:r.y,w:w}); }); });
+  function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function isOpen(o){ return TRIAL || (o.wi===0&&o.si===0) || SAVE.clear[prevId(o.wi,o.si)] || SAVE.clear[o.s.id]; }
+  var nx=null; sq.forEach(function(o){ if(!nx && isOpen(o) && !SAVE.clear[o.s.id]) nx=o; });
+  var g='<defs><filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="0" flood-color="#1D2B3A"/></filter></defs>';
+  // 背景：ワールドごとの帯
+  rows.forEach(function(r){ var w=WORLDS[r.wi]; var right=r.wi===2; g+='<rect x="6" y="'+(r.y-80)+'" width="'+(W-12)+'" height="140" rx="18" fill="'+w.sky[1]+'"/>'+'<text x="'+(right?W-24:24)+'" y="'+(r.y-60)+'" text-anchor="'+(right?'end':'start')+'" font-size="14" font-weight="700" fill="#1D2B3A">'+esc(w.name.replace(/（.*）/,''))+'</text>'; });
+  // 道
+  var first=sq[0], r1=sq.filter(function(o){return o.wi===0;}), r2=sq.filter(function(o){return o.wi===1;}), r3=sq.filter(function(o){return o.wi===2;});
+  var a=r1[r1.length-1], b=r2[0], c=r2[r2.length-1], d=r3[0], e=r3[r3.length-1];
+  var road='M42 '+first.y+' L'+a.x+' '+a.y+' C'+(a.x+120)+' '+a.y+' '+(b.x+70)+' '+b.y+' '+b.x+' '+b.y+' L'+c.x+' '+c.y+' C'+(c.x-90)+' '+c.y+' '+(d.x-110)+' '+d.y+' '+d.x+' '+d.y+' L'+(e.x+150)+' '+e.y;
+  g+='<path d="'+road+'" fill="none" stroke="#8A6A4A" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/><path d="'+road+'" fill="none" stroke="#E8D3A8" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/><path d="'+road+'" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="10 12" stroke-linecap="round"/>';
+  // 地下への分かれ道
+  sq.forEach(function(o){ var to=PIPE_IN[o.s.id]; if(!to) return; var by=o.y+76, bx=o.x+(o.wi===1?-46:46), seen=SAVE.under&&SAVE.under[to];
+    g+='<path d="M'+o.x+' '+(o.y+28)+' Q'+o.x+' '+(by-6)+' '+bx+' '+(by-6)+'" fill="none" stroke="#6B5B95" stroke-width="7" stroke-dasharray="3 6" stroke-linecap="round"/>';
+    g+='<g><title>'+o.s.id+' のステージの中にある土管の上で ↓ を押すと入れる</title><rect x="'+(bx-58)+'" y="'+(by-24)+'" width="150" height="36" rx="8" fill="#2E2650" stroke="#1D2B3A" stroke-width="2"/><rect x="'+(bx-52)+'" y="'+(by-18)+'" width="22" height="24" fill="#8A6A4A" stroke="#1D2B3A" stroke-width="1.5"/><rect x="'+(bx-55)+'" y="'+(by-21)+'" width="28" height="7" fill="#A9875F" stroke="#1D2B3A" stroke-width="1.5"/><text x="'+(bx-24)+'" y="'+(by-6)+'" font-size="11" fill="#D9D2F0">地下'+(seen?'　✔ 行った':'')+'</text><text x="'+(bx-24)+'" y="'+(by+8)+'" font-size="11" font-weight="700" fill="#FFFFFF">'+esc(UNDN[to])+'</text></g>'; });
+  // スタート・ゴール
+  g+='<g><circle cx="42" cy="'+first.y+'" r="26" fill="#4F9A3E" stroke="#1D2B3A" stroke-width="3"/><text x="42" y="'+(first.y+5)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">スタート</text></g>';
+  var gx=e.x+150, gy=e.y; g+='<g><line x1="'+gx+'" y1="'+(gy+30)+'" x2="'+gx+'" y2="'+(gy-48)+'" stroke="#1D2B3A" stroke-width="4"/><path d="M'+gx+' '+(gy-48)+' L'+(gx+46)+' '+(gy-36)+' L'+gx+' '+(gy-24)+' Z" fill="#E5484D" stroke="#1D2B3A" stroke-width="2"/><text x="'+(gx+14)+'" y="'+(gy+2)+'" font-size="14" font-weight="700" fill="#1D2B3A">ゴール</text><text x="'+(gx+14)+'" y="'+(gy+20)+'" font-size="12" fill="#1D2B3A">期末テスト</text></g>';
+  // マス
+  sq.forEach(function(o){ var open=isOpen(o), cl=!!SAVE.clear[o.s.id], st=SAVE.stars[o.s.id]||0, isNx=nx===o, boss=/城/.test(o.s.name), x=o.x-46, y=o.y-34;
+    var fill=cl?o.w.sky[0]:(open?'#FFFFFF':'#C9CED4'), stroke=isNx?'#F2B705':'#1D2B3A', sw=isNx?5:3;
+    var name=o.s.name, l1=name.slice(0,6), l2=name.slice(6,12);
+    g+='<g class="sq'+(open?' open':' locked')+(isNx?' next':'')+'" data-idx="'+sq.indexOf(o)+'"'+(open?' data-stage="'+o.s.id+'" tabindex="0" role="button" aria-label="ステージ '+o.s.id+' '+esc(name)+'"':' data-locked="'+o.s.id+'" aria-label="まだ通れない"')+'><title>'+o.s.id+' '+esc(name)+'\n'+esc(o.s.ref||'')+(open?'':'\n前のステージをクリアすると通れる')+'</title>';
+    if(boss) g+='<path d="M'+(x+14)+' '+(y+2)+' v-16 h10 v8 h10 v-8 h10 v8 h10 v-8 h10 v8 h10 v-8 h10 v16 Z" fill="'+(open?'#9AA6B2':'#B5BCC4')+'" stroke="#1D2B3A" stroke-width="2"/>';
+    g+='<rect x="'+x+'" y="'+y+'" width="92" height="68" rx="12" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'" filter="url(#sh)"/>';
+    g+='<text x="'+o.x+'" y="'+(y+20)+'" text-anchor="middle" font-size="16" font-weight="700" fill="'+(open?'#1D2B3A':'#6B7682')+'">'+o.s.id+(boss?' 城':'')+'</text><text x="'+o.x+'" y="'+(y+37)+'" text-anchor="middle" font-size="11.5" fill="'+(open?'#1D2B3A':'#6B7682')+'">'+esc(l1)+'</text>'+(l2?'<text x="'+o.x+'" y="'+(y+51)+'" text-anchor="middle" font-size="11.5" fill="'+(open?'#1D2B3A':'#6B7682')+'">'+esc(l2)+'</text>':'');
+    if(cl) g+='<text x="'+o.x+'" y="'+(y+65)+'" text-anchor="middle" font-size="12" fill="#B8860B">'+'★'.repeat(st)+'☆'.repeat(3-st)+'</text>';
+    if(!open) g+='<g transform="translate('+(x+76)+' '+(y+4)+')"><rect x="-8" y="0" width="16" height="12" rx="2" fill="#6B7682"/><path d="M-5 0 v-4 a5 5 0 0 1 10 0 v4" fill="none" stroke="#6B7682" stroke-width="2.5"/></g>';
+    g+='</g>'; });
+  // コマ（たっくん）
+  var here=nx||sq[sq.length-1];
+  var hx=here.x-12, hy=here.y-34-40;
+  g+='<g class="piece"><animateTransform attributeName="transform" type="translate" values="0 0;0 -8;0 0" dur="1s" repeatCount="indefinite"/>'+
+     '<rect x="'+hx+'" y="'+hy+'" width="24" height="8" fill="#C8323C"/><rect x="'+(hx+18)+'" y="'+(hy+2)+'" width="10" height="5" fill="#C8323C"/><rect x="'+(hx+3)+'" y="'+(hy+8)+'" width="18" height="10" fill="#F2C9A0"/><rect x="'+(hx+14)+'" y="'+(hy+10)+'" width="3" height="4" fill="#1D2B3A"/><rect x="'+hx+'" y="'+(hy+18)+'" width="24" height="14" fill="#2E6FB7"/><rect x="'+(hx+2)+'" y="'+(hy+32)+'" width="8" height="6" fill="#1D2B3A"/><rect x="'+(hx+14)+'" y="'+(hy+32)+'" width="8" height="6" fill="#1D2B3A"/></g>';
+  if(nx){ var bxx=here.x+(here.x>700?-112:18); g+='<g><rect x="'+bxx+'" y="'+(here.y-70)+'" width="92" height="24" rx="12" fill="#F2B705" stroke="#1D2B3A" stroke-width="2"/><text x="'+(bxx+46)+'" y="'+(here.y-53)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#1D2B3A">次はここ！</text></g>'; }
+  return '<div class="board"><svg viewBox="0 0 '+W+' 545" role="group" aria-label="ステージのすごろく">'+g+'</svg><p class="small" id="boardmsg" style="margin:4px 0 0">マスを押すとそのステージへ。灰色のマスは、前のステージをクリアすると通れる。紫の分かれ道は、ステージの中の土管から行ける地下世界。</p></div>';
+}
+var SPLASHED=false;
+function showSplash(){
+  G=G||{mode:"menu"}; G.mode="menu";
+  panel.innerHTML='<div class="splash"><svg viewBox="0 0 300 110" width="300" height="110" aria-hidden="true"><rect x="0" y="92" width="300" height="18" fill="#4F9A3E"/><rect x="0" y="100" width="300" height="10" fill="#8A6A4A"/><g transform="translate(40 40)"><rect x="0" y="0" width="30" height="10" fill="#C8323C"/><rect x="22" y="3" width="12" height="6" fill="#C8323C"/><rect x="4" y="10" width="22" height="12" fill="#F2C9A0"/><rect x="18" y="13" width="4" height="5" fill="#1D2B3A"/><rect x="0" y="22" width="30" height="18" fill="#2E6FB7"/><rect x="2" y="40" width="10" height="8" fill="#1D2B3A"/><rect x="18" y="40" width="10" height="8" fill="#1D2B3A"/></g><polygon points="150,30 175,30 187,52 175,74 150,74 138,52" fill="#F2B705" stroke="#1D2B3A" stroke-width="3"/><circle cx="235" cy="58" r="24" fill="#FFF" stroke="#1D2B3A" stroke-width="3"/><path d="M235 58 L235 34 A24 24 0 0 1 256 46 Z" fill="#E5484D"/></svg><h2 class="sptitle">平面図形 ステージ攻略</h2><p>図形の移動・作図・おうぎ形の3つのワールド</p><button class="btn main big" id="pressstart">♪ クリックしてスタート</button><p class="small blink">（スペースキーでもスタート。音が出ます）</p></div>';
+  ov.hidden=false;
+  function go(){ if(SPLASHED) return; SPLASHED=true; removeEventListener("keydown",kd); ac(); sfx("start"); showTitle(); }
+  function kd(ev){ if(ev.code==="Space"||ev.key==="Enter"){ ev.preventDefault(); go(); } }
+  document.getElementById("pressstart").onclick=go; addEventListener("keydown",kd);
+}
 function showTitle(){
+  if(!SPLASHED) return showSplash();
   G=G||{mode:"menu"}; G.mode="menu";
   var nx=null; WORLDS.forEach(function(w,wi){ if(w.soon) return; w.stages.forEach(function(st,si){ if(nx) return; var open=(wi===0&&si===0)||SAVE.clear[prevId(wi,si)]; if(open&&!SAVE.clear[st.id]) nx=st; }); });
   var h='<h2>平面図形 ステージ攻略</h2><p>問題を解いて、橋をかけたり扉を開けたりしながら、ステージを進もう。</p>';
   if(TRIAL) h+='<div class="trialbar"><b>保護者お試しモード</b>　全部のステージをえらべます。答えた結果・クリア・ポイントは<b>記録されず、スプレッドシートにも送られません。</b>拓真くんの記録はそのまま残っています。 <button class="btn" id="trialoff" style="font-size:14px;min-height:32px;padding:4px 10px;margin:4px 0 0">お試しモードを終わる</button></div>';
   h+='<div class="startbox">'+(nx?'<button class="btn main big" data-stage="'+nx.id+'">▶ ステージ '+nx.id+'「'+nx.name+'」から始める</button>':'<p><b>全ステージクリア！</b> ★が3つでないステージに、もう一度ちょうせんしよう。</p>')+'<p class="small" style="margin:6px 0 0">機×'+SAVE.lives+'　★'+SAVE.pts+' ポイント（50ポイントごとに機が1つ増える）</p></div>';
   h+='<p><span class="keys">←</span> <span class="keys">→</span> 移動　<span class="keys">スペース</span> または <span class="keys">↑</span> ジャンプ　<span class="keys">↓</span> 土管に入る　<span class="keys">Esc</span> メニュー</p><p class="small">ゲートの前まで進むと問題が出る。まちがえるとハートが1つへる（5つなくなると機が1つへる）。「問」ブロックは下からジャンプでたたくと問題が出る。</p>';
-  h+='<div class="stagegrid">'+WORLDS.map(function(w,wi){ if(w.soon) return '<div class="world"><h3>'+w.name+'</h3><p class="small">準備中</p></div>'; return '<div class="world"><h3>'+w.name+'</h3>'+w.stages.map(function(s,si){ var open = TRIAL || (wi===0&&si===0) || SAVE.clear[prevId(wi,si)] || SAVE.clear[s.id]; var star=SAVE.stars[s.id]||0; return '<button class="btn sbtn" data-stage="'+s.id+'"'+(open?'':' disabled')+'><span>'+s.id+' '+s.name+'<br><span class="small">'+(s.ref||'')+'</span></span><span>'+(SAVE.clear[s.id]?'★'.repeat(star)+'☆'.repeat(3-star):'')+'</span></button>'; }).join('')+'</div>'; }).join('')+'</div>';
+  h+=boardSVG();
   var wc=mlWeakCache(), wl=wc&&wc.weak?wc.weak:[], wh=wl.filter(function(o){return /^平面図形/.test(o.unit||"");}).length;
   h+='<div class="trainbox"><b>おさらい用：トレーニング</b>　<span class="small">ステージを進めたあと、まちがえた問題をまとめて練習したいときに使う。</span> <a class="btn" href="train.html'+(TRIAL?'?trial=1':'')+'" style="text-decoration:none;display:inline-block;font-size:14px;min-height:32px;padding:4px 10px">トレーニングを開く</a>'+(wh?'<p class="small" style="margin:6px 0 0">テスト対策：記録から、まだ直っていない平面図形の問題が <b>'+wh+' 問</b>。トレーニングの「苦手（記録から）」でまとめて練習できる。</p>':'')+'</div>';
   if(!TRIAL) h+='<details style="margin-top:12px"><summary>保護者お試しモード（おうちの人用）</summary><p class="small">拓真くんの記録を変えずに、全部のステージと問題を試せる。答えた結果はスプレッドシートに送られない。このタブを閉じると、ふつうのモードにもどる。</p><button class="btn" id="trialon" style="font-size:14px;min-height:32px;padding:4px 10px">お試しモードではじめる</button></details>';
@@ -823,7 +893,14 @@ function showTitle(){
   h+='<details style="margin-top:12px"><summary>ワーク版ファイル（おうちの人用）</summary><p class="small">ワークの問題そのものは、公開しないファイルに入っている。このパソコンで1回読みこむと、ステージとトレーニングにワークの問題が出るようになる。</p><p>'+(wn?'<b>読みこみ済み：'+wn+' 問</b>　<button class="btn" id="wkoff">外す</button>':'まだ読みこんでいない')+'</p><input type="file" id="wkfile" accept=".json,application/json"></details>';
   if(SAVE.miss.length) h+='<details style="margin-top:12px"><summary>まちがえた問題の記録（'+SAVE.miss.length+'）</summary><ul class="small">'+SAVE.miss.slice(-15).reverse().map(function(m){return '<li>'+m.at+'　'+m.stage+'　'+m.what+'</li>';}).join('')+'</ul></details>';
   panel.innerHTML=h; ov.hidden=false;
-  panel.querySelectorAll("[data-stage]").forEach(function(b){ b.onclick=function(){ ac(); startStage(b.dataset.stage); }; });
+  var going=false;
+  function go(id){ if(going) return; going=true; ac(); sfx("select"); setTimeout(function(){ startStage(id); },380); }
+  panel.querySelectorAll("[data-stage]").forEach(function(b){ var id=b.getAttribute("data-stage"); b.onclick=function(){ go(id); }; b.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); go(id); } }; });
+  var lastHover=-1;
+  panel.querySelectorAll(".board .sq").forEach(function(b){ var i=+b.getAttribute("data-idx");
+    function hv(){ if(i!==lastHover){ lastHover=i; hoverSfx(i); } }
+    b.addEventListener("pointerenter",hv); b.addEventListener("focus",hv); b.addEventListener("pointerleave",function(){ if(lastHover===i) lastHover=-1; });
+    if(b.hasAttribute("data-locked")) b.addEventListener("click",function(){ ac(); sfx("locked"); var m=document.getElementById("boardmsg"); if(m){ m.innerHTML='<b style="color:#E5484D">'+b.getAttribute("data-locked")+' は、まだ通れない。</b>前のステージをクリアすると通れるようになる。'; } }); });
   var wf=document.getElementById("wkfile"); if(wf) wf.onchange=function(){ var f=wf.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ try{ var o=JSON.parse(r.result); if(!o.items) throw 0; localStorage.setItem("heimen-work-v1",r.result); WORK=o; showTitle(); }catch(e){ alert("ワーク版ファイルではないようです"); } }; r.readAsText(f); };
   var ms=document.getElementById("mlsave"); if(ms) ms.onclick=function(){ var u=document.getElementById("mlurl").value.trim(), k=document.getElementById("mlkey").value.trim(); if(u && !/^https:\/\/script\.google\.com\/macros\/s\/[^\/]+\/exec$/.test(u)){ alert("URL は https://script.google.com/macros/s/……/exec の形で入れてください"); return; } var c=mlCfg(); c.url=u; c.key=k; mlSetCfg(c); mlFlush(); document.getElementById("mlstat").textContent="送っています…"; mlSnapshot(false).then(function(n){ return mlWeakFetch().then(function(w){ document.getElementById("mlstat").textContent="保存しました。"+(n>0?"ほかのアプリの記録 "+n+" 件を送りました。":"")+(w?"スプレッドシートとつながりました（苦手 "+w.length+" 問）。":"スプレッドシートの返事が読めませんでした。URL と合言葉を確かめてください。"); }); }); };
   var mn=document.getElementById("mlsnap"); if(mn) mn.onclick=function(){ document.getElementById("mlstat").textContent="送っています…"; mlSnapshot(true).then(function(n){ document.getElementById("mlstat").textContent=n<0?"先に URL と合言葉を保存してください。":"ほかのアプリの記録 "+n+" 件を送りました。"; }); };
