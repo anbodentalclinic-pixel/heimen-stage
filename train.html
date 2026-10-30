@@ -187,7 +187,10 @@ details.hint{ margin:6px 0; } details.hint summary{ cursor:pointer; font-weight:
 (function(){
 "use strict";
 var QS=new URLSearchParams(location.search), EMB=QS.get("embed"), EMB_TITLE=QS.get("title")||"";
-var KEY= EMB ? "heimen-zukei-embed" : "heimen-zukei-v1";
+var TRIAL=QS.get("trial")==="1"; try{ if(sessionStorage.getItem("heimen-trial")==="1") TRIAL=true; }catch(e){}
+if(TRIAL) window.ML_TRIAL=true;
+var KEY= EMB ? "heimen-zukei-embed" : (TRIAL ? "heimen-zukei-trial" : "heimen-zukei-v1");
+if(TRIAL && !EMB){ try{ localStorage.removeItem("heimen-zukei-trial"); }catch(e){} }
 if(EMB) document.documentElement.classList.add("embed");
 /* ===== 記録をGoogleスプレッドシートへ送る（おうちの人が送り先を設定したときだけ） ===== */
 var ML={cfg:"math-log-cfg",q:"math-log-queue",snap:"math-log-snap",weak:"math-log-weak"};
@@ -196,7 +199,7 @@ function mlCfg(){ var c; try{ c=JSON.parse(localStorage.getItem(ML.cfg))||{}; }c
 function mlSetCfg(c){ try{ localStorage.setItem(ML.cfg,JSON.stringify(c)); }catch(e){} }
 function mlQ(){ try{ return JSON.parse(localStorage.getItem(ML.q))||[]; }catch(e){ return []; } }
 function mlStrip(h){ return String(h==null?"":h).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim(); }
-function mlLog(row){ row.t=new Date().toISOString(); row.app=row.app||"平面図形 ステージ攻略"; var q=mlQ(); q.push(row); if(q.length>800) q=q.slice(-800); try{ localStorage.setItem(ML.q,JSON.stringify(q)); }catch(e){} mlFlush(); }
+function mlLog(row){ if(window.ML_TRIAL) return; row.t=new Date().toISOString(); row.app=row.app||"平面図形 ステージ攻略"; var q=mlQ(); q.push(row); if(q.length>800) q=q.slice(-800); try{ localStorage.setItem(ML.q,JSON.stringify(q)); }catch(e){} mlFlush(); }
 var mlBusy=false;
 function mlPost(c,body,cors){ return fetch(c.url,{method:"POST",mode:cors?"cors":"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}); }
 function mlFlush(){ var c=mlCfg(); if(!c.url||!c.key||mlBusy) return; var q=mlQ(); if(!q.length) return; var batch=q.slice(0,40); mlBusy=true;
@@ -852,7 +855,7 @@ if(EMB){ var mute0=S.mute; S={unit:"emb",units:freshUnits(),mute:!!mute0}; S.uni
 (function(){ var f=freshUnits(); UNITS.forEach(function(u){ var cur=S.units[u.key]; var want=f[u.key].q.map(function(e){return e.id;}).join(","); var have=cur?cur.q.filter(function(e){return !e.again;}).map(function(e){return e.id;}).join(","):""; if(want!==have) S.units[u.key]=f[u.key]; }); })();
 (function(){ if(EMB) return; var wc=mlWeakCache(); var ids=wc&&wc.weak?wc.weak.map(function(o){return o.id;}).filter(function(id){return ITEMS[id]&&ITEMS[id].type!=="card";}):[];
   if(ids.length){ UNITS.push({key:"u9",label:"苦手（記録から）"}); var cur=S.units.u9, have=cur?cur.q.filter(function(e){return !e.again;}).map(function(e){return e.id;}).join(","):""; if(have!==ids.join(",")) S.units.u9={q:ids.map(function(id){return {id:id};}),pos:0,cur:null,done:false,again:[]}; }
-  mlFlush(); mlWeakFetch(); })();
+  if(!TRIAL){ mlFlush(); mlWeakFetch(); } })();
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 var app=document.getElementById("app"), nav=document.getElementById("nav");
 
@@ -1282,7 +1285,7 @@ function numHint(it,v){
   if(/π/.test(it.unit||"") && same(v,it.ans*3.14)) return 'π を 3.14 にしないで、π のまま残す。';
   return '';
 }
-function render(){ renderNav(); sndLabel(); app.innerHTML='<section class="stage">'+stageHTML()+'</section>'; bindLive(); save(); }
+function render(){ renderNav(); sndLabel(); app.innerHTML=(TRIAL&&!EMB?'<div style="border:3px solid #7A4FB7;background:#F1E9FB;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:15px"><b>保護者お試しモード</b>　答えた結果は記録されず、スプレッドシートにも送られません。このタブを閉じると消えます。</div>':'')+'<section class="stage">'+stageHTML()+'</section>'; bindLive(); save(); }
 
 /* ---------- ドラッグとスライダー（再描画しない操作） ---------- */
 function setAng(c,a){
