@@ -202,14 +202,18 @@ var WORK=null; try{ WORK=JSON.parse(localStorage.getItem("heimen-work-v1")||"nul
 var WORLDS=[
  {key:"w1",name:"ワールド1 図形の移動（教科書 1節）",sky:["#7EC8F2","#CDEBFA"],stages:[
   {id:"1-1",name:"線と記号の野原",ref:"教科書 p.160〜161／ワーク p.100",quiz:2,gates:[
-    {k:"sign",items:["a1"]},
+    {k:"sign",items:["l1"]},
     {k:"z",items:["a2","a3","a4"]},
+    {k:"sign",items:["l2"]},
     {k:"z",items:["a12","a11","a13"]},
     {k:"z",items:["a9","a10","a5","a6"]},
+    {k:"sign",items:["l3"]},
     {k:"z",items:["a7","a8","a14"],work:["w100-1"]},
+    {k:"sign",items:["l4"]},
     {k:"z",items:["p1"],paper:true}]},
   {id:"1-2",name:"平行移動の谷",ref:"教科書 p.161〜162／ワーク p.100〜101",quiz:2,gates:[
     {k:"sign",items:["b1"]},
+    {k:"sign",items:["l5"]},
     {k:"z",items:["b2","b3"]},
     "translate",
     {k:"z",items:["b10","b25"],work:["w100-2"]},
@@ -217,6 +221,7 @@ var WORLDS=[
     {k:"z",items:["mg1"]},
     {k:"z",items:["p2"],paper:true}]},
   {id:"1-3",name:"回転はね橋",ref:"教科書 p.162〜164／ワーク p.100〜101",quiz:2,gates:[
+    {k:"sign",items:["l6"]},
     {k:"z",items:["b4","b5"]},
     "rotate",
     {k:"z",items:["b11","b12","b7"],work:["w100-3a","w100-3b"]},
@@ -225,6 +230,7 @@ var WORLDS=[
     {k:"z",items:["mg2","mg3"]},
     {k:"z",items:["p3"],paper:true}]},
   {id:"1-4",name:"鏡のがけ",ref:"教科書 p.164〜165／ワーク p.102〜103",quiz:2,gates:[
+    {k:"sign",items:["l7"]},
     {k:"z",items:["b6"]},
     "reflect",
     {k:"z",items:["b14","b15","b16","b8"],work:["w102-1"]},
@@ -237,7 +243,7 @@ var WORLDS=[
     {k:"z",items:["b20","b21"]},
     {k:"z",items:["b22","b23"],work:["w103-c"]},
     {k:"z",items:["p5"],paper:true}]},
-  {id:"1-6",name:"移動の城（ボス）",ref:"ワーク p.112、p.116／教科書 章末",quiz:1,gates:[
+  {id:"1-6",name:"移動の城（ボス）",ref:"ワーク p.112・p.114〜115／教科書 章末",quiz:1,gates:[
     "translate","rotate","reflect",
     {k:"z",boss:true,items:["b24","b26","b23","b10","b15","b19"],work:["tA1a","tA1b","tA2a","tA2b","tA2c","w112-3","w112-3b","w116-1","w116-1b","t81"]}]}
  ]},
@@ -319,28 +325,28 @@ var BOSSES={w1:{name:"ウツシゴースト",body:"#8E7CC3",eye:"#FFE07A"},w2:{n
 function zItems(spec){ var list=spec.items.slice(); if(WORK&&WORK.items&&spec.work) spec.work.forEach(function(id){ if(WORK.items[id]) list.push(id); }); return list; }
 var QUIZ={
  w1:[
-  {q:"直線は、どこまでのびている？",o:["両方にかぎりなく","片方だけ","2点の間だけ"],c:0,ex:"直線は両方にかぎりなくのびている。"},
-  {q:"2点 A、B を通る直線は何本ひける？",o:["1本","2本","何本でも"],c:0,ex:"2点を通る直線は1つしかひけない。1点を通る直線はいくらでもひける。"},
-  {q:"三角形 ABC を記号で書くと？",o:["△ABC","∠ABC","⌒ABC"],c:0,ex:"△ を使って △ABC と書く。"},
-  {q:"平行移動では、対応する点を結ぶ線分どうしは？",o:["平行で長さが等しい","垂直に交わる","長さが2倍"],c:0,ex:"平行移動の性質。"},
-  {q:"回転移動で、対応する点と回転の中心を結んでできる角は？",o:["すべて等しい","すべて 90°","すべてちがう"],c:0,ex:"どれも回転させた角と同じ大きさ。"},
-  {q:"対称移動で、対応する点を結ぶ線分は？",o:["対称の軸で垂直に2等分される","対称の軸と平行","対称の軸と同じ長さ"],c:0,ex:"対称移動の性質。"},
-  {q:"日本の伝統模様「麻の葉」は、どうやってできている？",o:["合同な図形をしきつめてできている","大きさのちがう円を重ねている","直線を1本だけ使っている"],c:0,ex:"合同な図形を移動させてしきつめた模様とみることができる。（教科書 p.167）"}],
+  {s:"1-1",q:"直線は、どこまでのびている？",o:["両方にかぎりなく","片方だけ","2点の間だけ"],c:0,ex:"直線は両方にかぎりなくのびている。"},
+  {s:"1-1",q:"2点 A、B を通る直線は何本ひける？",o:["1本","2本","何本でも"],c:0,ex:"2点を通る直線は1つしかひけない。1点を通る直線はいくらでもひける。"},
+  {s:"1-1",q:"三角形 ABC を記号で書くと？",o:["△ABC","∠ABC","⌒ABC"],c:0,ex:"△ を使って △ABC と書く。"},
+  {s:"1-2",q:"平行移動では、対応する点を結ぶ線分どうしは？",o:["平行で長さが等しい","垂直に交わる","長さが2倍"],c:0,ex:"平行移動の性質。"},
+  {s:"1-3",q:"回転移動で、対応する点と回転の中心を結んでできる角は？",o:["すべて等しい","すべて 90°","すべてちがう"],c:0,ex:"どれも回転させた角と同じ大きさ。"},
+  {s:"1-4",q:"対称移動で、対応する点を結ぶ線分は？",o:["対称の軸で垂直に2等分される","対称の軸と平行","対称の軸と同じ長さ"],c:0,ex:"対称移動の性質。"},
+  {s:"1-5",q:"日本の伝統模様「麻の葉」は、どうやってできている？",o:["合同な図形をしきつめてできている","大きさのちがう円を重ねている","直線を1本だけ使っている"],c:0,ex:"合同な図形を移動させてしきつめた模様とみることができる。（教科書 p.167）"}],
  w2:[
-  {q:"コンパスでできることは？",o:["円をかく、等しい長さを写す","角度をはかる","長さを目もりではかる"],c:0,ex:"作図ではコンパスで長さを写す。"},
-  {q:"円は、どんな直線について線対称？",o:["どの直径についても","1本の直径だけ","弦について"],c:0,ex:"円はどの直径についても線対称。（教科書 p.171）"},
-  {q:"作図の方法は、どんな図形の性質をもとにしている？",o:["線対称な図形の性質","平行四辺形の性質","おうぎ形の性質"],c:0,ex:"垂線・垂直二等分線・角の二等分線は、線対称な図形の性質をもとにしている。（教科書 p.180）"},
-  {q:"円と直線が1点だけで出あうとき、その直線を何という？",o:["接線","弦","半径"],c:0,ex:"接線。出あう点を接点という。（教科書 p.179）"},
-  {q:"30° の角をつくるには？",o:["正三角形の 60° を二等分","90° を二等分","45° を二等分"],c:0,ex:"60° の二等分。"},
-  {q:"45° の角をつくるには？",o:["90° を二等分","60° を二等分","120° を二等分"],c:0,ex:"垂線で 90° をつくり二等分。"},
-  {q:"AED の場所の地図で、2つの地点 P、Q のどちらに近いかを分ける線は？",o:["PQ の垂直二等分線","PQ に平行な線","P を中心とする円"],c:0,ex:"垂直二等分線上の点は P と Q から等しい距離。それより P 側は P に近い。（教科書 活用）"}],
+  {s:"2-1",q:"コンパスでできることは？",o:["円をかく、等しい長さを写す","角度をはかる","長さを目もりではかる"],c:0,ex:"作図ではコンパスで長さを写す。"},
+  {s:"2-2",q:"円は、どんな直線について線対称？",o:["どの直径についても","1本の直径だけ","弦について"],c:0,ex:"円はどの直径についても線対称。（教科書 p.171）"},
+  {s:"2-5",q:"作図の方法は、どんな図形の性質をもとにしている？",o:["線対称な図形の性質","平行四辺形の性質","おうぎ形の性質"],c:0,ex:"垂線・垂直二等分線・角の二等分線は、線対称な図形の性質をもとにしている。（教科書 p.180）"},
+  {s:"2-6",q:"円と直線が1点だけで出あうとき、その直線を何という？",o:["接線","弦","半径"],c:0,ex:"接線。出あう点を接点という。（教科書 p.179）"},
+  {s:"2-6",q:"30° の角をつくるには？",o:["正三角形の 60° を二等分","90° を二等分","45° を二等分"],c:0,ex:"60° の二等分。"},
+  {s:"2-6",q:"45° の角をつくるには？",o:["90° を二等分","60° を二等分","120° を二等分"],c:0,ex:"垂線で 90° をつくり二等分。"},
+  {s:"2-6",q:"AED の場所の地図で、2つの地点 P、Q のどちらに近いかを分ける線は？",o:["PQ の垂直二等分線","PQ に平行な線","P を中心とする円"],c:0,ex:"垂直二等分線上の点は P と Q から等しい距離。それより P 側は P に近い。（教科書 活用）"}],
  w3:[
-  {q:"弧の長さとおうぎ形の面積は、中心角にどんな関係？",o:["比例する","反比例する","関係ない"],c:0,ex:"中心角が2倍、3倍…になると、弧も面積も2倍、3倍…。"},
-  {q:"答えの書き方として正しいのは？",o:["6π cm²","π6 cm²","18.84 cm²"],c:0,ex:"π は数字のうしろ。3.14 にしない。"},
-  {q:"円を6等分したおうぎ形1つの中心角は？",o:["60°","30°","6°"],c:0,ex:"360 ÷ 6 = 60°。"},
-  {q:"ケーキ（円）を3等分するには、中心角を何度ずつにする？",o:["120°","90°","60°"],c:0,ex:"360 ÷ 3 = 120°。（教科書 p.183）"},
-  {q:"おうぎ形の周の長さは？",o:["弧の長さ ＋ 半径 × 2","弧の長さだけ","半径 × 2"],c:0,ex:"まわりには弧と2本の半径がある。"},
-  {q:"はちの巣が正六角形なのはなぜ？（教科書 p.192）",o:["同じ周の長さでしきつめるとき、面積がいちばん大きくなるから","かくのがかんたんだから","円よりかたいから"],c:0,ex:"ハニカム構造の特徴。"}]
+  {s:"3-2",q:"弧の長さとおうぎ形の面積は、中心角にどんな関係？",o:["比例する","反比例する","関係ない"],c:0,ex:"中心角が2倍、3倍…になると、弧も面積も2倍、3倍…。"},
+  {s:"3-2",q:"答えの書き方として正しいのは？",o:["6π cm²","π6 cm²","18.84 cm²"],c:0,ex:"π は数字のうしろ。3.14 にしない。"},
+  {s:"3-2",q:"円を6等分したおうぎ形1つの中心角は？",o:["60°","30°","6°"],c:0,ex:"360 ÷ 6 = 60°。"},
+  {s:"3-2",q:"ケーキ（円）を3等分するには、中心角を何度ずつにする？",o:["120°","90°","60°"],c:0,ex:"360 ÷ 3 = 120°。（教科書 p.183）"},
+  {s:"3-2",q:"おうぎ形の周の長さは？",o:["弧の長さ ＋ 半径 × 2","弧の長さだけ","半径 × 2"],c:0,ex:"まわりには弧と2本の半径がある。"},
+  {s:"3-3",q:"はちの巣が正六角形なのはなぜ？（教科書 p.192）",o:["同じ周の長さでしきつめるとき、面積がいちばん大きくなるから","かくのがかんたんだから","円よりかたいから"],c:0,ex:"ハニカム構造の特徴。"}]
 };
 
 function stageById(id){ if(UNDER[id]) return {w:{key:"u",name:"地下世界",sky:["#1B1530","#2E2650"]},wi:-1,s:{id:id,name:UNDER[id].name,gates:UNDER[id].gates,quiz:0},si:-1}; var r=null; WORLDS.forEach(function(w,wi){ w.stages.forEach(function(s,si){ if(s.id===id) r={w:w,wi:wi,s:s,si:si}; }); }); return r; }
@@ -760,9 +766,9 @@ window.addEventListener("message",function(ev){
   var g=current.g, ng=(d.miss||[]).length, nok=Object.keys(d.first||{}).length-ng;
   if(nok>0) addPts(nok*5,G.hero.x,G.hero.y-30);
   if(current.boss){ var e=g.enemy; g.queue.shift(); e.hp--; e.inv=90; sfx("bump"); G.anims.push({t:0,d:1,txt:"ダメージ！",x:e.x-30,y:e.y-20}); if(e.hp<=0){ e.dead=1; G.anims.push({t:0,d:2,txt:e.info.name+" をたおした！",x:e.x-60,y:e.y-50}); } }
-  if(ng){ G.missed+=ng; G.hearts-=ng; sfx("ng"); d.miss.forEach(function(m){ SAVE.miss.push({stage:G.id,what:m.q||m.id,at:new Date().toISOString().slice(0,10)}); }); if(SAVE.miss.length>80) SAVE.miss=SAVE.miss.slice(-80); save(); }
+  if(ng){ G.missed+=ng; G.hearts-=1; sfx("ng"); d.miss.forEach(function(m){ SAVE.miss.push({stage:G.id,what:m.q||m.id,at:new Date().toISOString().slice(0,10)}); }); if(SAVE.miss.length>80) SAVE.miss=SAVE.miss.slice(-80); save(); }
   else sfx("ok");
-  if(!current.boss) g.solved=true; panel.classList.remove("zpanel");
+  if(!current.boss) g.solved=true; panel.classList.remove("zpanel"); G.checkX=G.hero.x;
   if(G.hearts<=0){ ov.hidden=true; panel.innerHTML=""; current=null; G.mode="over"; showOver("まちがいが多かった。"); return; }
   ov.hidden=true; panel.innerHTML=""; current=null; G.mode="play"; keys={}; try{ window.focus(); }catch(e){}
 });
@@ -792,7 +798,7 @@ function mlWeakFetch(){ var c=mlCfg(); if(!c.url||!c.key) return Promise.resolve
   return mlPost(c,{key:c.key,want:"weak"},true).then(function(r){ return r.json(); }).then(function(d){ if(d&&d.ok&&d.weak){ try{ localStorage.setItem(ML.weak,JSON.stringify({at:Date.now(),weak:d.weak})); }catch(e){} return d.weak; } return null; }).catch(function(){ return null; }); }
 
 /* ================= 問ブロック ================= */
-function hitBlock(b){ if(b.used||G.mode!=="play") return; sfx("bump"); var pool=QUIZ[b.world]; var q=pool[Math.floor(Math.random()*pool.length)]; current={block:b,q:q,g:{type:"quiz"}};
+function hitBlock(b){ if(b.used||G.mode!=="play") return; sfx("bump"); var cur=(G.main?G.main.id:G.id), ord=function(id){ var m=/^(\d)-(\d)/.exec(id||""); return m?(+m[1])*10+(+m[2]):99; }, all=QUIZ[b.world], pool=all.filter(function(q){ return ord(q.s)<=ord(cur); }); if(!pool.length) pool=all; var q=pool[Math.floor(Math.random()*pool.length)]; current={block:b,q:q,g:{type:"quiz"}};
   var h='<span class="tag">問ブロック</span><h2>問題</h2><p style="font-size:19px">'+q.q+'</p>'+choiceBtns(q.o,"quiz")+'<div id="fb"></div><p class="small">正解するとコイン3まい。まちがえてもハートはへらない。</p>';
   openPanel(h); }
 function quizAnswer(b){ var q=current.q, ok=+b.dataset.i===q.c, fb=document.getElementById("fb"); b.classList.add(ok?"right":"wrong"); panel.querySelectorAll('button[data-act="quiz"]').forEach(function(x){ x.disabled=true; if(+x.dataset.i===q.c) x.classList.add("right"); });
@@ -853,9 +859,11 @@ function boardSVG(){
     var name=o.s.name, l1=name.slice(0,6), l2=name.slice(6,12);
     g+='<g class="sq'+(open?' open':' locked')+(isNx?' next':'')+'" data-idx="'+sq.indexOf(o)+'"'+(open?' data-stage="'+o.s.id+'" tabindex="0" role="button" aria-label="ステージ '+o.s.id+' '+esc(name)+'"':' data-locked="'+o.s.id+'" aria-label="まだ通れない"')+'><title>'+o.s.id+' '+esc(name)+'\n'+esc(o.s.ref||'')+(open?'':'\n前のステージをクリアすると通れる')+'</title>';
     if(boss) g+='<path d="M'+(x+14)+' '+(y+2)+' v-16 h10 v8 h10 v-8 h10 v8 h10 v-8 h10 v8 h10 v-8 h10 v16 Z" fill="'+(open?'#9AA6B2':'#B5BCC4')+'" stroke="#1D2B3A" stroke-width="2"/>';
-    g+='<rect x="'+x+'" y="'+y+'" width="92" height="68" rx="12" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'" filter="url(#sh)"/>';
+    g+='<rect x="'+x+'" y="'+y+'" width="92" height="78" rx="12" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'" filter="url(#sh)"/>';
     g+='<text x="'+o.x+'" y="'+(y+20)+'" text-anchor="middle" font-size="16" font-weight="700" fill="'+(open?'#1D2B3A':'#6B7682')+'">'+o.s.id+(boss?' 城':'')+'</text><text x="'+o.x+'" y="'+(y+37)+'" text-anchor="middle" font-size="11.5" fill="'+(open?'#1D2B3A':'#6B7682')+'">'+esc(l1)+'</text>'+(l2?'<text x="'+o.x+'" y="'+(y+51)+'" text-anchor="middle" font-size="11.5" fill="'+(open?'#1D2B3A':'#6B7682')+'">'+esc(l2)+'</text>':'');
-    if(cl) g+='<text x="'+o.x+'" y="'+(y+65)+'" text-anchor="middle" font-size="12" fill="#B8860B">'+'★'.repeat(st)+'☆'.repeat(3-st)+'</text>';
+    if(cl) g+='<text x="'+(o.x+22)+'" y="'+(y+72)+'" text-anchor="middle" font-size="11" fill="#B8860B">'+'★'.repeat(st)+'☆'.repeat(3-st)+'</text>';
+    var sch=SAVE.school&&SAVE.school[o.s.id];
+    g+='<g class="schip" data-school="'+o.s.id+'" tabindex="0" role="button" aria-label="'+o.s.id+' 学校で習った（押すと切りかえ）" style="cursor:pointer"><title>学校で習ったら押す（もう一度押すと消える）</title><rect x="'+(x+4)+'" y="'+(y+60)+'" width="40" height="14" rx="7" fill="'+(sch?'#4F9A3E':'#FFFFFF')+'" stroke="'+(sch?'#2E6B22':'#7A8794')+'" stroke-width="1.5"/><text x="'+(x+24)+'" y="'+(y+70.5)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="'+(sch?'#FFFFFF':'#5B6B7A')+'">'+(sch?'学校 ✓':'予習')+'</text></g>';
     if(!open) g+='<g transform="translate('+(x+76)+' '+(y+4)+')"><rect x="-8" y="0" width="16" height="12" rx="2" fill="#6B7682"/><path d="M-5 0 v-4 a5 5 0 0 1 10 0 v4" fill="none" stroke="#6B7682" stroke-width="2.5"/></g>';
     g+='</g>'; });
   // コマ（たっくん）
@@ -864,7 +872,7 @@ function boardSVG(){
   g+='<g class="piece"><animateTransform attributeName="transform" type="translate" values="0 0;0 -8;0 0" dur="1s" repeatCount="indefinite"/>'+
      '<rect x="'+hx+'" y="'+hy+'" width="24" height="8" fill="#C8323C"/><rect x="'+(hx+18)+'" y="'+(hy+2)+'" width="10" height="5" fill="#C8323C"/><rect x="'+(hx+3)+'" y="'+(hy+8)+'" width="18" height="10" fill="#F2C9A0"/><rect x="'+(hx+14)+'" y="'+(hy+10)+'" width="3" height="4" fill="#1D2B3A"/><rect x="'+hx+'" y="'+(hy+18)+'" width="24" height="14" fill="#2E6FB7"/><rect x="'+(hx+2)+'" y="'+(hy+32)+'" width="8" height="6" fill="#1D2B3A"/><rect x="'+(hx+14)+'" y="'+(hy+32)+'" width="8" height="6" fill="#1D2B3A"/></g>';
   if(nx){ var bxx=here.x+(here.x>700?-112:18); g+='<g><rect x="'+bxx+'" y="'+(here.y-70)+'" width="92" height="24" rx="12" fill="#F2B705" stroke="#1D2B3A" stroke-width="2"/><text x="'+(bxx+46)+'" y="'+(here.y-53)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#1D2B3A">次はここ！</text></g>'; }
-  return '<div class="board"><svg viewBox="0 0 '+W+' 545" role="group" aria-label="ステージのすごろく">'+g+'</svg><p class="small" id="boardmsg" style="margin:4px 0 0">マスを押すとそのステージへ。灰色のマスは、前のステージをクリアすると通れる。紫の分かれ道は、ステージの中の土管から行ける地下世界。</p></div>';
+  return '<div class="board"><svg viewBox="0 0 '+W+' 545" role="group" aria-label="ステージのすごろく">'+g+'</svg><p class="small" id="boardmsg" style="margin:4px 0 0">マスの左下は、学校の進み具合。学校で習ったら「予習」を押して「学校 ✓」にする（ワークは学校で習ってから）。マスを押すとそのステージへ。灰色のマスは、前のステージをクリアすると通れる。紫の分かれ道は、ステージの中の土管から行ける地下世界。</p></div>';
 }
 var SPLASHED=false;
 function showSplash(){
@@ -900,6 +908,9 @@ function showTitle(){
   var going=false;
   function go(id){ if(going) return; going=true; ac(); sfx("select"); setTimeout(function(){ startStage(id); },380); }
   panel.querySelectorAll("[data-stage]").forEach(function(b){ var id=b.getAttribute("data-stage"); b.onclick=function(){ go(id); }; b.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); go(id); } }; });
+  panel.querySelectorAll(".schip").forEach(function(c){ var id=c.getAttribute("data-school");
+    function tg(ev){ ev.stopPropagation(); ev.preventDefault(); ac(); var on=!(SAVE.school&&SAVE.school[id]); setSchool(id,on); sfx(on?"select":"dot"); var st=panel.scrollTop; showTitle(); panel.scrollTop=st; var m=document.getElementById("boardmsg"); if(m) m.innerHTML=on?'<b style="color:#2E6B22">'+id+' を「学校で習った」にした。</b>ワークまで進もう。':id+' を「予習」にもどした。'; }
+    c.addEventListener("click",tg); c.addEventListener("keydown",function(ev){ if(ev.key==="Enter"||ev.key===" ") tg(ev); }); });
   var lastHover=-1;
   panel.querySelectorAll(".board .sq").forEach(function(b){ var i=+b.getAttribute("data-idx");
     function hv(){ if(i!==lastHover){ lastHover=i; hoverSfx(i); } }
@@ -914,15 +925,25 @@ function showTitle(){
 }
 function prevId(wi,si){ if(si>0) return WORLDS[wi].stages[si-1].id; if(wi>0){ var pw=WORLDS[wi-1]; return pw.stages[pw.stages.length-1].id; } return null; }
 function startStage(id){ build(id); ov.hidden=true; panel.innerHTML=""; G.mode="play"; }
+var WORKMAP={"1-1": "p.100 ①、p.112 ③", "1-2": "p.100 ②、p.101 ①", "1-3": "p.100 ③④、p.101 ②③", "1-4": "p.102 ①②、p.103 ①", "1-5": "p.101 ④・C、p.102 ③", "1-6": "p.103 ②③・C、p.112 ①②", "2-1": "p.104 ①", "2-2": "p.104 ふり返り", "2-3": "p.104 ②③、p.106 ③、p.112 ④", "2-4": "p.105 ④⑤、p.106 ②、p.113 ⑤(1)", "2-5": "p.105 ⑥⑦、p.106 C、p.113 ⑤(2)", "2-6": "p.107 ①③④", "2-7": "p.107 ②、p.106 ④、p.108 ③④・C", "2-8": "p.106 ①、p.108 ①②、p.113 ⑥、p.110 ステップA ①", "3-1": "（ワークなし）教科書 p.183〜184 を読む", "3-2": "p.109 ぜんぶ", "3-3": "p.110 ステップA ②、p.111 ステップB ②、p.113 ⑦⑧"};
+function mlNote(k,data){ if(TRIAL) return; var c=mlCfg(); if(!c.url||!c.key) return; try{ mlPost(c,{key:c.key,snapshot:[{dev:c.dev||"",origin:location.origin,k:k,part:1,total:1,data:data}]}); }catch(e){} }
+function setSchool(id,on){ SAVE.school=SAVE.school||{}; if(on) SAVE.school[id]=new Date().toISOString().slice(0,10); else delete SAVE.school[id]; save();
+  mlNote("学校で習った", Object.keys(SAVE.school).sort().map(function(k){ return k+"（"+SAVE.school[k]+"）"; }).join("、")||"なし"); }
 function stageClear(){
   if(G.mode!=="play") return; G.mode="clear"; sfx("clear");
   var star = G.missed===0?3:(G.missed<=2?2:1); SAVE.clear[G.id]=true; SAVE.stars[G.id]=Math.max(SAVE.stars[G.id]||0,star); save();
-  var h='<h2>ステージクリア！</h2><p style="font-size:30px">'+'★'.repeat(star)+'☆'.repeat(3-star)+'</p><p>まちがい：'+G.missed+' 回　コイン：'+G.coin+'</p><p class="small">★3つ＝まちがい0　★2つ＝まちがい2回まで</p><p><b>紙でやろう：</b>ワークの同じところを、ノートに図をかいて解こう。</p><button class="btn main" id="toMenu">ステージえらびへ</button>';
-  panel.innerHTML=h; ov.hidden=false; document.getElementById("toMenu").onclick=showTitle;
+  var h='<h2>ステージクリア！</h2><p style="font-size:30px">'+'★'.repeat(star)+'☆'.repeat(3-star)+'</p><p>まちがい：'+G.missed+' 回　コイン：'+G.coin+'</p><p class="small">★3つ＝まちがい0　★2つ＝まちがい2回まで</p><div id="wkbox">'+wkHTML(G.id)+'</div><button class="btn main" id="toMenu">ステージえらびへ</button>';
+  panel.innerHTML=h; ov.hidden=false; document.getElementById("toMenu").onclick=showTitle; bindWk(G.id);
 }
+function wkHTML(id){ var sc=SAVE.school&&SAVE.school[id], wk=WORKMAP[id]||"";
+  if(sc) return '<p><b>紙でやろう：ワーク '+wk+'</b><br><span class="small">書いてある大問だけ。赤で丸つけ → 直し → 写真をお父さんへ。</span></p>';
+  return '<p><b>学校で、もうここを習った？</b></p><p class="small">習っていたら、ワーク '+wk+' へ進もう。まだなら今日は<b>予習</b>。ワークは学校で習ってからでOK。</p><div class="row"><button class="btn" id="schoolyes">学校で習った</button></div>'; }
+function bindWk(id){ var b=document.getElementById("schoolyes"); if(b) b.onclick=function(){ setSchool(id,true); sfx("select"); document.getElementById("wkbox").innerHTML=wkHTML(id); }; }
 function showOver(msg){
   SAVE.lives--; save();
-  if(SAVE.lives>0){ var h0='<h2>ハートがなくなった</h2><p>'+(msg||'')+'</p><p style="font-size:22px">のこり <b>'+SAVE.lives+' 機</b></p><p>コインと正解でポイントがたまると、機が増える（50ポイントごとに1機）。</p><button class="btn main" id="again">このステージをもう一度</button><button class="btn" id="toMenu">ステージえらびへ</button>'; panel.innerHTML=h0; ov.hidden=false; document.getElementById("again").onclick=function(){ startStage(G.main?G.main.id:G.id); }; document.getElementById("toMenu").onclick=showTitle; return; }
+  if(SAVE.lives>0){ var h0='<h2>ハートがなくなった</h2><p>'+(msg||'')+'</p><p style="font-size:22px">のこり <b>'+SAVE.lives+' 機</b></p><p>開いた扉は開いたまま。<b>続きから</b>やり直せる。コインと正解でポイントがたまると、機が増える（50ポイントごとに1機）。</p><button class="btn main" id="cont">続きから</button><button class="btn" id="again">このステージを最初から</button><button class="btn" id="toMenu">ステージえらびへ</button>'; panel.innerHTML=h0; ov.hidden=false;
+    document.getElementById("cont").onclick=function(){ ov.hidden=true; panel.innerHTML=""; G.hearts=5; G.hero.x=G.checkX||80; G.hero.y=GY-80; G.hero.vx=0; G.hero.vy=0; G.hero.inv=120; G.mode="play"; keys={}; sfx("move"); };
+    document.getElementById("again").onclick=function(){ startStage(G.main?G.main.id:G.id); }; document.getElementById("toMenu").onclick=showTitle; return; }
   SAVE.lives=3; save();
   var h='<h2>ゲームオーバー</h2><p>'+(msg||'')+' ハートがなくなった。</p><p>まちがえた問題は、もう一度出るときに数が変わる。図をよく見て考えよう。</p><button class="btn main" id="again">もう一度</button><button class="btn" id="toMenu">ステージえらびへ</button>';
   panel.innerHTML=h; ov.hidden=false; document.getElementById("again").onclick=function(){ startStage(G.id); }; document.getElementById("toMenu").onclick=showTitle;

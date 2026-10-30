@@ -925,6 +925,100 @@ Object.keys(WY).forEach(function(k){ ITEMS[k]=WY[k]; });
 })();
 
 
+/* ---------- 言葉の体験（問題の前に、さわって確かめる） ---------- */
+(function(){
+  function btnRow(list){ return '<div class="row" style="flex-wrap:wrap;gap:6px">'+list.map(function(b){ return '<button type="button" class="btn" data-lab="'+b[0]+'">'+b[1]+'</button>'; }).join('')+'</div>'; }
+  function labBox(id,w,h){ return '<div class="board"><svg id="'+id+'" viewBox="0 0 '+(w||340)+' '+(h||220)+'" role="img" aria-label="体験の図"></svg></div>'; }
+  function on(root,sel,fn){ root.querySelectorAll(sel).forEach(function(b){ b.addEventListener('click',function(){ fn(b.getAttribute('data-lab'),b); }); }); }
+  var LT='<div class="msg hint" id="labmsg" style="margin-top:6px">ボタンを押して、やってみよう。</div>';
+  function tx(x,y,s,o){ o=o||{}; return '<text pointer-events="none" x="'+x+'" y="'+y+'" text-anchor="'+(o.a||'middle')+'" font-size="'+(o.size||14)+'" font-weight="'+(o.w?700:400)+'" fill="'+(o.c||'var(--ink)')+'">'+s+'</text>'; }
+
+  /* 線分・半直線・直線 */
+  ITEMS.l1={u:"u1",type:"card",labNeed:true,html:'<b>体験：線の名前は「はし」で決まる</b><p>2点 A、B を結ぶ線。ボタンで、A の側と B の側を<b>のばしたり止めたり</b>してみよう。名前がどう変わるかな？ 4通り全部ためそう。</p>'+labBox('linelab')+btnRow([['a','A の側をのばす／止める'],['b','B の側をのばす／止める']])+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#linelab'), msg=root.querySelector('#labmsg'), ea=false, eb=false, seen={};
+      function draw(){ var A=[110,120], B=[230,120], x1=ea?10:A[0], x2=eb?330:B[0], g=grid(340,220), col='var(--red)';
+        g+=ln(x1,120,x2,120,col,4); if(ea) g+=arrowHead(10,120,180,col); if(eb) g+=arrowHead(330,120,0,col);
+        g+=dot(A[0],A[1],'var(--ink)',6)+dot(B[0],B[1],'var(--ink)',6)+tx(A[0],150,'A',{w:1})+tx(B[0],150,'B',{w:1});
+        var name, how;
+        if(!ea&&!eb){ name='線分 AB'; how='両方とも<b>はしがある</b>（A と B で止まっている）'; }
+        else if(ea&&eb){ name='直線 AB'; how='<b>両方に</b>かぎりなくのびている'; }
+        else if(eb){ name='半直線 AB'; how='A で止まり、<b>B の方へ</b>かぎりなくのびる（止まっている点が先）'; }
+        else { name='半直線 BA'; how='B で止まり、<b>A の方へ</b>かぎりなくのびる（止まっている点が先）'; }
+        g+=tx(170,50,name,{w:1,size:24,c:col}); sv.innerHTML=g; seen[name]=1;
+        msg.innerHTML='<b>'+name+'</b>：'+how+'。'+(Object.keys(seen).length<4?'（あと '+(4-Object.keys(seen).length)+' 通り）':'<br><b>はしが2つ＝線分、はしが1つ＝半直線、はしがない＝直線。</b>まっすぐな線が全部「直線」ではない。'); if(Object.keys(seen).length>=4) ok(); }
+      on(root,'[data-lab]',function(k){ if(k==='a') ea=!ea; else eb=!eb; sfx('dot'); draw(); }); draw(); }};
+
+  /* 2点を通る直線 */
+  ITEMS.l2={u:"u1",type:"card",labNeed:true,html:'<b>体験：2点 A、B を「通る」直線は何本？</b><p>「通る」は、<b>線がその点の上を通っている</b>ということ。A を中心に直線を回してみよう。A はいつも通るけれど、<b>B も通る</b>のはどんなとき？</p>'+labBox('thrulab')+'<div class="row" style="gap:8px;align-items:center"><span>回す</span><input type="range" id="thruang" min="0" max="179" value="20" style="flex:1"></div>'+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#thrulab'), msg=root.querySelector('#labmsg'), rg=root.querySelector('#thruang'), A=[110,140], B=[240,80], hit=0, moved=0, last=20, trails=[];
+      var angB=Math.atan2(A[1]-B[1],B[0]-A[0])*180/Math.PI; if(angB<0) angB+=180;
+      function draw(){ var a=+rg.value, r=a*Math.PI/180, dx=Math.cos(r)*400, dy=-Math.sin(r)*400, near=Math.abs(a-angB)<1.6, g=grid(340,220);
+        trails.forEach(function(t){ var rr=t*Math.PI/180; g+=ln(A[0]-Math.cos(rr)*400,A[1]+Math.sin(rr)*400,A[0]+Math.cos(rr)*400,A[1]-Math.sin(rr)*400,'#C9D3DD',1); });
+        g+=ln(A[0]-dx,A[1]-dy,A[0]+dx,A[1]+dy,near?'var(--red)':'var(--comp)',near?4:2.5)+dot(A[0],A[1],'var(--ink)',6)+dot(B[0],B[1],near?'var(--red)':'var(--ink)',near?9:6)+tx(A[0]-14,A[1]+22,'A',{w:1})+tx(B[0]+16,B[1]-8,'B',{w:1});
+        sv.innerHTML=g;
+        if(near){ hit=1; msg.innerHTML='<b>B も通った！</b> A と B の<b>両方</b>を通るのは、この<b>1本だけ</b>。'+(moved>120?'<br>うすい線は、A だけを通る直線。A だけなら<b>いくらでも</b>ひける。':'　もっと回してみよう。'); }
+        else msg.innerHTML='今の直線は A を通るけれど、B は通っていない。'+(hit?'（B も通る向きは、さっきの1つだけ）':'B の上を通る向きをさがそう。');
+        if(hit&&moved>120) ok(); }
+      rg.addEventListener('input',function(){ var a=+rg.value; moved+=Math.abs(a-last); if(Math.abs(a-last)>6||!trails.length){ trails.push(a); if(trails.length>14) trails.shift(); } last=a; draw(); });
+      draw(); }};
+
+  /* 点と直線の距離 */
+  ITEMS.l3={u:"u1",type:"card",labNeed:true,html:'<b>体験：「距離」は、いちばん短い長さ</b><p>点 A から直線 ℓ 上の点 P まで線をひく。P を動かして、<b>AP がいちばん短くなるところ</b>をさがそう（1目もり 1cm）。</p>'+labBox('distlab')+'<div class="row" style="gap:8px;align-items:center"><span>P を動かす</span><input type="range" id="distp" min="20" max="320" value="60" style="flex:1"></div>'+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#distlab'), msg=root.querySelector('#labmsg'), rg=root.querySelector('#distp'), A=[170,70], Y=190, U=40, best=1e9;
+      function draw(){ var px=+rg.value, len=Math.hypot(px-A[0],Y-A[1])/U, foot=Math.abs(px-A[0])<4, g=grid(340,220,U/2);
+        g+=ln(0,Y,340,Y,'var(--ink)',2.5)+tx(330,Y-8,'ℓ',{w:1})+dot(A[0],A[1],'var(--ink)',6)+tx(A[0]+14,A[1]-6,'A',{w:1})+ln(A[0],A[1],px,Y,foot?'var(--good)':'var(--red)',3.5)+dot(px,Y,foot?'var(--good)':'var(--red)',6)+tx(px,Y+22,'P',{w:1});
+        if(foot) g+=rightMark(A[0],Y,1,1,'var(--good)');
+        g+=tx(70,40,'AP ＝ '+len.toFixed(1)+' cm',{w:1,size:18,c:foot?'var(--good)':'var(--red)'});
+        sv.innerHTML=g;
+        msg.innerHTML=foot?'<b>いちばん短い！ AP は ℓ に垂直（直角）。</b>この長さ 3cm が「点 A と直線 ℓ の<b>距離</b>」。ななめに測った長さは距離ではない。':'AP ＝ '+len.toFixed(1)+' cm。もっと短くなるところはある？';
+        if(foot) ok(); }
+      rg.addEventListener('input',draw); draw(); }};
+
+  /* 言葉カード */
+  ITEMS.l4={u:"u1",type:"card",html:'<b>言葉カード：線の名前</b><div class="ex good"><span class="tag">いい例</span>　はしを見てから名前を決める。はし2つ＝線分 AB、はし1つ＝半直線 AB（A で止まって B の方へ）、はしなし＝直線 AB</div><div class="ex bad"><span class="tag">悪い例</span>　まっすぐな線を全部「直線」と書く</div><div class="ex good"><span class="tag">いい例</span>　「2点を通る」は、2つの点の<b>両方</b>の上を通ること。だから1本だけ</div><div class="ex bad"><span class="tag">悪い例</span>　A を通る線と B を通る線を別々に数える</div><div class="ex good"><span class="tag">いい例</span>　「距離」は<b>垂直に</b>測った、いちばん短い長さ</div><div class="ex bad"><span class="tag">悪い例</span>　ななめに測る、マスを数えるだけ</div>'};
+
+  /* 対応する点 */
+  ITEMS.l5={u:"u2",type:"card",labNeed:true,html:'<b>体験：「対応する」は、移動して重なる相手</b><p>△ABC を平行移動したのが △PQR。左の三角形の<b>頂点をクリック</b>すると、重なる相手（対応する点）が光る。3つともためそう。</p>'+labBox('corrlab')+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#corrlab'), msg=root.querySelector('#labmsg'), P=[[50,170],[130,170],[70,90]], d=[170,-40], N=['A','B','C'], M=['P','Q','R'], sel=-1, seen={};
+      function draw(){ var Q=P.map(function(p){return [p[0]+d[0],p[1]+d[1]];}), g=grid(340,220);
+        g+='<polygon points="'+P.map(function(p){return p.join(',');}).join(' ')+'" fill="var(--gold2)" stroke="var(--ink)" stroke-width="2"/><polygon points="'+Q.map(function(p){return p.join(',');}).join(' ')+'" fill="#CFE3F5" stroke="var(--ink)" stroke-width="2"/>';
+        P.forEach(function(p,i){ var on_=sel===i; if(on_) g+=ln(p[0],p[1],Q[i][0],Q[i][1],'var(--red)',2.5,'6 4')+arrowHead(Q[i][0],Q[i][1],Math.atan2(d[1],d[0])*180/Math.PI,'var(--red)');
+          g+='<circle data-v="'+i+'" cx="'+p[0]+'" cy="'+p[1]+'" r="12" fill="'+(on_?'var(--red)':'#fff')+'" stroke="var(--ink)" stroke-width="2" style="cursor:pointer"/>'+tx(p[0],p[1]+5,N[i],{w:1,size:13,c:on_?'#fff':'var(--ink)'});
+          g+='<circle cx="'+Q[i][0]+'" cy="'+Q[i][1]+'" r="12" fill="'+(on_?'var(--red)':'#fff')+'" stroke="var(--ink)" stroke-width="2"/>'+tx(Q[i][0],Q[i][1]+5,M[i],{w:1,size:13,c:on_?'#fff':'var(--ink)'}); });
+        sv.innerHTML=g;
+        sv.querySelectorAll('[data-v]').forEach(function(el){ el.addEventListener('click',function(){ sel=+el.getAttribute('data-v'); seen[sel]=1; sfx('dot'); draw(); msg.innerHTML='点 <b>'+N[sel]+'</b> に対応する点は <b>'+M[sel]+'</b>。'+(Object.keys(seen).length<3?'ほかの頂点もためそう。':'<b>A↔P、B↔Q、C↔R。名前を書く順番も対応している</b>（△ABC と △PQR）。辺 AB に対応する辺は PQ。'); if(Object.keys(seen).length>=3) ok(); }); }); }
+      draw(); }};
+
+  /* 回転の向き */
+  ITEMS.l6={u:"u2",type:"card",labNeed:true,html:'<b>体験：時計回りと、反時計回り</b><p>時計の針が進む向きが<b>時計回り</b>、その反対が<b>反時計回り</b>。点 O を中心に、三角形を 90° 回してみよう。</p>'+labBox('rotlab')+btnRow([['cw','時計回りに 90°'],['ccw','反時計回りに 90°'],['r','もどす']])+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#rotlab'), msg=root.querySelector('#labmsg'), O=[170,120], T=[[200,110],[260,110],[215,70]], ang=0, busy=false, seen={};
+      function rot(p,a){ var r=a*Math.PI/180, x=p[0]-O[0], y=p[1]-O[1]; return [O[0]+x*Math.cos(r)-y*Math.sin(r), O[1]+x*Math.sin(r)+y*Math.cos(r)]; }
+      function draw(a,dir){ var g=grid(340,220); g+='<g transform="translate(36 40)"><circle r="24" fill="#fff" stroke="var(--ink)" stroke-width="2"/>'+ln(0,0,0,-16,'var(--ink)',2.5)+ln(0,0,12,0,'var(--ink)',2.5)+'<path d="M 16 -18 A 24 24 0 0 1 24 -2" fill="none" stroke="var(--red)" stroke-width="3"/></g>'+tx(36,82,'時計回り',{size:11,c:'var(--red)'});
+        g+='<polygon points="'+T.map(function(p){return p.join(',');}).join(' ')+'" fill="none" stroke="#9AA6B2" stroke-width="1.5" stroke-dasharray="4 3"/>';
+        var R=T.map(function(p){return rot(p,a);}); g+='<polygon points="'+R.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="var(--gold2)" stroke="var(--ink)" stroke-width="2"/>'+ln(O[0],O[1],R[0][0],R[0][1],'var(--red)',1.5,'4 3')+dot(O[0],O[1],'var(--red)',5)+tx(O[0]-12,O[1]+18,'O',{w:1});
+        if(dir) g+=arcPath(O[0],O[1],46,dir>0?-10:-10+0,dir>0?-10+Math.abs(a):-10,'var(--red)',3);
+        sv.innerHTML=g; }
+      function run(dir){ if(busy) return; busy=true; var t0=null; sfx('dot');
+        function st(ts){ if(!t0) t0=ts; var k=Math.min(1,(ts-t0)/900), a=dir*90*k; draw(a,dir); ang=dir*90; if(k<1) requestAnimationFrame(st); else { busy=false; seen[dir]=1; msg.innerHTML=(dir>0?'<b>時計回り</b>（針と同じ向き）に 90°。':'<b>反時計回り</b>（針と反対の向き）に 90°。')+'回転の中心 O は動かない。'+(Object.keys(seen).length<2?'もう1つの向きもためそう。':'<b>同じ 90° でも、向きがちがうと行き先がちがう。</b>問題文の「時計回り」「反時計回り」に線を引いてから考えよう。'); if(Object.keys(seen).length>=2) ok(); } }
+        requestAnimationFrame(st); }
+      on(root,'[data-lab]',function(k){ if(k==='cw') run(1); else if(k==='ccw') run(-1); else { draw(0,0); } }); draw(0,0); }};
+
+  /* 対称の軸 */
+  ITEMS.l7={u:"u2",type:"card",labNeed:true,html:'<b>体験：対称の軸と、対応する点</b><p>点線 ℓ が対称の軸（鏡）。左側を<b>クリック</b>すると点 A が置かれ、ℓ で折り返した点 A′ が出る。3か所ためして、<b>AA′ と ℓ の関係</b>を見つけよう。</p>'+labBox('refllab')+LT,
+    bind:function(root,c,ok){ var sv=root.querySelector('#refllab'), msg=root.querySelector('#labmsg'), X=170, A=null, n=0;
+      function draw(){ var g=grid(340,220)+ln(X,0,X,220,'var(--comp)',2.5,'8 5')+tx(X+12,16,'ℓ',{w:1});
+        g+='<rect x="0" y="0" width="'+X+'" height="220" fill="transparent" id="hit" style="cursor:crosshair"/>';
+        if(A){ var B=[2*X-A[0],A[1]]; g+=ln(A[0],A[1],B[0],B[1],'var(--red)',2.5)+dot(A[0],A[1],'var(--ink)',6)+dot(B[0],B[1],'var(--ink)',6)+tx(A[0],A[1]-12,'A',{w:1})+tx(B[0],B[1]-12,"A′",{w:1})+rightMark(X,A[1],1,1,'var(--red)');
+          var m1=[(A[0]+X)/2,A[1]], m2=[(B[0]+X)/2,A[1]]; g+=ln(m1[0],A[1]-7,m1[0],A[1]+7,'var(--red)',2)+ln(m2[0],A[1]-7,m2[0],A[1]+7,'var(--red)',2)+dot(X,A[1],'var(--red)',4)+tx(X+12,A[1]+18,'M',{w:1,c:'var(--red)'}); }
+        sv.innerHTML=g;
+        sv.querySelector('#hit').addEventListener('click',function(ev){ var p=sv.createSVGPoint(); p.x=ev.clientX; p.y=ev.clientY; var q=p.matrixTransform(sv.getScreenCTM().inverse()); if(q.x>X-8) return; A=[q.x,q.y]; n++; sfx('dot'); draw();
+          msg.innerHTML='AA′ は ℓ と<b>垂直</b>に交わり（直角の印）、交わる点 M で<b>半分ずつ</b>（同じ印）。'+(n<3?'あと '+(3-n)+' か所。':'<b>どこに置いても同じ。対称の軸は、AA′ の垂直二等分線。</b>'); if(n>=3) ok(); }); }
+      draw(); }};
+})();
+
+(function(){ var ks=Object.keys(ITEMS), labs={u1:["l1","l2","l3","l4"],u2:["l5","l6","l7"]}, out={}, done={};
+  ks.forEach(function(k){ var it=ITEMS[k]; if(/^l[1-7]$/.test(k)) return; if(labs[it.u]&&!done[it.u]){ done[it.u]=1; labs[it.u].forEach(function(l){ out[l]=ITEMS[l]; }); } out[k]=it; });
+  ks.forEach(function(k){ delete ITEMS[k]; }); Object.keys(out).forEach(function(k){ ITEMS[k]=out[k]; }); })();
 /* ---------- 文字だけの設問に付ける図（見てわかる補助） ---------- */
 var FX=(function(){
   function P(pts,fill,stroke,w,dash){ return '<polygon points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="'+(fill||'var(--gold2)')+'" stroke="'+(stroke||'var(--line)')+'" stroke-width="'+(w||2)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'; }
