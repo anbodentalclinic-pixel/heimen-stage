@@ -375,7 +375,7 @@ function build(id){
       g.gap=[x,x+180]; x+=180; ground(x,x+300); g.barrier={x:g.gap[0]-6,y:0,w:6,h:H};
     } else if(type==="boss"){
       ground(x,x+1000); g.door={x:x+860,y:GY-240,w:80,h:240}; g.barrier={x:x+854,y:0,w:6,h:H}; g.step=0;
-      var bq=zItems(spec); g.queue=shuffle(bq).slice(0,3); g.enemy={cx:x+470,x:x+470,y:GY-200,w:70,h:60,hp:3,max:3,t:0,inv:0,on:false,dead:0,info:BOSSES[info.w.key]||BOSSES.w1}; g.arena=x+40;
+      var bq=zItems(spec); g.queue=shuffle(bq).slice(0,3); solids.push({x:x+230,y:GY-120,w:120,h:24,k:"plat"}); solids.push({x:x+590,y:GY-120,w:120,h:24,k:"plat"}); g.enemy={cx:x+470,x:x+470,y:GY-200,w:70,h:60,hp:3,max:3,t:0,inv:0,on:false,dead:0,info:BOSSES[info.w.key]||BOSSES.w1}; g.arena=x+40;
       x+=1000;
     }
     if(type==="door"&&spec.k==="sign"){ g.door={x:g.x+120,y:GY-90,w:60,h:90}; g.barrier={x:g.x+114,y:0,w:6,h:H}; }
@@ -465,16 +465,19 @@ function leaveUnder(){ var main=G.main; main.hearts=G.hearts; main.coin+=G.coin;
 /* ---------- ボス（敵キャラ） ---------- */
 function bossStep(g){
   var e=g.enemy, h=G.hero; if(h.x<g.arena) return;
-  if(!e.on){ e.on=true; G.anims.push({t:0,d:2.5,txt:e.info.name+" があらわれた！ 上からふんで攻撃！",x:h.x-120,y:GY-260}); sfx("hurt"); }
+  if(!e.on){ e.on=true; G.anims.push({t:0,d:3,txt:e.info.name+" があらわれた！ 地面におりたらチャンス、上からふもう！",x:h.x-160,y:GY-260}); sfx("hurt"); }
   if(e.dead){ e.dead++; e.y+=4; if(e.dead>70){ g.solved=true; addPts(20,e.x,e.y-60); sfx("clear"); } return; }
-  e.t+=1/60; var t=e.t, ph=t%6;
-  var tx=e.cx+230*Math.sin(t*0.9), ty=GY-210+70*Math.sin(t*2.3);
-  if(ph>3.8&&ph<4.8){ var k=(ph-3.8); tx=e.cx+230*Math.sin(t*0.9)+((h.x-e.x)*0.04); ty=GY-210+(GY-e.h-(GY-210))*Math.sin(k*Math.PI); }
-  if(ph>1.5&&ph<1.9){ ty-=60*Math.sin((ph-1.5)/0.4*Math.PI); }
-  e.x+=(tx-e.x)*0.08; e.y+=(ty-e.y)*0.1; if(e.inv>0) e.inv--;
+  e.t+=1/60; var t=e.t, ph=t%7, ground=GY-e.h, tx, ty, prev=e.state;
+  if(ph<3.6){ e.state="fly"; tx=e.cx+200*Math.sin(t*0.7); ty=GY-185+40*Math.sin(t*1.8); }
+  else if(ph<4.3){ if(prev!=="down"){ var sp=[e.cx-320,e.cx,e.cx+310]; e.restX=sp.reduce(function(a,b){ return Math.abs(b-e.x)<Math.abs(a-e.x)?b:a; }); } e.state="down"; tx=e.restX; ty=ground; }
+  else if(ph<6.6){ e.state="rest"; tx=e.restX; ty=ground+3*Math.sin(t*6); }
+  else { e.state="up"; tx=e.x; ty=GY-185; }
+  if(e.state==="rest"&&prev!=="rest"){ sfx("bump"); G.anims.push({t:0,d:1.2,txt:"チャンス！",x:e.x-40,y:ground-40}); }
+  e.x+=(tx-e.x)*(e.state==='down'?0.12:0.05); e.y+=(ty-e.y)*(e.state==="down"?0.15:0.08); if(e.inv>0) e.inv--;
   var box={x:e.x-e.w/2,y:e.y,w:e.w,h:e.h};
   if(rectHit(h,box) && e.inv===0){
-    if(h.vy>0 && h.y+h.h-box.y<22){ h.vy=-10; e.inv=60; askBoss(g); }
+    if(h.vy>0 && h.y+h.h-box.y<e.h*0.6){ h.vy=-10; e.inv=60; askBoss(g); }
+    else if(e.state==="rest"||e.state==="down"){ h.x+=(h.x<e.x?-6:6); h.vx=0; }
     else if(h.inv===0){ h.inv=90; h.vx=0; h.x+= (h.x<e.x?-50:50); hurt("敵にぶつかった。"); }
   }
 }
@@ -520,7 +523,7 @@ function draw(){
   var near=G.gates.filter(function(g){ return !g.solved && Math.abs(g.x-G.hero.x)<260; })[0];
   if(near && G.mode==="play"){ ctx.fillStyle="rgba(29,43,58,.75)"; ctx.fillRect(W/2-210,H-52,420,34); ctx.fillStyle="#fff"; ctx.font="18px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText(gateHint(near),W/2,H-28); }
 }
-function gateHint(g){ if(g.type==="boss") return g.enemy.on?"敵を上からふむと、攻撃の問題が出る（横からぶつかるとハートがへる）":"城の門の前に敵がいる"; if(g.type==="door") return g.spec.k==="sign"?"看板を読もう（進むと開く）":(g.spec.paper?"紙ミッション：ワークを解いてから開けよう":"問題の扉（"+zItems(g.spec).length+"問）")+"（進むと問題）"; if(false) return ({choice:"問題の扉",multi:"問題の扉（すべて選ぶ）",sym:"記号の扉：記号で書いて開けよう",num:"計算の扉",paper:"紙ミッションの扉：ワークを解いてから開けよう"})[g.spec.k]+"（進むと問題）"; return {translate:"橋を平行移動させて道をつくろう",rotate:"はね橋を回転させよう",reflect:"階段を対称移動させよう",pb:"2つの塔から等しい場所に柱を立てよう",ab:"光を角のまん中に通そう",pp:"いちばん短いロープをおろそう",arc:"弧のレールの長さを計算しよう",fan:"おうぎの扉を回して橋にしよう",area:"おうぎ形の床をぬろう",boss:"城の門のカギを3つ開けよう"}[g.type]+"（進むと問題）"; }
+function gateHint(g){ if(g.type==="boss") return g.enemy.on?"敵が地面におりて休んだらチャンス。上からふむと攻撃の問題（足場からでもOK）":"城の門の前に敵がいる"; if(g.type==="door") return g.spec.k==="sign"?"看板を読もう（進むと開く）":(g.spec.paper?"紙ミッション：ワークを解いてから開けよう":"問題の扉（"+zItems(g.spec).length+"問）")+"（進むと問題）"; if(false) return ({choice:"問題の扉",multi:"問題の扉（すべて選ぶ）",sym:"記号の扉：記号で書いて開けよう",num:"計算の扉",paper:"紙ミッションの扉：ワークを解いてから開けよう"})[g.spec.k]+"（進むと問題）"; return {translate:"橋を平行移動させて道をつくろう",rotate:"はね橋を回転させよう",reflect:"階段を対称移動させよう",pb:"2つの塔から等しい場所に柱を立てよう",ab:"光を角のまん中に通そう",pp:"いちばん短いロープをおろそう",arc:"弧のレールの長さを計算しよう",fan:"おうぎの扉を回して橋にしよう",area:"おうぎ形の床をぬろう",boss:"城の門のカギを3つ開けよう"}[g.type]+"（進むと問題）"; }
 function drawPipe(s){ ctx.fillStyle="#8A6A4A"; ctx.fillRect(s.x+4,s.y+14,s.w-8,s.h-14); ctx.fillStyle="#A9875F"; ctx.fillRect(s.x,s.y,s.w,16); ctx.fillStyle="#C9A97F"; ctx.fillRect(s.x+8,s.y+18,8,s.h-20); ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.strokeRect(s.x+1,s.y+1,s.w-2,15); ctx.strokeRect(s.x+5,s.y+15,s.w-10,s.h-16); }
 function drawBoss(e){
   var x=Math.round(e.x-e.w/2), y=Math.round(e.y), w=e.w, hh=e.h, flash=e.inv>0&&Math.floor(e.inv/5)%2;
@@ -532,6 +535,7 @@ function drawBoss(e){
   ctx.strokeStyle="#1D2B3A"; ctx.lineWidth=2; ctx.strokeRect(x+.5,y+10.5,w-1,hh-11);
   for(var k=0;k<e.max;k++){ ctx.fillStyle=k<e.hp?"#E5484D":"#6B6B6B"; ctx.fillRect(x+k*24,y-16,20,8); ctx.strokeRect(x+k*24+.5,y-15.5,19,7); }
   ctx.fillStyle="#1D2B3A"; ctx.font="14px 'DotGothic16',monospace"; ctx.textAlign="center"; ctx.fillText(e.info.name,x+w/2,y-22);
+  if(e.state==="rest"&&!e.dead){ var tt=Date.now()/300; ctx.fillStyle="#F2B705"; for(var si=0;si<3;si++){ var a=tt+si*2.1; ctx.fillRect(Math.round(x+w/2+Math.cos(a)*30-4),Math.round(y-38+Math.sin(a)*6-4),8,8); } ctx.fillStyle="#E5484D"; ctx.font="16px 'DotGothic16',monospace"; ctx.fillText("いまだ！ 上からふめ",x+w/2,y-46); }
   ctx.globalAlpha=1;
 }
 function drawGate(g){
