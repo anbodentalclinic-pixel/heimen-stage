@@ -129,6 +129,16 @@ input.num{ font:inherit; font-size:22px; width:7em; padding:6px 8px; border:2px 
 input.num.s{ width:4.2em; font-size:20px; padding:4px 6px; }
 input.num.bad{ border-color:var(--rasp); background:var(--hintbg); }
 .tog .btn[aria-pressed="true"]{ background:var(--gold); color:#1D2B3A; }
+.hintbox{ border:3px solid #F2B705; background:#FFF8DD; border-radius:10px; padding:10px 12px; margin:8px 0; font-size:16px; line-height:1.6; }
+.hintbox svg{ width:100%; max-width:420px; height:auto; display:block; margin:6px auto; background:#fff; border-radius:8px; }
+.mkl{ display:flex; flex-direction:column; gap:6px; margin:6px 0 10px; }
+.mkrow{ display:flex; align-items:center; gap:8px; border:2px solid var(--line,#1D2B3A); border-radius:10px; padding:6px 8px; background:#fff; }
+.mkrow .mkt{ flex:1; font-size:16px; }
+.mkrow .mkb{ display:flex; gap:6px; }
+.mkrow .mkb .btn{ min-width:48px; font-size:18px; padding:4px 10px; margin:0; }
+.mkrow.mk-ok{ border-color:#4F9A3E; background:#EAF6E5; }
+.mkrow.mk-ng{ border-color:#E5484D; background:#FDEBEC; }
+.mkrow .mkans{ font-weight:700; font-size:14px; color:#2E6B22; }
 .once{ font-size:14px; color:var(--sub); margin:2px 0 6px; }
 .opts .btn.picked-wrong{ background:var(--hintbg); border-color:var(--rasp); opacity:1; }
 .opts .btn:disabled{ opacity:.55; }
@@ -186,7 +196,7 @@ details.hint{ margin:6px 0; } details.hint summary{ cursor:pointer; font-weight:
 <script>
 (function(){
 "use strict";
-var QS=new URLSearchParams(location.search), EMB=QS.get("embed"), EMB_TITLE=QS.get("title")||"";
+var QS=new URLSearchParams(location.search), EMB=QS.get("embed"), EMB_TITLE=QS.get("title")||""; var EMB_STAGE=QS.get("stage")||"";
 var TRIAL=QS.get("trial")==="1"; try{ if(sessionStorage.getItem("heimen-trial")==="1") TRIAL=true; }catch(e){}
 if(TRIAL) window.ML_TRIAL=true;
 var KEY= EMB ? "heimen-zukei-embed" : (TRIAL ? "heimen-zukei-trial" : "heimen-zukei-v1");
@@ -1016,9 +1026,64 @@ Object.keys(WY).forEach(function(k){ ITEMS[k]=WY[k]; });
       draw(); }};
 })();
 
-(function(){ var ks=Object.keys(ITEMS), labs={u1:["l1","l2","l3","l4"],u2:["l5","l6","l7"]}, out={}, done={};
-  ks.forEach(function(k){ var it=ITEMS[k]; if(/^l[1-7]$/.test(k)) return; if(labs[it.u]&&!done[it.u]){ done[it.u]=1; labs[it.u].forEach(function(l){ out[l]=ITEMS[l]; }); } out[k]=it; });
+(function(){ var ks=Object.keys(ITEMS), labs={u1:["l1","l2","l3","l4"],u2:["l5","l6","l7","l8"]}, out={}, done={};
+  ks.forEach(function(k){ var it=ITEMS[k]; if(/^l[1-8]$/.test(k)) return; if(labs[it.u]&&!done[it.u]){ done[it.u]=1; labs[it.u].forEach(function(l){ out[l]=ITEMS[l]; }); } out[k]=it; });
   ks.forEach(function(k){ delete ITEMS[k]; }); Object.keys(out).forEach(function(k){ ITEMS[k]=out[k]; }); })();
+/* ---------- 回転の作図の体験・まちがえたあとのヒント ---------- */
+(function(){
+  function tx(x,y,s,o){ o=o||{}; return '<text pointer-events="none" x="'+x+'" y="'+y+'" text-anchor="'+(o.a||'middle')+'" font-size="'+(o.size||13)+'" font-weight="'+(o.w?700:400)+'" fill="'+(o.c||'var(--ink)')+'">'+s+'</text>'; }
+  var U=24, T=[[2,2],[1,5],[4,4]], O=[7,5], NM=['A','B','C'];
+  function P(v){ return [20+v[0]*U, 10+v[1]*U]; }
+  ITEMS.l8={u:"u2",type:"card",labNeed:true,html:'<b>体験：回転した図は、頂点を1つずつ回してかく</b><p>三角形をまるごと回そうとすると、まちがえやすい。<b>O と頂点を結んだ「うで」</b>を回して、1つずつ点を打とう。90° と 180° の両方をためそう。</p><div class="board"><svg id="rdlab" viewBox="0 0 360 290" role="img" aria-label="回転の作図の体験"></svg></div><div class="row" style="flex-wrap:wrap;gap:6px"><button type="button" class="btn" data-lab="m90">90°（反時計回り）でやる</button><button type="button" class="btn" data-lab="m180">180° でやる</button><button type="button" class="btn main" data-lab="next">次の頂点を回す ▶</button></div><div class="msg hint" id="labmsg" style="margin-top:6px">まず「90°」か「180°」を選ぼう。</div>',
+    bind:function(root,c,ok){ var sv=root.querySelector('#rdlab'), msg=root.querySelector('#labmsg'), mode=null, k=0, done={}, busy=false;
+      function img(v){ var dx=v[0]-O[0], dy=v[1]-O[1]; return mode===90?[O[0]+dy,O[1]-dx]:[O[0]-dx,O[1]-dy]; }
+      function base(extraArm){ var g=''; for(var x=0;x<=14;x++) g+='<line x1="'+(20+x*U)+'" y1="10" x2="'+(20+x*U)+'" y2="'+(10+11*U)+'" stroke="var(--grid)"/>'; for(var y=0;y<=11;y++) g+='<line x1="20" y1="'+(10+y*U)+'" x2="'+(20+14*U)+'" y2="'+(10+y*U)+'" stroke="var(--grid)"/>';
+        g+='<polygon points="'+T.map(function(v){return P(v).join(',');}).join(' ')+'" fill="var(--gold2)" stroke="var(--ink)" stroke-width="2"/>';
+        T.forEach(function(v,i){ var p=P(v); g+=tx(p[0]-10,p[1]-6,NM[i],{w:1}); });
+        if(mode) for(var i=0;i<k;i++){ var q=P(img(T[i])); g+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="6" fill="var(--red)"/>'+tx(q[0]+12,q[1]-6,NM[i]+'′',{w:1,c:'var(--red)'}); }
+        if(mode&&k>=3) g+='<polygon points="'+T.map(function(v){return P(img(v)).join(',');}).join(' ')+'" fill="#CFE3F5" fill-opacity=".7" stroke="var(--red)" stroke-width="2"/>';
+        var o=P(O); g+=(extraArm||'')+'<circle cx="'+o[0]+'" cy="'+o[1]+'" r="6" fill="var(--ink)"/>'+tx(o[0]+12,o[1]+18,'O',{w:1});
+        return g; }
+      function draw(arm){ sv.innerHTML=base(arm||''); }
+      function stepAnim(){ if(busy||!mode||k>=3) return; busy=true; var v=T[k], o=P(O), p=P(v), dx=v[0]-O[0], dy=v[1]-O[1], t0=null, total=mode===90?90:180;
+        sfx('dot');
+        function fr(ts){ if(!t0) t0=ts; var f=Math.min(1,(ts-t0)/1300), a=-total*f*Math.PI/180, vx=(p[0]-o[0]), vy=(p[1]-o[1]), rx=vx*Math.cos(a)-vy*Math.sin(a), ry=vx*Math.sin(a)+vy*Math.cos(a);
+          var arm='<line x1="'+o[0]+'" y1="'+o[1]+'" x2="'+p[0]+'" y2="'+p[1]+'" stroke="var(--comp)" stroke-width="3"/>'+'<line x1="'+o[0]+'" y1="'+o[1]+'" x2="'+(o[0]+rx)+'" y2="'+(o[1]+ry)+'" stroke="var(--red)" stroke-width="3"/>';
+          draw(arm);
+          if(f<1) requestAnimationFrame(fr); else { k++; busy=false; draw(arm);
+            var h=Math.abs(dx), t=Math.abs(dy), hd=dx<0?'左':'右', td=dy<0?'上':'下';
+            var w2=img(v), dx2=w2[0]-O[0], dy2=w2[1]-O[1], hd2=dx2<0?'左':'右', td2=dy2<0?'上':'下';
+            msg.innerHTML='O から '+NM[k-1]+' へは「'+hd+'に '+h+'、'+td+'に '+t+'」。'+(mode===90?'90° 回すと、<b>横とたてが入れかわって</b>「'+hd2+'に '+Math.abs(dx2)+'、'+td2+'に '+Math.abs(dy2)+'」。':'180° は O をはさんで<b>反対側へ同じだけ</b>：「'+hd2+'に '+Math.abs(dx2)+'、'+td2+'に '+Math.abs(dy2)+'」。')+'うでの長さは変わらない。'+(k<3?'次の頂点も回そう。':'<b>3つの点を結んだら完成！</b>');
+            if(k>=3){ done[mode]=1; if(done[90]&&done[180]) ok(); else msg.innerHTML+='<br>もう一方（'+(mode===90?'180°':'90°')+'）もためそう。'; } } }
+        requestAnimationFrame(fr); }
+      root.querySelectorAll('[data-lab]').forEach(function(b){ b.addEventListener('click',function(){ var v=b.getAttribute('data-lab'); if(v==='m90'||v==='m180'){ mode=v==='m90'?90:180; k=0; draw(); msg.innerHTML=(mode===90?'90° 反時計回り':'180°')+'。「次の頂点を回す」を押そう。'; sfx('dot'); } else if(v==='next'){ if(!mode){ msg.innerHTML='先に「90°」か「180°」を選ぼう。'; return; } stepAnim(); } }); });
+      draw(); }};
+
+  /* 角のヒント図：C を中心に、B→Q、A→P と回した図 */
+  function angHint(rot,total,mode,nm){ nm=nm||{C:'C',A:'A',B:'B',P:'P',Q:'Q'}; var C=[110,220], R=165, g='';
+    function pt(deg,r){ var a=deg*Math.PI/180; return [C[0]+r*Math.cos(a), C[1]-r*Math.sin(a)]; }
+    function wedge(a1,a2,r,col){ var p1=pt(a1,r), p2=pt(a2,r); return '<path d="M'+C[0]+' '+C[1]+' L'+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+' A'+r+' '+r+' 0 0 0 '+p2[0].toFixed(1)+' '+p2[1].toFixed(1)+' Z" fill="'+col+'" fill-opacity=".55" stroke="none"/>'; }
+    if(mode==='diff'){ var y1=pt(0,145), y2=pt(total,145); g+=wedge(0,rot,95,'#E5484D')+wedge(rot,total,95,'#4F9A3E')+'<path d="M'+y1[0].toFixed(1)+' '+y1[1].toFixed(1)+' A145 145 0 0 0 '+y2[0].toFixed(1)+' '+y2[1].toFixed(1)+'" fill="none" stroke="#F2B705" stroke-width="7"/>'; }
+    else { g+=wedge(0,rot,100,'#E5484D')+wedge(total,total+rot,100,'#E5484D')+wedge(0,total,60,'#F2B705'); }
+    [[0,nm.B],[rot,nm.Q],[total,nm.A],[total+rot,nm.P]].forEach(function(r){ var p=pt(r[0],R); g+='<line x1="'+C[0]+'" y1="'+C[1]+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'" stroke="var(--ink)" stroke-width="2"/>'+tx(p[0]+10,p[1]+4,r[1],{w:1,a:'start'}); });
+    g+='<circle cx="'+C[0]+'" cy="'+C[1]+'" r="4" fill="var(--ink)"/>'+tx(C[0]-12,C[1]+16,nm.C,{w:1});
+    if(mode==='diff'){ g+=tx(196,24,'黄 ∠'+nm.A+nm.C+nm.B+' ＝ '+total+'°',{a:'start',c:'#9A6B00',w:1})+tx(196,44,'赤 ∠'+nm.B+nm.C+nm.Q+' ＝ '+rot+'°（回した角）',{a:'start',c:'#C0392B',w:1})+tx(196,64,'緑 ∠'+nm.A+nm.C+nm.Q+' ＝ ？',{a:'start',c:'#2E6B22',w:1}); }
+    else g+=tx(196,30,'赤 ＝ 回した角（どちらも同じ）',{a:'start',c:'#C0392B',w:1});
+    return '<svg viewBox="0 0 360 250" role="img" aria-label="角のヒントの図">'+g+'</svg>'; }
+  window.HINT={
+    b24:angHint(40,75,'diff')+'<p>B は Q に移るので、<b>∠BCQ（赤）が回した角 40°</b>。<br>∠ACQ（緑）＝ ∠ACB（黄）－ ∠BCQ（赤）＝ 75 － □</p>',
+    "w101-3p":angHint(35,82,'rot')+'<p>A は P に移る。<b>対応する点と回転の中心を結んだ角 ∠ACP が、回した角そのもの</b>。B と Q の角（∠BCQ）も同じ大きさ。</p>',
+    "w101-3":angHint(35,82,'diff')+'<p>∠BCQ（赤）は回した角 35°。<br>∠ACQ（緑）＝ ∠ACB（黄）－ ∠BCQ（赤）＝ 82 － □</p>',
+    b7:'<p>回転で<b>変わる</b>もの：図形の<b>向き</b>、図形の<b>位置</b>（場所）。<br>回転で<b>変わらない</b>もの：形、大きさ、<b>中心 O からの距離</b>（うでの長さ）。</p><p>問題は「<b>変わらない</b>もの」。</p>',
+    b5:'<p>90° は<b>4分の1回転</b>（横向きになる）。180° は<b>半回転</b>（さかさまになる）。<br>ゴールのキャラの頭が、どっちを向いているか見よう。</p>',
+    mg2:'<p>体験「頂点を1つずつ回してかく」と同じやり方。<br>① O から A へ「横に□、たてに□」を数える<br>② 90° 回すと、<b>横とたてが入れかわる</b><br>③ その場所に A′。B、C も同じ。</p>',
+    mg3:'<p>180° は、<b>O をはさんで反対側へ、同じだけ</b>進む。<br>O から A へ「右に3、上に2」なら、A′ は O から「左に3、下に2」。</p>',
+    "w100-4a":'<p>180° の回転移動には、特別な名前がある。<b>「点」がつく</b>。<br>線で折り返すのは「対称移動」。点を中心に半回転するのは「点○○移動」。</p>',
+    a8:'<p>距離は、<b>垂直に（直角に）</b>測った、いちばん短い長さ。<br>A から<b>まっすぐ下へ</b> ℓ まで、マスを数えよう。ななめに数えない。</p>',
+    b13:'<p>180° 回してもとに重なる図形の、<b>まん中の点</b>が回転の中心。<br>平行四辺形のまん中は、2本の<b>対角線</b>が交わる点。</p>'
+  };
+})();
+
 /* ---------- 文字だけの設問に付ける図（見てわかる補助） ---------- */
 var FX=(function(){
   function P(pts,fill,stroke,w,dash){ return '<polygon points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="'+(fill||'var(--gold2)')+'" stroke="'+(stroke||'var(--line)')+'" stroke-width="'+(w||2)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'; }
@@ -1365,7 +1430,7 @@ function stageHTML(){
   h+='<h2>'+uinfo.label+'</h2>';
   if(D.done && EMB){
     var ng=Object.keys(D.first).filter(function(k){return D.first[k]===false;});
-    h+='<div class="msg ok">クリア！'+(ng.length?'　1回目でまちがえた問題：'+ng.length+' 問（ハートが '+ng.length+' へる）':'　1回目で全部正解！')+'</div><button type="button" class="btn main" data-fx="zback">ステージにもどる</button>';
+    h+='<div class="msg ok">クリア！'+(ng.length?'　1回目でまちがえた問題：'+ng.length+' 問（ハートが1つへる）':'　1回目で全部正解！')+'</div><button type="button" class="btn main" data-fx="zback">ステージにもどる</button>';
     return h;
   }
   if(D.done){
@@ -1376,6 +1441,12 @@ function stageHTML(){
   if(!D.cur) D.cur=newCur(it);
   var c=D.cur, lock=c.res!==null;
   h+='<p class="prog">'+(D.pos+1)+' 問目 ／ のこり '+(D.q.length-D.pos)+' 問'+(e.again?'　<b>（もう一度）</b>':'')+'</p>';
+  var mcn=(D.mc&&D.mc[e.id])||0;
+  if(e.again && mcn>=1 && it.type!=="card" && !lock){
+    var hint=(window.HINT&&window.HINT[e.id]) || ((it.exfig?'<div class="board">'+it.exfig+'</div>':'')+'<p>'+(it.ex||'')+'</p>');
+    h+='<div class="hintbox"><b>ヒント</b>（さっきまちがえた問題。ヒントを読んでから、もう一度）'+hint+'</div>';
+    if(!c.hintOK){ h+='<button type="button" class="btn main" data-fx="hintok">ヒントを見た。答える</button>'; return h; }
+  }
   if(it.prev) h+='<div class="ex bad"><span class="tag">前に書いた答え</span>　'+it.prev+'</div>';
   if(it.ctx) h+='<div class="sit" style="border-left-color:var(--dirt)">'+it.ctx+'</div>';
   if(it.slotFig){ var labs=it.slots.map(function(x,i){ return c.sl[i]!=null ? it.chips[c.sl[i]] : '（'+'アイウエ'.charAt(i)+'）'; }); var sf=it.slotFig(labs); h+='<div class="board">'+sf.svg+'</div>'+(sf.note?'<div class="msg '+(sf.warn?'miss':'hint')+'" style="margin-top:0">'+sf.note+'</div>':''); }
@@ -1402,8 +1473,10 @@ function stageHTML(){
     if(!lock) h+='<div class="row"><button type="button" class="btn" data-fx="gundo">1つもどす</button><button type="button" class="btn main" data-fx="ok"'+(c.gp.length<it.poly.length?' disabled':'')+'>答え合わせ</button><span class="once">'+it.lab.map(function(l){return l+'′';}).join(' → ')+' の順に、方眼の点をクリック。</span></div>';
   }
   if(it.type==="multi"){
-    h+='<div class="sit">'+it.q+'</div><p class="once">あてはまるものを全部押してから決定。答えは1回だけ。</p><div class="opts">';
-    c.ord.forEach(function(i){ var on=c.sel.indexOf(i)>=0, cls="btn"; if(lock){ if(it.c.indexOf(i)>=0) cls+=" right"; else if(on) cls+=" picked-wrong"; } else if(on) cls+=" on"; h+='<button type="button" class="'+cls+'" data-fxm="'+i+'" aria-pressed="'+on+'"'+(lock?' disabled':'')+'>'+it.opts[i]+'</button>'; });
+    c.mk=c.mk||{};
+    h+='<div class="sit">'+it.q+'</div><p class="once">1つずつ読んで、<b>○（あてはまる）</b>か<b>×（あてはまらない）</b>を決めよう。全部決めたら決定。</p><div class="mkl">';
+    c.ord.forEach(function(i){ var m=c.mk[i], right=it.c.indexOf(i)>=0, rowc=lock?((m===1)===right?'mk-ok':'mk-ng'):'';
+      h+='<div class="mkrow '+rowc+'"><span class="mkt">'+it.opts[i]+'</span><span class="mkb"><button type="button" class="btn'+(m===1?' on':'')+'" data-mk="'+i+':1"'+(lock?' disabled':'')+'>○</button><button type="button" class="btn'+(m===0?' on':'')+'" data-mk="'+i+':0"'+(lock?' disabled':'')+'>×</button></span>'+(lock?'<span class="mkans">'+(right?'○':'×')+'</span>':'')+'</div>'; });
     h+='</div>'+(lock?'':'<button type="button" class="btn main" data-fx="ok">決定</button>');
   }
   if(it.type==="num"){
@@ -1594,7 +1667,8 @@ function bindLive(){
 /* ---------- 操作 ---------- */
 function next(D,c,it,e){
   if(D.first && !e.again) D.first[e.id]=!!c.res;
-  if(it.type!=="card" && c.res!==null && c.res!==undefined){ var ul=(UNITS.filter(function(u){return u.key===it.u;})[0]||{}).label||""; mlLog({unit:"平面図形："+ul,pat:mlPat(it),id:e.id,q:mlStrip(it.q||it.ctx||"").slice(0,200),res:c.res?"○":"×",ans:mlAns(it),got:c.res?"":mlGot(it,c),ref:it.ref||"",memo:(EMB?"ステージ "+EMB_TITLE:"トレーニング")+(e.again?"（もう一度）":"")}); }
+  if(it.type!=="card" && c.res!==null && c.res!==undefined){ var ul=(UNITS.filter(function(u){return u.key===it.u;})[0]||{}).label||""; mlLog({unit:"平面図形："+ul,pat:mlPat(it),id:e.id,q:mlStrip(it.q||it.ctx||"").slice(0,200),res:c.res?"○":"×",ans:mlAns(it),got:c.res?"":mlGot(it,c),ref:it.ref||"",memo:(EMB?"ステージ "+(EMB_STAGE?EMB_STAGE+" ":"")+EMB_TITLE:"トレーニング")+(e.again?"（もう一度）":"")}); }
+  if(c.res===false){ D.mc=D.mc||{}; D.lw=D.lw||{}; D.mc[e.id]=(D.mc[e.id]||0)+1; D.lw[e.id]= c.pick!=null ? 'p'+c.pick : (c.vals&&c.vals.length&&c.vals[0]!=null&&c.vals[0]!=='' ? 'v'+parseNum(c.vals[0]) : null); }
   if(!c.res && D.again.indexOf(D.pos)<0 && ["card","draw","locus","construct","sector","circlearea","roll","conceptanim"].indexOf(it.type)<0){ D.again.push(D.q.length); D.q.push({id:e.id,again:true}); }
   D.pos++; D.cur=null; if(D.pos>=D.q.length){ D.done=true; sfx("done"); }
 }
@@ -1607,7 +1681,10 @@ document.addEventListener("click",function(ev){
   if(D.done){ if(t.dataset.fx==="zback"){ var miss=Object.keys(D.first).filter(function(k){return D.first[k]===false;}).map(function(k){ var x=ITEMS[k]; return {id:k,q:String(x.q||x.ctx||"").replace(/<[^>]+>/g,"").slice(0,40)}; }); parent.postMessage({type:"zdone",first:D.first,miss:miss},"*"); } return; }
   var e=D.q[D.pos], it=ITEMS[e.id], c=D.cur; if(!c) return;
   if(t.dataset.fxt!=null && c.res===null){ c.seq.push(it.tok[+t.dataset.fxt]); sfx("dot"); render(); return; }
+  if(t.dataset.mk!=null && c.res===null){ var pr=t.dataset.mk.split(":"); c.mk=c.mk||{}; c.mk[+pr[0]]=+pr[1]; c.sel=Object.keys(c.mk).filter(function(k){return c.mk[k]===1;}).map(Number); sfx("dot"); render(); return; }
   if(t.dataset.fxm!=null && c.res===null){ var mi=+t.dataset.fxm, mk=c.sel.indexOf(mi); if(mk>=0) c.sel.splice(mk,1); else c.sel.push(mi); render(); return; }
+  if(t.dataset.fxc!=null && c.res===null && e.again && D.lw && D.lw[e.id]==='p'+t.dataset.fxc){ flash("さっきと同じ答え。ヒントを見て、考え直そう"); sfx("soft"); return; }
+  if(t.dataset.fxv!=null && c.res===null && e.again && D.lw && D.lw[e.id]==='p'+t.dataset.fxv){ flash("さっきと同じ答え。ヒントを見て、考え直そう"); sfx("soft"); return; }
   if(t.dataset.fxc!=null && c.res===null){ c.pick=+t.dataset.fxc; c.res=c.pick===it.c; fb(c.res); render(); return; }
   if(t.dataset.fxv!=null && c.res===null){ c.pick=+t.dataset.fxv; c.res=c.pick===it.c; sfx("move"); render(); setTimeout(function(){ fb(c.res); },1000); return; }
   if(t.dataset.fxs!=null && c.res===null){ var ps=t.dataset.fxs.split(":"); c.cat[+ps[0]]=ps[1]; render(); return; }
@@ -1644,16 +1721,17 @@ document.addEventListener("click",function(ev){
       else sfx("dot");
       return;
     case "reveal": c.reveal=true; sfx("ok"); render(); return;
+    case "hintok": c.hintOK=true; sfx("dot"); render(); return;
     case "next": next(D,c,it,e); render(); window.scrollTo(0,0); return;
     case "ok":
-      if(it.type==="num"){ c.vals=[val("fxin")]; if(parseNum(c.vals[0])===null){ flash("数を入れよう"); return; } c.res=same(parseNum(c.vals[0]),it.ans); }
+      if(it.type==="num"){ c.vals=[val("fxin")]; if(parseNum(c.vals[0])===null){ flash("数を入れよう"); return; } if(e.again && D.lw && D.lw[e.id]==='v'+parseNum(c.vals[0])){ flash("さっきと同じ答え。ヒントの図を見て、考え直そう"); sfx("soft"); return; } c.res=same(parseNum(c.vals[0]),it.ans); }
       else if(it.type==="move"){ c.vals=[val("mx"),val("my")]; var vx=parseNum(c.vals[0]), vy=parseNum(c.vals[1]); if(vx===null||vy===null){ flash("2つとも予想を入れよう"); return; } c.res = vx===it.goal[0]-it.start[0] && vy===it.goal[1]-it.start[1]; sfx("move"); render(); requestAnimationFrame(function(){ var g=document.getElementById("mvshape"); if(g){ g.style.transform='translate(0px,0px)'; requestAnimationFrame(function(){ g.style.transform='translate('+vx*20+'px,'+(-vy*20)+'px)'; }); } }); setTimeout(function(){ fb(c.res); },1000); return; }
       else if(it.type==="sort"){ if(!it.chips.every(function(x,i){return !!c.cat[i];})){ flash("全部えらんでから決定"); return; } c.res=it.cats.every(function(v,i){return c.cat[i]===v;}); }
       else if(it.type==="slots"){ if(!it.slots.every(function(x,i){return c.sl[i]!=null;})){ flash("全部えらんでから決定"); return; } c.res=it.ans.every(function(v,i){return c.sl[i]===v;}); }
       else if(it.type==="dragorder"){ c.res=c.seq.every(function(v,i){return v===i;}); }
       else if(it.type==="sym"){ if(!c.seq.length){ flash("記号を並べてから決定"); return; } var gs=c.seq.join(" "); c.res=it.ans.some(function(a){ return a.join(" ")===gs; }); }
       else if(it.type==="gdraw"){ var tg=gTarget(it); c.res=tg.every(function(p,i){ return c.gp[i]&&c.gp[i][0]===p[0]&&c.gp[i][1]===p[1]; }); }
-      else if(it.type==="multi"){ if(!c.sel.length){ flash("選んでから決定"); return; } c.res=c.sel.slice().sort().join(",")===it.c.slice().sort().join(","); }
+      else if(it.type==="multi"){ c.mk=c.mk||{}; if(Object.keys(c.mk).length<it.opts.length){ flash("全部に ○ か × をつけてから決定"); return; } c.sel=Object.keys(c.mk).filter(function(k){return c.mk[k]===1;}).map(Number); if(!c.sel.length){ flash("○ が1つもない。もう一度読もう"); return; } c.res=c.sel.slice().sort().join(",")===it.c.slice().sort().join(","); }
       else if(it.type==="order"){ if(c.seq.length<it.opts.length){ flash("全部ならべてから決定"); return; } c.res=c.seq.every(function(v,i){return v===i;}); }
       fb(c.res); render(); return;
   }

@@ -227,6 +227,7 @@ var WORLDS=[
     {k:"z",items:["b11","b12","b7"],work:["w100-3a","w100-3b"]},
     {k:"z",items:["b13","b24"],work:["w100-4a","w100-4b","w101-2","w101-3p","w101-3"]},
     "rotate",
+    {k:"sign",items:["l8"]},
     {k:"z",items:["mg2","mg3"]},
     {k:"z",items:["p3"],paper:true}]},
   {id:"1-4",name:"鏡のがけ",ref:"教科書 p.164〜165／ワーク p.102〜103",quiz:2,gates:[
@@ -489,7 +490,7 @@ function bossStep(g){
 }
 function askBoss(g){ var id=g.queue[0]; if(!id) return; G.mode="panel"; keys={}; current={g:g,z:true,boss:true,qid:id};
   panel.classList.add("zpanel");
-  panel.innerHTML='<div class="zhead"><span class="tag">'+g.enemy.info.name+'への攻撃</span> <span class="hearts">'+heartsTxt()+'</span><span class="small">　正解でダメージ。のこり体力 '+g.enemy.hp+' / 3。まちがえると、正解するまで同じ問題が出る（ハートが1つへる）。</span></div><iframe id="zf" title="問題" src="train.html?embed='+encodeURIComponent(id)+'&title='+encodeURIComponent('攻撃の問題')+(TRIAL?'&trial=1':'')+'"></iframe>';
+  panel.innerHTML='<div class="zhead"><span class="tag">'+g.enemy.info.name+'への攻撃</span> <span class="hearts">'+heartsTxt()+'</span><span class="small">　正解でダメージ。のこり体力 '+g.enemy.hp+' / 3。まちがえると、正解するまで同じ問題が出る（ハートが1つへる）。</span></div><iframe id="zf" title="問題" src="train.html?embed='+encodeURIComponent(id)+'&title='+encodeURIComponent('攻撃の問題')+'&stage='+encodeURIComponent(G.main?G.main.id:G.id)+(TRIAL?'&trial=1':'')+'"></iframe>';
   ov.hidden=false; }
 
 /* ================= 描画 ================= */
@@ -758,7 +759,7 @@ function openZ(g){
   G.mode="panel"; keys={}; current={g:g,z:true};
   var ids=zItems(g.spec), title=gateTitle(g)+(g.spec.boss?"（ワークとふり返り）":"");
   panel.classList.add("zpanel");
-  panel.innerHTML='<div class="zhead"><span class="tag">'+gateTitle(g)+'</span> <span class="hearts">'+heartsTxt()+'</span>'+(g.spec.k==="sign"?'':'<span class="small">　1回目でまちがえるとハートが1つへる。まちがえた問題は、最後にもう一度出る。</span>')+'</div><iframe id="zf" title="問題" src="train.html?embed='+encodeURIComponent(ids.join(","))+'&title='+encodeURIComponent(title)+(TRIAL?'&trial=1':'')+'"></iframe>';
+  panel.innerHTML='<div class="zhead"><span class="tag">'+gateTitle(g)+'</span> <span class="hearts">'+heartsTxt()+'</span>'+(g.spec.k==="sign"?'':'<span class="small">　1回目でまちがえるとハートが1つへる。まちがえた問題は、最後にもう一度出る。</span>')+'</div><iframe id="zf" title="問題" src="train.html?embed='+encodeURIComponent(ids.join(","))+'&title='+encodeURIComponent(title)+'&stage='+encodeURIComponent(G.main?G.main.id:G.id)+(TRIAL?'&trial=1':'')+'"></iframe>';
   ov.hidden=false;
 }
 window.addEventListener("message",function(ev){
